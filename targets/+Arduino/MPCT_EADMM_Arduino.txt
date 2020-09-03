@@ -1,20 +1,24 @@
 void MPCT_EADMM(float *pointer_u, float *pointer_x0, float *pointer_ref){
 
-    // TODO: Warmstart??
-
     // Obtain variables in scaled units 
     if( in_engineering ){
         for(i = 0; i < nm; i++){
-            ref[i] = pointer_ref[i]*scaling[i];
-            x0[i] = pointer_x0[i]*scaling[i];
+            ref[i] = scaling[i]*(pointer_ref[i] - OpPoint[i]);
+        }
+        for(i = 0; i < n; i++){
+            x0[i] = scaling[i]*(pointer_x0[i] - OpPoint[i]);
         }
     }
     else{
         for(i = 0; i < nm; i++){
             ref[i] = pointer_ref[i];
+        }
+        for(i = 0; i < n; i++){
             x0[i] = pointer_x0[i];
         }
     }
+
+    // TODO: Warmstart
    
     // Initialize EADMM variables
     done = false;
@@ -27,7 +31,7 @@ void MPCT_EADMM(float *pointer_u, float *pointer_x0, float *pointer_ref){
         
         // Problem QP1
         for(i = 0; i < nm; i++) {
-            z1[i][0] = max( min( (beta[i][0]*(x0[i] + z3[i][0] + z2[i]) + lambda[i][1] - lambda[i][0] )*H1i[i][0], UB[i]), LB[i]);
+            z1[i][0] = max( min( (beta[i][0]*(-x0[i] + z3[i][0] + z2[i]) + lambda[i][1] - lambda[i][0] )*H1i[i][0], UB[i]), LB[i]);
         }
         for(j = 1; j < N; j++) {
             for(i = 0;  i < nm; i++){
@@ -246,7 +250,7 @@ void MPCT_EADMM(float *pointer_u, float *pointer_x0, float *pointer_ref){
         if( done ){
             if( in_engineering ){
                 for(j = 0; j < m; j++){
-                    pointer_u[j] = z1[n+j][0]*scaling_inv[j+n];
+                    pointer_u[j] = z1[n+j][0]*scaling_inv_u[j] + OpPoint[n+j];
                 }
             }
             else{

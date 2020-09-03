@@ -30,6 +30,7 @@ idx = 1;
 [vars, idx] = addLine(vars, idx, 'S', str.S, 1, 'float', 'constant');
 [vars, idx] = addLine(vars, idx, 'scaling', str.scaling, 1, 'float', 'constant');
 [vars, idx] = addLine(vars, idx, 'scaling_inv_u', str.scaling_inv_u, 1, 'float', 'constant');
+[vars, idx] = addLine(vars, idx, 'OpPoint', str.OpPoint, 1, 'float', 'constant');
 
 % Alpha and Beta
 [vars, idx] = addLine(vars, idx, 'Alpha', str.Alpha, 1, 'float', 'constant');
