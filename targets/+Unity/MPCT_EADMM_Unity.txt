@@ -73,7 +73,7 @@ WHILE NOT done DO
     (* Problem 1: Minimize w.r.t. z1 = (xi, ui) *)
 
     FOR i := 1 TO nm DO
-        z1[i, 1] := MAX( MIN( (rho[i, 1]*( x0_inc[i] + z3[i, 1] + z2[i] ) + lambda[i, 2] - lambda[i, 1] )*H1i[i, 1], UB[i]), LB[i]);
+        z1[i, 1] := MAX( MIN( (rho[i, 1]*( z3[i, 1] + z2[i] ) - rho_0[i]*x0_inc[i] + lambda[i, 2] - lambda[i, 1] )*H1i[i, 1], UB0[i]), LB0[i]);
     END_FOR;
 
     FOR j := 2 TO NN DO
@@ -83,7 +83,7 @@ WHILE NOT done DO
     END_FOR;
 
     FOR i := 1 TO nm DO
-        z1[i, NN+1] := MAX( MIN( (rho[i, NN+1]*( z3[i, NN+1] + 2.0*z2[i] ) + lambda[i, NN+2] + lambda[i, NN+3] )*H1i[i, NN+1], UB[i]), LB[i]);
+        z1[i, NN+1] := MAX( MIN( (rho[i, NN+1]*z3[i, NN+1] + ( rho[i, NN+1] + rho_s[i] )*z2[i] + lambda[i, NN+2] + lambda[i, NN+3] )*H1i[i, NN+1], UBs[i]), LBs[i]);
     END_FOR;
 
     (* Problem 2: Minimize w.r.t. z2 = (xs, us) *)
@@ -91,7 +91,7 @@ WHILE NOT done DO
     (* Compute q2 *)
 
     FOR i := 1 TO nm DO
-        q2[i] := rho[i, NN+1]*( z3[i, NN+1] - 2.0*z1[i, NN+1] ) + lambda[i, NN+2] + lambda[i, NN+3];
+        q2[i] := rho[i, NN+1]*z3[i, NN+1] - ( rho[i, NN+1] + rho_s[i] )*z1[i, NN+1]  + lambda[i, NN+2] + lambda[i, NN+3];
     END_FOR;
 
     FOR i := 1 TO n DO
@@ -272,7 +272,7 @@ WHILE NOT done DO
     (* Update lambda *)
 
     FOR j := 1 TO n DO
-        lambda[j, 1] := lambda[j, 1] + rho[j, 1]*res[j, 1];
+        lambda[j, 1] := lambda[j, 1] + rho_0[j]*res[j, 1];
     END_FOR;
     FOR l := 2 TO NN+2 DO
         FOR j:= 1 TO nm DO
@@ -280,7 +280,7 @@ WHILE NOT done DO
         END_FOR;
     END_FOR;
     FOR j := 1 TO nm DO
-        lambda[j, NN+3] := lambda[j, NN+3] + rho[j, NN+1]*res[j, NN+3];
+        lambda[j, NN+3] := lambda[j, NN+3] + rho_s[j]*res[j, NN+3];
     END_FOR;
 
     (* Exit condition *)

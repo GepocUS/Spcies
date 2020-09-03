@@ -15,6 +15,26 @@ function str = Spcies_compute_MPCT_EADMM_ingredients(sys, param, options)
     R = param.R;
     T = param.T;
     S = param.S;
+    if isfield(param, 'epsilon_x')
+        epsilon_x = param.epsilon_x;
+    else
+        epsilon_x = 1e-6;
+    end
+    if isfield(param, 'epsilon_u')
+        epsilon_u = param.epsilon_u;
+    else
+        epsilon_u = 1e-6;
+    end
+    if isfield(param, 'inf_bound_value')
+        inf_bound_value = param.inf_bound_value;
+    else
+        inf_bound_value =  100000;
+    end
+    if  isfield(param, 'x0_bound_value')
+        x0_bound_value = param.x0_bound_value;
+    else
+        x0_bound_value = 100000;
+    end
     
     %% Decision variables
     z1_0 = zeros((N+1)*(n+m), 1); % z1 = (xi, ui)
@@ -46,8 +66,6 @@ function str = Spcies_compute_MPCT_EADMM_ingredients(sys, param, options)
     LB1 = [kron(ones(N+1,1), [sys.LBx; sys.LBu])]; 
     UB1 = [kron(ones(N+1,1), [sys.UBx; sys.UBu])];
     
-    % Matrices for explicit solution
-    
     % Ingredients with minimal memory consumption
     H1i = 1./diag(H1);
     
@@ -62,8 +80,6 @@ function str = Spcies_compute_MPCT_EADMM_ingredients(sys, param, options)
     % Matrices for explicit solution
     H2i = inv(H2);
     W2 = H2i*Az2'*inv(Az2*H2i*Az2')*Az2*H2i - H2i;
-    
-    % Ingredients with minimal memory consumption
     
     %% Problem 3: z3 = (hat_xi, hat_ui)
     H3 = kron(eye(N+1), blkdiag(Q, R)) + (rho.*A3)'*A3;
@@ -138,17 +154,25 @@ function str = Spcies_compute_MPCT_EADMM_ingredients(sys, param, options)
     str.T = -T;
     str.S = -S;
     str.LB = [sys.LBx; sys.LBu];
-    str.LB(isinf(str.LB)) = -10000.0;
+    str.LB(isinf(str.LB)) = -inf_bound_value;
     str.UB = [sys.UBx; sys.UBu];
-    str.UB(isinf(str.UB)) = 10000.0;
+    str.UB(isinf(str.UB)) = inf_bound_value;
+    str.LBs = [sys.LBx + epsilon_x*ones(n, 1); sys.LBu + epsilon_u*ones(m, 1)];
+    str.UBs = [sys.UBx - epsilon_x*ones(n, 1); sys.UBu - epsilon_u*ones(m, 1)];
+    str.LB0 = [-x0_bound_value*ones(n,1); sys.LBu];
+    str.UB0 = [x0_bound_value*ones(n,1); sys.UBu];
     
     % Penalty parameter
-        rho_b = zeros((N+1)*(n+m), 1);
-        rho_b(1:n) = rho(1:n);
-        rho_b(n+(1:m)) = rho(2*n+(1:m));
-        rho_b(n+m+(1:(N-1)*(n+m))) = rho(2*n+m+(1:(N-1)*(n+m)));
-        rho_b(N*(n+m) + (1:n+m)) = rho(end-n-m+1:end);
-    str.rho = reshape(rho_b, m+n, N+1); 
+%         rho_b = zeros((N+1)*(n+m), 1);
+%         rho_b(1:n) = rho(1:n);
+%         rho_b(n+(1:m)) = rho(2*n+(1:m));
+%         rho_b(n+m+(1:(N-1)*(n+m))) = rho(2*n+m+(1:(N-1)*(n+m)));
+%         rho_b(N*(n+m) + (1:n+m)) = rho(end-n-m+1:end);
+%     str.rho = reshape(rho_b, m+n, N+1);
+
+    str.beta = rho(n+1:end-n-m);
+    str.beta_0 = rho(1:n);
+    str.beta_s = rho(end-n-m+1:end);
     
     % Warmstart
     str.L_z2 = L_z2;

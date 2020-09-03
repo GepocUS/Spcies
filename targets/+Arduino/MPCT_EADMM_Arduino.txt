@@ -31,15 +31,15 @@ void MPCT_EADMM(float *pointer_u, float *pointer_x0, float *pointer_ref){
         
         // Problem QP1
         for(i = 0; i < nm; i++) {
-            z1[i][0] = max( min( (beta[i][0]*(-x0[i] + z3[i][0] + z2[i]) + lambda[i][1] - lambda[i][0] )*H1i[i][0], UB[i]), LB[i]);
+            z1[i][0] = max( min( (rho[i][0]*(z3[i][0] + z2[i]) - rho_0[i]*x0[i] + lambda[i][1] - lambda[i][0] )*H1i[i][0], UB0[i]), LB0[i]);
         }
         for(j = 1; j < N; j++) {
             for(i = 0;  i < nm; i++){
-                z1[i][j] = max( min( (beta[i][j]*(z2[i] + z3[i][j]) + lambda[i][j+1] )*H1i[i][j], UB[i]), LB[i]);
+                z1[i][j] = max( min( (rho[i][j]*(z2[i] + z3[i][j]) + lambda[i][j+1] )*H1i[i][j], UB[i]), LB[i]);
             }
         }
         for(i = 0; i < nm; i++){
-            z1[i][N] = max( min( (beta[i][N]*(2*z2[i] + z3[i][N]) + lambda[i][N+1] + lambda[i][N+2] )*H1i[i][N], UB[i]), LB[i]);
+            z1[i][N] = max( min( (rho[i][N]*z3[i][N] (rho[i][N] + rho_s[i])*z2[i] + lambda[i][N+1] + lambda[i][N+2] )*H1i[i][N], UBs[i]), LBs[i]);
         }
 
         // Problem QP2
@@ -47,7 +47,7 @@ void MPCT_EADMM(float *pointer_u, float *pointer_x0, float *pointer_ref){
 
         // Compute q2
         for(i = 0; i < nm; i++){
-            q2[i] = beta[i][N]*(z3[i][N] - 2*z1[i][N]) + lambda[i][N+1] + lambda[i][N+2];
+            q2[i] = rho[i][N]*z3[i][N] - (rho[i][N] + rho_s[i])*z1[i][N]) + lambda[i][N+1] + lambda[i][N+2];
         }
         for(i = 0; i < n; i++){
             for(j = 0; j < n; j++){
@@ -61,7 +61,7 @@ void MPCT_EADMM(float *pointer_u, float *pointer_x0, float *pointer_ref){
         }
         for(j = 0; j < N; j++){
             for(i = 0; i< nm; i++){
-                q2[i] = q2[i] + beta[i][j]*(z3[i][j] - z1[i][j]) + lambda[i][j+1];
+                q2[i] = q2[i] + rho[i][j]*(z3[i][j] - z1[i][j]) + lambda[i][j+1];
             }
         }
 
@@ -77,15 +77,15 @@ void MPCT_EADMM(float *pointer_u, float *pointer_x0, float *pointer_ref){
 
         // Compute q3
         for(i = 0; i < nm; i++){
-            q3[i][0] = beta[i][0]*(z2[i] - z1[i][0]) + lambda[i][1];
+            q3[i][0] = rho[i][0]*(z2[i] - z1[i][0]) + lambda[i][1];
         }
         for(j = 1; j< N; j++){
             for(i = 0; i< nm; i++){
-                q3[i][j] = beta[i][j]*(z2[i] - z1[i][j]) + lambda[i][j+1];
+                q3[i][j] = rho[i][j]*(z2[i] - z1[i][j]) + lambda[i][j+1];
             }
         }
         for(i = 0; i < nm; i++){
-            q3[i][N] = beta[i][N]*(z2[i] - z1[i][N]) + lambda[i][N+1];
+            q3[i][N] = rho[i][N]*(z2[i] - z1[i][N]) + lambda[i][N+1];
         }
 
         // Compute mu3: Forward substitution
@@ -219,15 +219,15 @@ void MPCT_EADMM(float *pointer_u, float *pointer_x0, float *pointer_ref){
         
         // Update lambda
         for(j = 0; j < n; j++){
-            lambda[j][0] = lambda[j][0] + beta[j][0]*res[j][0];
+            lambda[j][0] = lambda[j][0] + rho_0[j]*res[j][0];
         }
         for(l = 1; l < N+2; l++){
             for(j = 0; j < nm; j++){
-                lambda[j][l] = lambda[j][l] + beta[j][l-1]*res[j][l];
+                lambda[j][l] = lambda[j][l] + rho[j][l-1]*res[j][l];
             }
         }
         for(j = 0; j < nm; j++){
-            lambda[j][N+2] = lambda[j][N+2] + beta[j][N]*res[j][N+2];
+            lambda[j][N+2] = lambda[j][N+2] + rho_s[j]*res[j][N+2];
         }
 
         // Exit condition

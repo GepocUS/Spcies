@@ -38,8 +38,14 @@ idx = 1;
 
 % Constants
 [vars, idx] = addLine(vars, idx, 'rho', str.rho, 1, 'float', 'public');
+[vars, idx] = addLine(vars, idx, 'rho_0', str.rho_0, 1, 'float', 'public');
+[vars, idx] = addLine(vars, idx, 'rho_s', str.rho_s, 1, 'float', 'public');
 [vars, idx] = addLine(vars, idx, 'LB', str.LB, 1, 'float', 'public');
 [vars, idx] = addLine(vars, idx, 'UB', str.UB, 1, 'float', 'public');
+[vars, idx] = addLine(vars, idx, 'LB0', str.LB0, 1, 'float', 'public');
+[vars, idx] = addLine(vars, idx, 'UB0', str.UB0, 1, 'float', 'public');
+[vars, idx] = addLine(vars, idx, 'LBs', str.LBs, 1, 'float', 'public');
+[vars, idx] = addLine(vars, idx, 'UBs', str.UBs, 1, 'float', 'public');
 [vars, idx] = addLine(vars, idx, 'AB', str.AB, 1, 'float', 'public');
 [vars, idx] = addLine(vars, idx, 'T', str.T, 1, 'float', 'public');
 [vars, idx] = addLine(vars, idx, 'S', str.S, 1, 'float', 'public');
@@ -103,3 +109,4 @@ fclose(controller_file);
 movefile([save_name '.txt'], [save_name '.XDB']);
 
 end
+
