@@ -19,7 +19,7 @@
 %   - s: String containing the text for the variable declaration.
 %
 
-% Function bellonging to the Spcies toolbox
+% Function belonging to the Spcies toolbox
 % Author: Pablo Krupa, pkrupa@us.es, (c) 2020
 %
 
@@ -46,7 +46,7 @@ function s = decVar(var)
 
     else
 
-        if length(dim) == 2 % Vector o multidimensional matrix (2D or 3D)
+        if length(dim) == 2 % Vector o multidimensional array (2D or 3D)
 
             if min(dim) == 1
                 order = 'vector';

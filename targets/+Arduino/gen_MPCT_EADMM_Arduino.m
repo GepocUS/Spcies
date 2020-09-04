@@ -8,7 +8,7 @@
 % OUTPUT: Saves the controller into a txt file in the current directory
 %
 
-% Function bellonging to the Spcies toolbox
+% Function belonging to the Spcies toolbox
 % Author: Pablo Krupa, pkrupa@us.es, (c) 2020
 %
 

@@ -12,7 +12,7 @@
 %   - s: String containing the text for the variable declaration in the Arduino environment.
 %
 
-% Function bellonging to the Spcies toolbox
+% Function belonging to the Spcies toolbox
 % Author: Pablo Krupa, pkrupa@us.es, (c) 2020
 %
 
