@@ -10,7 +10,6 @@ function str = Spcies_compute_MPCT_EADMM_ingredients(sys, param, options)
     A = sys.A;
     B = sys.Bu;  
     N = param.N;
-    rho = param.beta;
     Q = param.Q;
     R = param.R;
     T = param.T;
@@ -30,10 +29,25 @@ function str = Spcies_compute_MPCT_EADMM_ingredients(sys, param, options)
     else
         inf_bound_value =  100000;
     end
-    if  isfield(param, 'x0_bound_value')
+    if isfield(param, 'x0_bound_value')
         x0_bound_value = param.x0_bound_value;
     else
         x0_bound_value = 100000;
+    end
+    
+    %% Extract or compute rho
+    if isfield(param, 'rho')
+        rho = param.rho;
+    else
+        rho = rho_base*ones((param.N+1)*(n+m) + n + 1*(n+m), 1);
+        % Penalize constraints related to x
+        rho(1:n) = 1*rho_mult*rho_base; % Initial constraint: x_0 = x. (6b)
+        rho(n+1:2*n) = 1*rho_mult*rho_base; % Initial z1 + z2 + z3 = 0. (6i) for i = 0
+        rho(end-2*(n+m)+1:end-n-m-m) = 1*rho_mult*rho_base; % Final  z1 + z2 + z3 = 0. (6i)  for i = N
+        rho(end-n-m+1:end-m) = 1*rho_mult*rho_base; % x_N = x_s. (6k)
+        % Penalize constraints related to u
+        rho(end-2*(n+m)+n+1:end-n-m) = rho_mult*rho_base; % Final  z1 + z2 + z3 = 0. (6j)  for i = N
+        rho(end-m+1:end) = rho_mult*rho_base; % u_N = u_s. (6l) 
     end
     
     %% Decision variables
@@ -163,16 +177,9 @@ function str = Spcies_compute_MPCT_EADMM_ingredients(sys, param, options)
     str.UB0 = [x0_bound_value*ones(n,1); sys.UBu];
     
     % Penalty parameter
-%         rho_b = zeros((N+1)*(n+m), 1);
-%         rho_b(1:n) = rho(1:n);
-%         rho_b(n+(1:m)) = rho(2*n+(1:m));
-%         rho_b(n+m+(1:(N-1)*(n+m))) = rho(2*n+m+(1:(N-1)*(n+m)));
-%         rho_b(N*(n+m) + (1:n+m)) = rho(end-n-m+1:end);
-%     str.rho = reshape(rho_b, m+n, N+1);
-
-    str.beta = rho(n+1:end-n-m);
-    str.beta_0 = rho(1:n);
-    str.beta_s = rho(end-n-m+1:end);
+    str.rho = reshape(rho(n+1:end-n-m), m+n, N+1);
+    str.rho_0 = [rho(1:n); zeros(m,1)];
+    str.rho_s = rho(end-n-m+1:end);
     
     % Warmstart
     str.L_z2 = L_z2;

@@ -9,9 +9,11 @@ function str = Spcies_gen_MPCT_EADMM(target, sys, param, options, save_name)
     if strcmp(target, 'Arduino')
         Arduino.gen_MPCT_EADMM_Arduino(str, options, save_name);
     elseif strcmp(target, 'Unity')
-        Unity.gen_MPCT_EADMM_Unity(str, options, save_name);
+        Unity.gen_MPCT_EADMM_Unity(str, options, save_name);      
     else
-        error('Target not recognized or supported');
+        if ~strcmp(target, 'Matlab')
+            error('Target not recognized or supported');
+        end
     end
     
 end
