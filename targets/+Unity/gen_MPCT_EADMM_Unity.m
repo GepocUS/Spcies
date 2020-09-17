@@ -7,13 +7,13 @@
 %
 % OUTPUT: Saves the controller into a txt file in the current directory
 %
+% This function is part of Spcies: https://github.com/GepocUS/Spcies
+% 
 
-% Function belonging to the Spcies toolbox
-% Author: Pablo Krupa, pkrupa@us.es, (c) 2020
-%
-
-% Devlog and notes:
-%   - 20/09/04: Cleaned code and added documentation
+% Author: Pablo Krupa (pkrupa@us.es)
+% 
+% Changelog: 
+%   v0.1 (2020/09/04): Initial commit version
 
 function gen_MPCT_EADMM_Unity(str, options, save_name)
     import utils.addLine

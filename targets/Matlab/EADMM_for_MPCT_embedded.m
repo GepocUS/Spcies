@@ -21,6 +21,13 @@
 %   - e_flag: Flag indicating the exit condition of the algorithm. 1: Optimim found. -1: Maximum number of iterations attained.
 %   - Hist: Structure containing a variety of information and historics.
 %
+% This function is part of Spcies: https://github.com/GepocUS/Spcies
+% 
+
+% Author: Pablo Krupa (pkrupa@us.es)
+% 
+% Changelog: 
+%   v0.1 (2020/09/17): Initial commit version
 
 function [u_opt, opt_var, e_flag, Hist] = EADMM_for_MPCT_embedded(var, x0, xr, ur, varargin)
     timer_function = tic;

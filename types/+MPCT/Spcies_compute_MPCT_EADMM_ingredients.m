@@ -1,6 +1,31 @@
-%% This function computes the ingredients of the EADMM algorithm for MPCT
-% We generate three pairs of structures.
+%% Spcies_compute_MPCT_EADMM_ingredients
+% Computes the ingredients for the MPCT controller solved using the EADMM algorithm
+%
+% Information about this formulaiton and the solver  can be found at:
+% 
+% "Implementation of model predictive control for tracking in embedded systems
+% using a sparse extended ADMM algorithm", by P. Krupa, I. Alvarado, D. Limon
+% and T. Alamo, arXiv preprint: 2008:09071, 2020.
+% 
+% INPUTS:
+%   - sys: model of the system.
+%   - param: structure containing  parameters of the MPCT controller.
+%            See documentation for the parameters needed.
+%   - options: structure containing options of the EADMM solver.
+%              See documentation for the options available.
+% 
+% OUTPUTS:
+%   - str: Structure containing the ingredients required by the solver.
+% 
+% This function is part of Spcies: https://github.com/GepocUS/Spcies
+% 
 
+% Author: Pablo Krupa (pkrupa@us.es)
+% 
+% Changelog: 
+%   v0.1 (2020/09/03): Initial commit version
+%   v0.2 (2020/09/17): Added documentation
+%
 
 function str = Spcies_compute_MPCT_EADMM_ingredients(sys, param, options)
 

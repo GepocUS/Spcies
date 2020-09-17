@@ -1,19 +1,25 @@
 %% gen_MPCT_EADMM_Arduino - Generates the MPCT controller solved with the EADMM algorithm for Arduino
-%
+% 
+% Information about this formulaiton and the solver  can be found at:
+% 
+% "Implementation of model predictive control for tracking in embedded systems
+% using a sparse extended ADMM algorithm", by P. Krupa, I. Alvarado, D. Limon
+% and T. Alamo, arXiv preprint: 2008:09071, 2020.
+% 
 % INPUTS:
 %   - str: Structure containing information needed to declare the variables
 %   - options: Structure containing several options for the solver
 %   - save_name: String containing the name of the file the controller is saved to
-%
+% 
 % OUTPUT: Saves the controller into a txt file in the current directory
-%
+% 
+% This function is part of Spcies: https://github.com/GepocUS/Spcies
+% 
 
-% Function belonging to the Spcies toolbox
-% Author: Pablo Krupa, pkrupa@us.es, (c) 2020
-%
-
-% Devlog and notes:
-%   - 20/09/03: Cleaned code and added documentation
+% Author: Pablo Krupa (pkrupa@us.es)
+% 
+% Changelog: 
+%   v0.1 (2020/09/03): Initial commit version
 
 function gen_MPCT_EADMM_Arduino(str, options, save_name)
     import utils.addLine
@@ -110,4 +116,3 @@ function gen_MPCT_EADMM_Arduino(str, options, save_name)
     fclose(controller_file);
     
 end
-

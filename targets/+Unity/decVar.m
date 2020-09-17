@@ -16,13 +16,13 @@
 % OUTPUTS:
 %   - s: String containing the text for the variable declaration.
 %
+% This function is part of Spcies: https://github.com/GepocUS/Spcies
+% 
 
-% Function belonging to the Spcies toolbox
-% Author: Pablo Krupa, pkrupa@us.es, (c) 2020
-%
-
-% Devlog and notes:
-%   - 20/09/04: Cleaned code and added documentation
+% Author: Pablo Krupa (pkrupa@us.es)
+% 
+% Changelog: 
+%   v0.1 (2020/09/04): Initial commit version
 
 function s = decVar(var, position)
     if nargin < 2
