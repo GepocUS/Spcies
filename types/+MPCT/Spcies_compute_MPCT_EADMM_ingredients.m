@@ -197,7 +197,9 @@ function str = Spcies_compute_MPCT_EADMM_ingredients(sys, param, options)
     str.UB = [sys.UBx; sys.UBu];
     str.UB(isinf(str.UB)) = inf_bound_value;
     str.LBs = [sys.LBx + epsilon_x*ones(n, 1); sys.LBu + epsilon_u*ones(m, 1)];
+    str.LBs(isinf(str.LBs)) = -inf_bound_value;
     str.UBs = [sys.UBx - epsilon_x*ones(n, 1); sys.UBu - epsilon_u*ones(m, 1)];
+    str.UBs(isinf(str.UBs)) = inf_bound_value;
     str.LB0 = [-x0_bound_value*ones(n,1); sys.LBu];
     str.UB0 = [x0_bound_value*ones(n,1); sys.UBu];
     
