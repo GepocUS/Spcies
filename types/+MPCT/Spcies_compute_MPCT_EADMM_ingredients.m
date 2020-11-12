@@ -64,6 +64,8 @@ function str = Spcies_compute_MPCT_EADMM_ingredients(sys, param, options)
     if isfield(param, 'rho')
         rho = param.rho;
     else
+        rho_base = param.rho_base;
+        rho_mult = param.rho_mult;
         rho = rho_base*ones((param.N+1)*(n+m) + n + 1*(n+m), 1);
         % Penalize constraints related to x
         rho(1:n) = 1*rho_mult*rho_base; % Initial constraint: x_0 = x. (6b)

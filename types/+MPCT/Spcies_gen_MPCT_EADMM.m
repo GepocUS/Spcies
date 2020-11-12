@@ -35,9 +35,9 @@ function str = Spcies_gen_MPCT_EADMM(target, sys, param, options, save_name)
     
     %% Call the funciton that constructs the controller
     if strcmp(target, 'Arduino')
-        Arduino.gen_MPCT_EADMM_Arduino(str, options, save_name);
+        gen_MPCT_EADMM_Arduino(str, options, save_name);
     elseif strcmp(target, 'Unity')
-        Unity.gen_MPCT_EADMM_Unity(str, options, save_name);      
+        gen_MPCT_EADMM_Unity(str, options, save_name);      
     else
         if ~strcmp(target, 'Matlab')
             error('Target not recognized or supported');
