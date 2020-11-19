@@ -25,12 +25,15 @@
 % Changelog: 
 %   v0.1 (2020/09/03): Initial commit version
 %   v0.2 (2020/09/17): Added documentation
+%   v0.3 (2020/10/16): Added RMPC_ADMM
 %
 
 function str = Spcies_gen_controller(type, target, sys, param, options, save_name)
 
 if strcmp(type, 'MPCT_EADMM')
     str = MPCT.Spcies_gen_MPCT_EADMM(target, sys, param, options, save_name);
+elseif strcmp(type, 'RMPC_ADMM')
+    str = RMPC.Spcies_gen_RMPC_ADMM(target, sys, param, options, save_name);
 else
     error('Type not recognized or supported');
 end

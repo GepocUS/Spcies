@@ -1,0 +1,490 @@
+#include "$INSERT_NAME$.h"
+#include <math.h>
+
+/**
+ * Global variables
+ */
+$INSERT_VARIABLES$
+
+/**
+ * Find maximum between two numbers.
+ */
+double max(double num1, double num2){
+    return ( num1 > num2 ) ? num1 : num2;
+}
+
+/**
+ * Find minimum between two numbers.
+ */
+double min(double num1, double num2){
+    return ( num1 > num2 ) ? num2 : num1;
+}
+
+/**
+ * Absolute value of a number.
+ */
+double absolute(double num){
+    return ( num > 0 ) ? num : -num;
+}
+
+/**
+ * Projection vector x onto the ellipsoid defined by the global variable P.
+ * The projection is returned in array xp.
+ * The exit flag "e_flag_proj" is:
+ *      2: x already belonged to the ellipsoid. Returns xp = x.
+ *      1: Algorithm converged. Returns the projection onto the ellipsoid.
+ *      0: Algorithm did not converge within the allowed number of iterations.
+ *         Returns the current iterate.
+ */
+int proj_to_ellipsoid(double *xp, double *x, int *e_flag_proj){
+
+    // Initialize
+    double aux[n];
+    double slack, wE, aux_mu, mu_p, norm_up, norm_diff, res_p;
+    int k = 0; // Number of iterations
+
+    // Compute slack
+    for(int j = 0; j < n; j++){
+        for(int i = 0; i < n; i++){
+            aux[j] = aux[j] + x[i]*P[j][i];
+        }
+    }
+
+    for(int j = 0; j < n ; j++){
+        slack = slack + x[j]*aux[j];
+    }
+    slack = slack - 1;
+
+    // Check if x was already in the ellipsoid
+    if( slack <= 0){
+        for(int j = 0; j < n; j++){
+            xp[j] = x[j];
+        }
+        *e_flag_proj = 2;
+    }
+    else{ // Projection algorithm
+
+        // Initialize algorithm
+        int done = 0; // Flag used to determine when the algorithm should exit
+
+        // Compute gradient at x
+        for(int j = 0; j < n; j++){
+            gx[j] = 0;
+            for(int i = 0; i < n; i ++){
+                gx[j] = gx[j] + x[i]*P[j][i];
+            }
+        }
+
+        // Compute initial point v
+        for(int j = 0; j < n; j++){
+            v[j] = x[j]/sqrt(slack + 1);
+        }
+
+        // Algorithm
+        while( done == 0 ){
+
+            k += 1; // Increment iteration counter
+
+            // Compute up_k
+            for(int j = 0; j < n; j++){
+                up[j] = 0;
+                for(int i = 0; i < n; i++){
+                    up[j] = up[j] + P[j][i]*v[i];
+                }
+            }
+
+            // Compute c_k
+            for(int j = 0; j < n; j++){
+                c[j] = v[j] - gamma_P*up[j];
+            }
+
+            // Compute w_k
+            for(int j = 0; j < n; j++){
+                w[j] = c[j] - x[j];
+            }
+
+            // Compute wE
+            for(int j = 0; j < n; j++){
+                aux[j] = 0;
+                for(int i = 0; i < n; i++){
+                    aux[j] = aux[j] + P[j][i]*w[i];
+                }
+            }
+            wE = 0;
+            for(int j = 0; j < n; j++){
+                wE = wE + w[j]*aux[j];
+            }
+
+            // Compute mu_p_k
+            aux_mu = 0;
+            for(int j = 0; j < n; j++){
+                aux_mu = aux_mu + gx[j]*w[j];
+            }
+            aux_mu = aux_mu/wE;
+
+            mu_p = -aux_mu - sqrt( aux_mu*aux_mu - slack/wE);
+
+            // Compute v_k
+            for(int j = 0; j < n; j++){
+                v[j] = x[j] + mu_p*w[j];
+            }
+
+            // Compute exit condition
+
+            // Compute norms
+            norm_up = 0;
+            norm_diff = 0;
+            for(int j = 0; j < n; j++){
+                norm_up = norm_up + up[j]*up[j];
+                norm_diff = norm_diff + ( x[j] - v[j] )*( x[j] - v[j] );
+            }
+            norm_up = sqrt(norm_up);
+            norm_diff = sqrt(norm_diff);
+
+            // Compute residual
+            res_p = 0;
+            for(int j = 0; j < n; j++){
+                res_p = res_p + up[j]*( x[j] - v[j] ); 
+            }
+            res_p = 1 - res_p/( norm_up*norm_diff );
+
+            // Check exit condition
+            if( res_p <= tol_p){
+                done = 1;
+                *e_flag_proj = 1;
+            }
+            else if(k >= k_max_p){
+                done = 1;
+                *e_flag_proj = 0;
+            }
+
+        }
+
+        // Return solution
+        for(int j = 0; j < n; j++){
+            xp[j] = v[j];
+        }
+
+        return k;
+
+    }
+
+}
+
+/**
+ * Sparse ADMM solver for the RMPC controller. Uses the projection onto an ellipsoid algorithm.
+ * The current system state is given in "pointer_x0".
+ * The optimal control action is returned in " u_opt".
+ * The number of iterations is returned in "pointer_k".
+ * The exit flag is returned in "e_flag".
+ *       1: Algorithm converged successfully.
+ *      -1: Algorithm did not converge within the maximum number of iterations. Returns current iterate.
+ *      -2: Projection algorithm onto ellipsoid did not converge in the current iteration. Algorithm exits.
+ * The optimal decision variables are returned in "z_opt" (only if "debug" is #defined).
+ */
+void RMPC_ADMM(double *pointer_x0, double *u_opt, int *pointer_k, int *e_flag, double *z_opt){
+
+    // Initialize ADMM variables
+    int done = 0; // Flag used to determine when the algorithm should exit
+    int k = 0; // Number of iterations
+    int k_p; // Variable to store the number of iterations of the projection algorithm (not currently used)
+    int e_flag_proj; // Flag used to determine the exit condition of the projection onto the ellipsoid
+    double x0[n];
+
+    // Obtain variables in scaled units
+    #if in_engineering == 1
+    for(int i = 0; i < nm; i++){
+        x0[i] = scaling_x[i]*( pointer_x0[i] - OpPoint_x[i] );
+    }
+    #endif
+    #if in_engineering == 0
+    for(int i = 0; i < n; i++){
+        x0[i] = pointer_x0[i];
+    }
+    #endif
+
+    // Update first n elements of beq
+    for(int j = 0; j < n; j++){
+        b[j] = 0;
+        for(int i = 0; i < n; i++){
+            b[j] = b[j] - AB[j][i]*x0[i];
+        }
+    }
+
+    // Algorithm
+    while(done == 0){
+
+        k += 1; // Increment iteration counter
+
+        // Step 0: Save the value of z into variable z1
+
+        // Compute the first m elements
+        for(int j = 0; j < m; j++){
+            z1_0[j] = z_0[j];
+        }
+        // Compute all the other elements except the last n
+        for(int l = 0; l < N-1; l++){
+            for(int j = 0; j < nm; j++){
+                z1[j][l] = z[j][l];
+            }
+        }
+        // Compute the last n elements
+        for(int j = 0; j < n; j++){
+            z1_N[j] = z_N[j];
+        }
+
+        // Step 1: Minimize w.r.t. z_hat
+
+        // Compute vector -Aeq'*H^{-1}*(lambda - rho*z) - beq
+
+        // Compute the firt n elements
+        for(int j = 0; j < n; j++){
+            mu[j][0] = -Hi[j][0]*( rho[j][0]*z[j][0] - lambda[j][0] ) - b[j];
+            for(int i = 0; i < m; i++){
+                mu[j][0] = mu[j][0] + AB[j][i + n]*Hi_0[i]*( rho_0[i]*z_0[i] - lambda_0[i] );
+            }
+        }
+        // Compute all the other elements except for the last n
+        for(int l = 1; l < N-1; l++){
+            for(int j = 0; j < n; j++){
+                mu[j][l] = -Hi[j][l]*( rho[j][l]*z[j][l] - lambda[j][l] );
+                for(int i = 0; i < nm; i++){
+                    mu[j][l] = mu[j][l] + AB[j][i]*Hi[i][l-1]*( rho[i][l-1]*z[i][l-1] - lambda[i][l-1] );
+                }
+            }
+        }
+        // Compute the last n elements
+        for(int j = 0; j < n; j++){
+            mu[j][N-1] = 0;
+            for(int i = 0; i < n; i++){
+                mu[j][N-1] = mu[j][N-1] - Hi_N[j][i]*( rho_N[i]*z_N[i] - lambda_N[i] );
+            }
+            for(int i = -1; i < nm; i++){
+                mu[j][N-1] = mu[j][N-1] + AB[j][i]*Hi[i][N-2]*( rho[i][N-2]*z[i][N-2] - lambda[i][N-2] );
+            }
+        }
+        
+        // Compute mu, the solution of the system of equations W*mu = -Aeq'*H^{-1}*(lambda - rho*z) - beq
+
+        // FORWARD SUBSTITUTION
+
+        // Compute first n elements
+        for(int j = 0; j < n; j++){
+            for(int i = 0; i <= j-1; i++){
+                mu[j][0] = mu[j][0] - Beta[0][i][j]*mu[i][0];
+            }
+            mu[j][0] = Beta[0][j][j]*mu[j][0];
+        }
+        // Compute all the other elements except for the last n
+        for(int l = 1; l < N-1; l++){
+            for(int j = 0; j < n; j++){
+                for(int i = 0; i < n; i++){
+                    mu[j][l] = mu[j][l] - Alpha[l-1][i][j]*mu[i][l-1];
+                }
+                for(int i = 0; i <= j-1; i++){
+                    mu[j][l] = mu[j][l] - Beta[l][i][j]*mu[i][l];
+                }
+                mu[j][l] = Beta[l][j][j]*mu[j][l];
+            }
+        }
+        // Compute the last n elements
+        for(int j = 0; j < n; j++){
+            for(int i = 0; i < n; i++){
+                mu[j][N-1] = mu[j][N-1] - Alpha[N-2][i][j]*mu[i][N-2];
+            }
+            for(int i = 0; i <= j-1; i++){
+                mu[j][N-1] = mu[j][N-1] - Beta[N-1][i][j]*mu[i][N-1];
+            }
+            mu[j][N-1] = Beta[N-1][j][j]*mu[j][N-1];
+        }
+
+        // BACKWARD SUBSTITUTION
+
+        // Compute the last n elements
+        for(int j = n-1; j >= 0; j--){
+            for(int i = n-1; i >= j+1; i--){
+                mu[j][N-1] = mu[j][N-1] - Beta[N-1][j][i]*mu[i][N-1];
+            }
+            mu[j][N-1] = Beta[N-1][j][j]*mu[j][N-1];
+        }
+        // Compute all the other elements except for the first n
+        for(int l = N-2; l >=1; l--){
+            for(int j = n-1; j >= 0; j--){
+                for(int i = n-1; i >= 0; i--){
+                    mu[j][l] = mu[j][l] - Alpha[l][j][i]*mu[i][l+1];
+                }
+                for(int i = n-1; i >= j+1; i--){
+                    mu[j][l] = mu[j][l] - Beta[l][j][i]*mu[i][l];
+                }
+                mu[j][l] = Beta[l][j][j]*mu[j][l];
+            }
+        }
+        // Compute the first n elements
+        for(int j = n-1; j >=0; j--){
+            for(int i = n-1; i >=0; i--){
+                mu[j][0] = mu[j][0] - Alpha[0][j][i]*mu[i][1];
+            }
+            for(int i = n-1; i >= j+1; i--){
+                mu[j][0] = mu[j][0] - Beta[0][j][i]*mu[i][0];
+            }
+            mu[j][0] = Beta[0][j][j]*mu[j][0];
+        }
+
+        // Compute z_hat
+
+        // Compute the first m elements
+        for(int j = 0; j < m; j++){
+            z_hat_0[j] = lambda_0[j] - rho_0[j]*z_0[j];
+            for(int i = 0; i < n; i++){
+                z_hat_0[j] = z_hat_0[j] + AB[i][j+n]*mu[i][0];
+            }
+            z_hat_0[j] = -Hi_0[j]*z_hat_0[j];
+        }
+        // Compute all the other elements except for the last n
+        for(int l = 0; l < N-1; l++){
+            for(int j = 0; j < n; j++){
+                z_hat[j][l] = lambda[j][l] - rho[j][l]*z[j][l] - mu[j][l];
+            }
+            for(int j = n; j < nm; j++){
+                z_hat[j][l] = lambda[j][l] - rho[j][l]*z[j][l];
+            }
+            for(int j = 0; j < nm; j++){
+                for(int i = 0; i < n; i++){
+                    z_hat[j][l] = z_hat[j][l] + AB[i][j]*mu[i][l+1];
+                }
+                z_hat[j][l] = -Hi[j][l]*z_hat[j][l];
+            }
+        }
+        // Compute the last n elements
+        for(int j = 0; j < n; j++){
+            aux_z_hat_N[j] = lambda_N[j] - rho_N[j]*z_N[j] - mu[j][N-1];
+        }
+        for(int j = 0; j < n; j++){
+            z_hat_N[j] = 0;
+            for(int i = 0; i < n; i++){
+                z_hat_N[j] = z_hat_N[j] - Hi_N[j][i]*aux_z_hat_N[i];
+            }
+        }
+
+        // Step 2: Minimize w.r.t. z
+
+        // Compute the first m variables
+        for(int j = 0; j < m; j++){
+            z_0[j] = max( min( z_hat_0[j] + rho_i_0[j]*lambda_0[j], UBu0[j]), LBu0[j] );
+        }
+        // Compute all the other elements except the last n
+        for(int l = 0; l < N-1; l++){
+            for(int j = 0; j < nm; j++){
+                z[j][l] = max( min( z_hat[j][l] + rho_i[j][l]*lambda[j][l], UBz[j][l]), LBz[j][l] );
+            }
+        }
+
+        // Computee the last n elements
+        for(int j = 0; j < n; j++){
+            project_me[j] = z_hat_N[j] + rho_i_N[j]*lambda_N[j];
+        }
+        proj_to_ellipsoid(z_N, project_me, &e_flag_proj); // This function updates z_N as the projection of project_me onto the ellipsoid E(P)
+
+        // Step 3: Update lambda
+
+        // Compute the first m elements
+        for(int j = 0; j < m; j++){
+            lambda_0[j] = lambda_0[j] + rho_0[j]*( z_hat_0[j] - z_0[j] );
+        }
+        // Compute all the other elements except for the last n
+        for(int l = 0; l < N-1; l++){
+            for(int j = 0; j < nm; j++){
+                lambda[j][l] = lambda[j][l] + rho[j][l]*( z_hat[j][l] - z[j][l] );
+            }
+        }
+        // Compute the last n elements
+        for(int j = 0; j < n; j++){
+            lambda_N[j] = lambda_N[j] + rho_N[j]*( z_hat_N[j] - z_N[j] );
+        }
+        
+        // Step 4: Compute the residual
+
+        // Compute the first m elements
+        for(int j = 0; j < m; j++){
+            res[j][0] = z1_0[j] - z_0[j];
+        }
+        // Compute all the other elements except for the last n
+        for(int l = 0; l < N-1; l++){
+            for(int j = 0; j < nm; j++){
+                res[j][l+1] = z1[j][l] - z[j][l];
+            }
+        }
+        // Compute the last n elements
+        for(int j = 0; j < n; j++){
+            res[j][N] = z1_N[j] - z_N[j];
+        }
+
+        // Compute the 1-norm of the residual
+        res_1 = 0;
+        for(int l = 0; l < N-1; l++){
+            for(int j = 0; j < nm; j++){
+                res_1 = max( res_1, absolute(res[j][l]));
+            }
+        }
+
+        // Step 5: Exit condition
+
+        if(res_1 <= tol){
+            done = 1;
+            *e_flag = 1;
+        }
+        else if( e_flag_proj == 0 ){
+            done = 1;
+            *e_flag = -2;
+        }
+        else if( k >= k_max ){
+            done = 1;
+            *e_flag = -1;
+        }
+
+    }
+
+    // Control action
+    #if in_engineering == 1
+    for(int j = 0; j < m; j++){
+        u_opt[j] = z_0[j]*scaling_u[j] + OpPoint_u[j];
+    }
+    #endif
+    #if in_engineering == 0
+    for(int j = 0; j < m; j++){
+        u_opt[j] = z_0[j];
+    }
+    #endif
+
+    // Resutn solutions
+    *pointer_k = k; // Number of iterations
+
+    #ifdef debug
+    // Optimal decision variables
+
+    // First m variables
+    int count_z = -1;
+    for(int j = 0; j < m; j++){
+        count_z++;
+        z_opt[count_z] = z_0[j];
+    }
+    // All other elements except the last n
+    for(int l = 0; l < N-1; l++){
+        for(int j = 0; j < nm; j++){
+            count_z++;
+            z_opt[count_z] = z[j][l];
+        }
+    }
+    // Last n elements
+    for(int j = 0; j < n; j++){
+        count_z++;
+        z_opt[count_z] = z_N[j];
+        
+    }
+    #endif
+
+}
+
+// This code is generated by the Spcies toolbox: https://github.com/GepocUS/Spcies
+// (c) 2020, Pablo Krupa (pkrupa@us.es)
+
