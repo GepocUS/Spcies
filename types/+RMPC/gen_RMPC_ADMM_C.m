@@ -25,9 +25,7 @@ function gen_RMPC_ADMM_C(stru, options, save_name)
     [vars, idx] = addLine(vars, idx, 'nm', n+m, 1, 'uint', 'define');
     [vars, idx] = addLine(vars, idx, 'N', N, 1, 'uint', 'define');
     [vars, idx] = addLine(vars, idx, 'k_max', options.k_max, 1, 'uint', 'define');
-    [vars, idx] = addLine(vars, idx, 'k_max_p', options.k_max_p, 1, 'uint', 'define');
     [vars, idx] = addLine(vars, idx, 'tol', options.tol, 1, 'float', 'define');
-    [vars, idx] = addLine(vars, idx, 'tol_p', options.tol_p, 1, 'float', 'define');
     [vars, idx] = addLine(vars, idx, 'in_engineering', options.in_engineering, 1, 'int', 'define');
     if options.debug
         [vars, idx] = addLine(vars, idx, 'debug', 1, 1, 'bool', 'define');
@@ -49,9 +47,10 @@ function gen_RMPC_ADMM_C(stru, options, save_name)
     [vars, idx] = addLine(vars, idx, 'Hi_N', stru.Hi_N, 1, 'double', 'constant');
     [vars, idx] = addLine(vars, idx, 'AB', stru.AB, 1, 'double', 'constant');
     [vars, idx] = addLine(vars, idx, 'P', stru.P, 1, 'double', 'constant');
+    [vars, idx] = addLine(vars, idx, 'P_half', stru.P_half, 1, 'double', 'constant');
+    [vars, idx] = addLine(vars, idx, 'Pinv_half', stru.Pinv_half, 1, 'double', 'constant');
     [vars, idx] = addLine(vars, idx, 'Alpha', stru.Alpha, 1, 'double', 'constant');
     [vars, idx] = addLine(vars, idx, 'Beta', stru.Beta, 1, 'double', 'constant');
-    [vars, idx] = addLine(vars, idx, 'gamma_P', stru.gamma, 1, 'double', 'constant');
     if options.in_engineering
         [vars, idx] = addLine(vars, idx, 'scaling_x', stru.scaling_x, 1, 'double', 'constant');
         [vars, idx] = addLine(vars, idx, 'scaling_i_u', stru.scaling_u, 1, 'double', 'constant');
@@ -69,7 +68,7 @@ function gen_RMPC_ADMM_C(stru, options, save_name)
     [vars, idx] = addLine(vars, idx, 'z_hat', zeros(m+n, N-1), 0, 'double', 'variable');
     [vars, idx] = addLine(vars, idx, 'z_hat_0', zeros(m, 1), 0, 'double', 'variable');
     [vars, idx] = addLine(vars, idx, 'z_hat_N', zeros(n, 1), 0, 'double', 'variable');
-    [vars, idx] = addLine(vars, idx, 'aux_z_hat_N', zeros(n, 1), 0, 'double', 'variable');
+    [vars, idx] = addLine(vars, idx, 'aux_N', zeros(n, 1), 0, 'double', 'variable');
     [vars, idx] = addLine(vars, idx, 'lambda', zeros(m+n, N-1), 0, 'double', 'variable');
     [vars, idx] = addLine(vars, idx, 'lambda_0', zeros(m, 1), 0, 'double', 'variable');
     [vars, idx] = addLine(vars, idx, 'lambda_N', zeros(n, 1), 0, 'double', 'variable');
@@ -78,21 +77,14 @@ function gen_RMPC_ADMM_C(stru, options, save_name)
     [vars, idx] = addLine(vars, idx, 'res_1', 1, 0, 'double', 'variable');
     [vars, idx] = addLine(vars, idx, 'b', zeros(n, 1), 0, 'double', 'variable');
     [vars, idx] = addLine(vars, idx, 'project_me', zeros(n, 1), 0, 'double', 'variable');
-        % For projection algorithm
-    [vars, idx] = addLine(vars, idx, 'aux', zeros(n, 1), 0, 'double', 'variable');
-    [vars, idx] = addLine(vars, idx, 'gx', zeros(n, 1), 0, 'double', 'variable');
-    [vars, idx] = addLine(vars, idx, 'v', zeros(n, 1), 0, 'double', 'variable');
-    [vars, idx] = addLine(vars, idx, 'up', zeros(n, 1), 0, 'double', 'variable');
-    [vars, idx] = addLine(vars, idx, 'c', zeros(n, 1), 0, 'double', 'variable');
-    [vars, idx] = addLine(vars, idx, 'w', zeros(n, 1), 0, 'double', 'variable');
-    
+    [vars, idx] = addLine(vars, idx, 'vPv', 0, 0, 'double', 'variable');
     
     % Inputs and outputs
-    [vars, idx] = addLine(vars, idx, 'u', zeros(m, 1), 0, 'double', 'variable');
-    [vars, idx] = addLine(vars, idx, 'x', zeros(n, 1), 0, 'double', 'variable');
-    [vars, idx] = addLine(vars, idx, 'z_star', zeros(N*(n+m), 1), 0, 'double', 'variable');
-    [vars, idx] = addLine(vars, idx, 'exit_flag', 1, 0, 'int', 'variable');
-    [vars, idx] = addLine(vars, idx, 'iter', 1, 0, 'int', 'variable');
+    %[vars, idx] = addLine(vars, idx, 'u', zeros(m, 1), 0, 'double', 'variable');
+    %[vars, idx] = addLine(vars, idx, 'x', zeros(n, 1), 0, 'double', 'variable');
+    %[vars, idx] = addLine(vars, idx, 'z_star', zeros(N*(n+m), 1), 0, 'double', 'variable');
+    %[vars, idx] = addLine(vars, idx, 'exit_flag', 1, 0, 'int', 'variable');
+    %[vars, idx] = addLine(vars, idx, 'iter', 1, 0, 'int', 'variable');
     
     %% Create text for variables
     var_text = C_code.declareVariables(vars);

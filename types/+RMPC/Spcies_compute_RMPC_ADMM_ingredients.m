@@ -25,7 +25,7 @@ function stru = Spcies_compute_RMPC_ADMM_ingredients(sys, param, options)
     Pt = param.Pt;
     
     %% Penalty parameter
-    if isfield(param, 'rho')
+    if isfield(options, 'rho')
         if isscalar(options.rho)
             rho = options.rho*ones(N*(n+m), 1);
         else
@@ -40,7 +40,8 @@ function stru = Spcies_compute_RMPC_ADMM_ingredients(sys, param, options)
     % Hessian and q for variable z
     Hz = blkdiag(R, kron(eye(N-1), blkdiag(Q, R)), Pt);
     
-    H = Hz + rho.*eye(size(Hz, 1));
+    P_half = sqrtm(P);
+    H = Hz + rho.*blkdiag(eye(size(Hz, 1)-n), P);
     q = zeros(N*(n+m), 1);
     
     %% Compute the matrix Aeq and vector beq
@@ -88,7 +89,8 @@ function stru = Spcies_compute_RMPC_ADMM_ingredients(sys, param, options)
     stru.rho_i = reshape(1./rho(m+1:end-n), n+m, N-1);
     stru.rho_i_N = 1./rho(end-n+1:end);
     stru.P = P;
-    stru.gamma = 1/max(eig(P));
+    stru.P_half = P_half;
+    stru.Pinv_half = inv(P)*P_half;
     
     % Scaling vectors and operating point
     stru.scaling_x = sys.Nx;

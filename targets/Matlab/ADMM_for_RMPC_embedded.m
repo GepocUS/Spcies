@@ -73,8 +73,9 @@ function [z_0, k, e_flag, vars] = ADMM_for_RMPC_embedded(var, x0, varargin)
     
     z_hat_0 = zeros(m, 1);
     z_hat_N = zeros(n, 1);
-    aux_z_hat_N = zeros(n, 1);
-    z_hat = zeros(n+m, N-1); % Decision variable z1 in matrix form
+    z_hat = zeros(n+m, N-1);
+    aux_N = zeros(n, 1);
+    project_me = zeros(n, 1);
     
     lambda_0 = lambda(1:m);
     lambda_N = lambda(end-n+1:end);
@@ -94,6 +95,8 @@ function [z_0, k, e_flag, vars] = ADMM_for_RMPC_embedded(var, x0, varargin)
     Hi = var.Hi;
     Hi_0 = var.Hi_0;
     Hi_N = var.Hi_N;
+    P_half = var.P_half;
+    P = var.P;
     
     for j = 1:n
         b(j) = 0;
@@ -143,9 +146,15 @@ function [z_0, k, e_flag, vars] = ADMM_for_RMPC_embedded(var, x0, varargin)
         end
             % Compute the last n
         for j = 1:n
-            mu(j, N) = 0;
-            for i = n
-                mu(j, N) = mu(j, N) - Hi_N(j, i)*(rho_N(i)*z_N(i) - lambda_N(i));
+            aux_N(j) = 0;
+            for i = 1:n
+                aux_N(j) = aux_N(j) + P(j, i)*rho_N(i)*z_N(i) - P_half(j, i)*lambda_N(i);
+            end 
+        end
+        for j = 1:n
+            mu(j, N) = 0;   
+            for i = 1:n
+                mu(j, N) = mu(j, N) - Hi_N(j, i)*aux_N(i);
             end
             for i = 1:n+m
                 mu(j, N) = mu(j, N) + AB(j, i)*Hi(i, N-1)*(rho(i, N-1)*z(i, N-1) - lambda(i, N-1));
@@ -243,12 +252,12 @@ function [z_0, k, e_flag, vars] = ADMM_for_RMPC_embedded(var, x0, varargin)
         end
             % Compute the last n
         for j = 1:n
-            aux_z_hat_N(j) = lambda_N(j) - rho_N(j)*z_N(j) - mu(j, N);
+            aux_N(j) = lambda_N(j) - rho_N(j)*z_N(j) - mu(j, N);
         end
         for j = 1:n
             z_hat_N(j) = 0;
             for i = 1:n
-                z_hat_N(j) = z_hat_N(j) - Hi_N(j, i)*aux_z_hat_N(i);
+                z_hat_N(j) = z_hat_N(j) - Hi_N(j, i)*aux_N(i);
             end
         end
         
@@ -266,9 +275,37 @@ function [z_0, k, e_flag, vars] = ADMM_for_RMPC_embedded(var, x0, varargin)
             end
         end
         
-        % The last n elements
-        [z_N, e_flag_pE, k_pE] = proj_ellipsoid(var.P, z_hat_N + var.rho_i_N.*lambda_N);
-        e_flag_pE
+        % Last n elements
+            % Compute the vector to bee projected
+        for j = 1:n
+            project_me(j) = z_hat_N(j);
+            for i = 1:n
+                project_me(j) = project_me(j) + var.Pinv_half(j, i)*var.rho_i_N(i)*lambda_N(i);
+            end
+        end
+        
+        % Compute project_me*P*project_me
+        for j = 1:n
+            aux_N(j) = 0;
+            for i = 1:n
+                aux_N(j) = aux_N(j) + P(j, i)*project_me(i);
+            end
+        end
+        vPv = 0;
+        for j = 1:n
+            vPv = vPv + project_me(j)*aux_N(j);
+        end
+        
+        if vPv <= 1 % If project_me belongs to the ellipsoid, return the same vector
+            for j = 1:n
+                z_N(j) = project_me(j);
+            end
+        else % Otherwise, project to the ellipsoid
+            vPv = 1/sqrt(vPv);
+            for j = 1:n
+                z_N(j) = vPv*project_me(j);
+            end
+        end
         
         %% Step 3: Update lambda
         
@@ -284,9 +321,14 @@ function [z_0, k, e_flag, vars] = ADMM_for_RMPC_embedded(var, x0, varargin)
         end
             % Compute the last n
         for j = 1:n
-            lambda_N(j) = lambda_N(j) + rho_N(j)*(z_hat_N(j) - z_N(j));
+            aux_N(j) = rho_N(j)*(z_hat_N(j) - z_N(j));
         end
-        
+        for j = 1:n
+            for i = 1:n
+                lambda_N(j) = lambda_N(j) + P_half(j, i)*aux_N(i);
+            end
+        end
+
         %% Step 4: Compute residual
         
         % Compute the residual vector
@@ -318,9 +360,6 @@ function [z_0, k, e_flag, vars] = ADMM_for_RMPC_embedded(var, x0, varargin)
         if res_1 <= tol
             done = true;
             e_flag = 1;
-        elseif e_flag_pE == 0
-            done = true;
-            e_flag = -2;
         elseif k >= k_max
             done = true;
             e_flag = -1;
