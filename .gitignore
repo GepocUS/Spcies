@@ -2,3 +2,4 @@
 *.swp
 *.pdf
 /old/*
+/development/*

@@ -119,7 +119,7 @@ void RMPC_ADMM(double *pointer_x0, double *u_opt, int *pointer_k, int *e_flag, d
             for(int i = 0; i < n; i++){
                 mu[j][N-1] = mu[j][N-1] - Hi_N[j][i]*aux_N[i];
             }
-            for(int i = -1; i < nm; i++){
+            for(int i = 0; i < nm; i++){
                 mu[j][N-1] = mu[j][N-1] + AB[j][i]*Hi[i][N-2]*( rho[i][N-2]*z[i][N-2] - lambda[i][N-2] );
             }
         }
