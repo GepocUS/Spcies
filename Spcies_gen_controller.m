@@ -30,10 +30,10 @@
 
 function str = Spcies_gen_controller(type, target, sys, param, options, save_name)
 
-if strcmp(type, 'MPCT_EADMM')
+if strcmp(type, 'MPCT')
     str = MPCT.Spcies_gen_MPCT_EADMM(target, sys, param, options, save_name);
-elseif strcmp(type, 'RMPC_ADMM')
-    str = RMPC.Spcies_gen_RMPC_ADMM(target, sys, param, options, save_name);
+elseif strcmp(type, 'ellipMPC')
+    str = ellipMPC.Spcies_gen_ellipMPC_ADMM(target, sys, param, options, save_name);
 else
     error('Type not recognized or supported');
 end

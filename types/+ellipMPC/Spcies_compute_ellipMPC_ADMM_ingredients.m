@@ -8,7 +8,7 @@
 %   v0.1 (2020/10/16): Initial commit version
 %
 
-function stru = Spcies_compute_RMPC_ADMM_ingredients(sys, param, options)
+function stru = Spcies_compute_ellipMPC_ADMM_ingredients(sys, param, options)
 
     %% Default values
     def_rho = 0.01;

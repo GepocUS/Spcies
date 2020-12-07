@@ -7,7 +7,7 @@
 %   v0.1 (2020/10/16): Initial commit version
 %
 
-function gen_RMPC_ADMM_C(stru, options, save_name)
+function gen_ellipMPC_ADMM_C(stru, options, save_name)
     import utils.addLine
     
     %% Rename variables for convenience
@@ -99,8 +99,8 @@ function gen_RMPC_ADMM_C(stru, options, save_name)
     %% Create text for code
     full_path = mfilename('fullpath');
     this_path = fileparts(full_path);
-    code_text = fileread([this_path '/code_RMPC_ADMM_C.txt']);
-    header_text = fileread([this_path '/header_RMPC_ADMM_C.txt']);
+    code_text = fileread([this_path '/code_ellipMPC_ADMM_C.txt']);
+    header_text = fileread([this_path '/header_ellipMPC_ADMM_C.txt']);
     
     %% Merge text
     %controller_text = [var_text '\n\n' code_text];
