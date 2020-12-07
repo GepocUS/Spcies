@@ -10,11 +10,23 @@
 function gen_ellipMPC_ADMM_C(vars, options, save_name, override)
     import utils.addLine
     
-    %% Default values
+    %% Evaluate function inputs
     def_save_name = 'ellipMPC';
-    
+
+    % Determine the name of the file if it already exists
     if isempty(save_name)
         save_name = def_save_name;
+    end
+    if ~override
+       if isfile([save_name '.c'])
+           number = 1;
+           new_save_name = [save_name '_v' num2str(number)];
+           while isfile([new_save_name '.c'])
+               number = number + 1;
+                new_save_name = [save_name '_v' num2str(number)];
+           end
+           save_name = new_save_name;
+       end
     end
     
     %% Rename variables for convenience
@@ -101,19 +113,6 @@ function gen_ellipMPC_ADMM_C(vars, options, save_name, override)
     header_text = strrep(header_text, "$INSERT_NAME$", save_name);
     
     %% Generate files for the controller
-    
-    % Determine the name of the file if it already exists
-    if ~override
-       if isfile([save_name '.c'])
-           number = 1;
-           new_save_name = [save_name '_v' number];
-           while isfile([new_save_name '.c'])
-               number = number + 1;
-                new_save_name = [save_name '_v' number];
-           end
-           save_name = new_save_name;
-       end
-    end
     
     % Open write and save the controller file
     controller_file = fopen([save_name '.c'], 'wt');
