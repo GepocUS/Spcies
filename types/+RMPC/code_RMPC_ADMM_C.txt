@@ -7,27 +7,6 @@
 $INSERT_VARIABLES$
 
 /**
- * Find maximum between two numbers.
- */
-double my_max(double num1, double num2){
-    return ( num1 > num2 ) ? num1 : num2;
-}
-
-/**
- * Find minimum between two numbers.
- */
-double my_min(double num1, double num2){
-    return ( num1 > num2 ) ? num2 : num1;
-}
-
-/**
- * Absolute value of a number.
- */
-double my_absolute(double num){
-    return ( num > 0 ) ? num : -num;
-}
-
-/**
  * Sparse ADMM solver for the RMPC controller. Uses the projection onto an ellipsoid algorithm.
  * The current system state is given in "pointer_x0".
  * The optimal control action is returned in " u_opt".
@@ -38,12 +17,18 @@ double my_absolute(double num){
  *      -2: Projection algorithm onto ellipsoid did not converge in the current iteration. Algorithm exits.
  * The optimal decision variables are returned in "z_opt" (only if "debug" is #defined).
  */
-void RMPC_ADMM(double *pointer_x0, double *u_opt, int *pointer_k, int *e_flag, double *z_opt){
+void RMPC_ADMM(double *pointer_x0, double *my_xr, double *my_ur, double *u_opt, int *pointer_k, int *e_flag, double *z_opt){
 
     // Initialize ADMM variables
     int done = 0; // Flag used to determine when the algorithm should exit
     int k = 0; // Number of iterations
     double x0[n];
+    double v[nm][N-1];
+    double v_0[m];
+    double v_N[n];
+    double lambda[nm][N-1];
+    double lambda_0[m];
+    double lambda_N[n];
 
     // Obtain variables in scaled units
     #if in_engineering == 1
@@ -65,6 +50,18 @@ void RMPC_ADMM(double *pointer_x0, double *u_opt, int *pointer_k, int *e_flag, d
         }
     }
 
+    // Update the reference
+    for(int j = 0; j < n; j++){
+        q[j] = Q[j]*my_xr[j];
+        qT[j] = 0.0;
+        for(int i = 0; i < n; i++){
+            qT[j] = qT[j] + T[j][i]*my_xr[i];
+        }
+    }
+    for(int j = 0; j < m; j++){
+        q[j+n] = R[j]*my_ur[j];
+    }
+
     // Algorithm
     while(done == 0){
 
@@ -76,12 +73,14 @@ void RMPC_ADMM(double *pointer_x0, double *u_opt, int *pointer_k, int *e_flag, d
         for(int j = 0; j < m; j++){
             z1_0[j] = z_0[j];
         }
+
         // Compute all the other elements except the last n
         for(int l = 0; l < N-1; l++){
             for(int j = 0; j < nm; j++){
                 z1[j][l] = z[j][l];
             }
         }
+
         // Compute the last n elements
         for(int j = 0; j < n; j++){
             z1_N[j] = z_N[j];
@@ -89,42 +88,62 @@ void RMPC_ADMM(double *pointer_x0, double *u_opt, int *pointer_k, int *e_flag, d
 
         // Step 1: Minimize w.r.t. z_hat
 
-        // Compute vector -Aeq'*H^{-1}*(lambda - rho*z) - beq
+        // Compute vector q_hat = q + lambda - rho*v
+        // I store vector q_hat in z because I save memory and computation
+        
+        // Compute the firt m elements
+        for(int j = 0; j < m; j++){
+            z_0[j] = q[j+n] + lambda_0[j] - rho_0[j]*v_0[j];
+        }
+
+        // Compute all the other elements except for the last n
+        for(int l = 0; l < N-1; l++){
+            for(int j = 0; j < nm; j++){
+                z[j][l] = q[j] + lambda[j][l] - rho[j][l]*v[j][l];
+            }
+        }
+
+        // Compute the last n elements
+        for(int j = 0; j < n; j++){
+            z_N[j] = qT[j];
+            for(int i = 0; i < n; i++){
+                z_N[j] = z_N[j] + P_half[j][i]*lambda_N[i] - P[j][i]*rho_N[i]*v_N[i];
+            }
+        }
+
+        // Compute r.h.s of the Wc system of equations, i.e., -G'*H_hat^(-1)*q_hat - b
+        // I store it in mu to save a bit of memory
 
         // Compute the firt n elements
         for(int j = 0; j < n; j++){
-            mu[j][0] = -Hi[j][0]*( rho[j][0]*z[j][0] - lambda[j][0] ) - b[j];
+            mu[j][0] = Hi[j][0]*z[j][0] - b[j];
             for(int i = 0; i < m; i++){
-                mu[j][0] = mu[j][0] + AB[j][i + n]*Hi_0[i]*( rho_0[i]*z_0[i] - lambda_0[i] );
+                mu[j][0] = mu[j][0] - AB[j][i+n]*Hi_0[i]*z_0[i];
             }
         }
+
         // Compute all the other elements except for the last n
         for(int l = 1; l < N-1; l++){
             for(int j = 0; j < n; j++){
-                mu[j][l] = -Hi[j][l]*( rho[j][l]*z[j][l] - lambda[j][l] );
+                mu[j][l] = Hi[j][l]*z[j][l];
                 for(int i = 0; i < nm; i++){
-                    mu[j][l] = mu[j][l] + AB[j][i]*Hi[i][l-1]*( rho[i][l-1]*z[i][l-1] - lambda[i][l-1] );
+                    mu[j][l] = mu[j][l] - AB[j][i]*Hi[i][l-1]*z[i][l-1];
                 }
             }
         }
+
         // Compute the last n elements
-        for(int j = 0; j < n; j++){
-            aux_N[j] = 0.0;
-            for(int i = 0; i < n; i++){
-                aux_N[j] = aux_N[j] + P[j][i]*rho_N[i]*z_N[i] - P_half[j][i]*lambda_N[i];
-            }
-        }
         for(int j = 0; j < n; j++){
             mu[j][N-1] = 0.0;
             for(int i = 0; i < n; i++){
-                mu[j][N-1] = mu[j][N-1] - Hi_N[j][i]*aux_N[i];
+                mu[j][N-1] = mu[j][N-1] + Hi_N[j][i]*z_N[i];
             }
             for(int i = 0; i < nm; i++){
-                mu[j][N-1] = mu[j][N-1] + AB[j][i]*Hi[i][N-2]*( rho[i][N-2]*z[i][N-2] - lambda[i][N-2] );
+                mu[j][N-1] = mu[j][N-1] - AB[j][i]*Hi[i][N-2]*z[i][N-2];
             }
         }
         
-        // Compute mu, the solution of the system of equations W*mu = -Aeq'*H^{-1}*(lambda - rho*z) - beq
+        // Compute mu, the solution of the system of equations W*mu = -G'*H^(-1)*q_hat - beq
 
         // FORWARD SUBSTITUTION
 
@@ -135,6 +154,7 @@ void RMPC_ADMM(double *pointer_x0, double *u_opt, int *pointer_k, int *e_flag, d
             }
             mu[j][0] = Beta[0][j][j]*mu[j][0];
         }
+
         // Compute all the other elements except for the last n
         for(int l = 1; l < N-1; l++){
             for(int j = 0; j < n; j++){
@@ -147,6 +167,7 @@ void RMPC_ADMM(double *pointer_x0, double *u_opt, int *pointer_k, int *e_flag, d
                 mu[j][l] = Beta[l][j][j]*mu[j][l];
             }
         }
+
         // Compute the last n elements
         for(int j = 0; j < n; j++){
             for(int i = 0; i < n; i++){
@@ -167,6 +188,7 @@ void RMPC_ADMM(double *pointer_x0, double *u_opt, int *pointer_k, int *e_flag, d
             }
             mu[j][N-1] = Beta[N-1][j][j]*mu[j][N-1];
         }
+
         // Compute all the other elements except for the first n
         for(int l = N-2; l >=1; l--){
             for(int j = n-1; j >= 0; j--){
@@ -179,6 +201,7 @@ void RMPC_ADMM(double *pointer_x0, double *u_opt, int *pointer_k, int *e_flag, d
                 mu[j][l] = Beta[l][j][j]*mu[j][l];
             }
         }
+
         // Compute the first n elements
         for(int j = n-1; j >=0; j--){
             for(int i = n-1; i >=0; i--){
@@ -190,54 +213,57 @@ void RMPC_ADMM(double *pointer_x0, double *u_opt, int *pointer_k, int *e_flag, d
             mu[j][0] = Beta[0][j][j]*mu[j][0];
         }
 
-        // Compute z_hat
+        // Compute z (note that, from before, we have that at this point z = q_hat)
 
         // Compute the first m elements
         for(int j = 0; j < m; j++){
-            z_hat_0[j] = lambda_0[j] - rho_0[j]*z_0[j];
             for(int i = 0; i < n; i++){
-                z_hat_0[j] = z_hat_0[j] + AB[i][j+n]*mu[i][0];
+                z_0[j] = z_0[j] + AB[i][j+n]*mu[i][0];
             }
-            z_hat_0[j] = -Hi_0[j]*z_hat_0[j];
+            z_0[j] = -Hi_0[j]*z_0[j];
         }
+
         // Compute all the other elements except for the last n
         for(int l = 0; l < N-1; l++){
             for(int j = 0; j < n; j++){
-                z_hat[j][l] = lambda[j][l] - rho[j][l]*z[j][l] - mu[j][l];
-            }
-            for(int j = n; j < nm; j++){
-                z_hat[j][l] = lambda[j][l] - rho[j][l]*z[j][l];
+                z[j][l] = z[j][l] - mu[j][l];
             }
             for(int j = 0; j < nm; j++){
                 for(int i = 0; i < n; i++){
-                    z_hat[j][l] = z_hat[j][l] + AB[i][j]*mu[i][l+1];
+                    z[j][l] = z[j][l] + AB[i][j]*mu[i][l+1];
                 }
-                z_hat[j][l] = -Hi[j][l]*z_hat[j][l];
-            }
-        }
-        // Compute the last n elements
-        for(int j = 0; j < n; j++){
-            aux_N[j] = lambda_N[j] - rho_N[j]*z_N[j] - mu[j][N-1];
-        }
-        for(int j = 0; j < n; j++){
-            z_hat_N[j] = 0.0;
-            for(int i = 0; i < n; i++){
-                z_hat_N[j] = z_hat_N[j] - Hi_N[j][i]*aux_N[i];
+                z[j][l] = -Hi[j][l]*z[j][l];
             }
         }
 
-        // Step 2: Minimize w.r.t. z
+        // Compute the last n elements
+        for(int j = 0; j < n; j++){
+            aux_N[j] = z_N[j] - mu[j][N-1];
+        }
+        for(int j = 0; j < n; j++){
+            z_N[j] = 0.0;
+            for(int i = 0; i < n; i++){
+                z_N[j] = z_N[j] - Hi_N[j][i]*aux_N[i];
+            }
+        }
+
+        // Step 2: Minimize w.r.t. v
 
         // Compute the first m variables
         for(int j = 0; j < m; j++){
-            z_0[j] = my_max(z_hat_0[j] + rho_i_0[j]*lambda_0[j], LBu0[j] );
-            z_0[j] = my_min( z_0[j], UBu0[j]);
+
+            v_0[j] = z_0[j] + rho_i_0[j]*lambda_0[j];
+            v_0[j] = (v_0[j] > LBu0[j]) ? v_0[j] : LBu0[j]; // maximum between v and the lower bound
+            v_0[j] = (v_0[j] > UBu0[j]) ? UBu0[j] : v_0[j]; // minimum between v and the upper bound
+
         }
+
         // Compute all the other elements except the last n
         for(int l = 0; l < N-1; l++){
             for(int j = 0; j < nm; j++){
-                z[j][l] = my_max( z_hat[j][l] + rho_i[j][l]*lambda[j][l], LBz[j][l] );
-                z[j][l] = my_min( z[j][l], UBz[j][l]);
+                v[j][l] = z[j][l] + rho_i[j][l]*lambda[j][l];
+                v[j][l] = (v[j][l] > LBz[j][l]) ? v[j][l] : LBz[j][l]; // maximum between v and the lower bound
+                v[j][l] = (v[j][l] > UBz[j][l]) ? UBz[j][l] : v[j][l]; // minimum between v and the upper bound
             }
         }
 
@@ -245,32 +271,29 @@ void RMPC_ADMM(double *pointer_x0, double *u_opt, int *pointer_k, int *e_flag, d
 
         // Compute the vector to be projected
         for(int j = 0; j < n; j++){
-            project_me[j] = z_hat_N[j];
+            v_N[j] = z_N[j];
             for(int i = 0; i < n; i++){
-                project_me[j] = project_me[j] + Pinv_half[j][i]*rho_i_N[i]*lambda_N[i];
+                v_N[j] = v_N[j] + Pinv_half[j][i]*rho_i_N[i]*lambda_N[i];
             }
         }
-        // Compute project_me'*P*project_me
+
+        // Compute (v_N - c)'*P*(v_N - c)
         for(int j = 0; j < n; j++){
             aux_N[j] = 0.0;
             for(int i = 0; i < n; i++){
-                aux_N[j] = aux_N[j] + P[j][i]*project_me[i];
+                aux_N[j] = aux_N[j] + P[j][i]*( v_N[i] - c[i] );
             }
         }
         vPv = 0.0;
         for(int j = 0; j < n; j++){
-            vPv = vPv + project_me[j]*aux_N[j];
+            vPv = vPv + ( v_N[j] - c[j] )*aux_N[j];
         }
-        // Project
-        if( vPv <= 1){
+
+        // If v_N does not belong to the ellipsoid I need to perform the projection step
+        if( vPv > r*r){
+            vPv = r/sqrt(vPv);
             for(int j = 0; j < n; j++){
-                z_N[j] = project_me[j];
-            }
-        }
-        else{
-            vPv = 1/sqrt(vPv);
-            for(int j = 0; j < n; j++){
-                z_N[j] = vPv*project_me[j];
+                v_N[j] = vPv*( v_N[j] - c[j] ) + c[j];
             }
         }
 
@@ -278,17 +301,17 @@ void RMPC_ADMM(double *pointer_x0, double *u_opt, int *pointer_k, int *e_flag, d
 
         // Compute the first m elements
         for(int j = 0; j < m; j++){
-            lambda_0[j] = lambda_0[j] + rho_0[j]*( z_hat_0[j] - z_0[j] );
+            lambda_0[j] = lambda_0[j] + rho_0[j]*( z_0[j] - v_0[j] );
         }
         // Compute all the other elements except for the last n
         for(int l = 0; l < N-1; l++){
             for(int j = 0; j < nm; j++){
-                lambda[j][l] = lambda[j][l] + rho[j][l]*( z_hat[j][l] - z[j][l] );
+                lambda[j][l] = lambda[j][l] + rho[j][l]*( z[j][l] - v[j][l] );
             }
         }
         // Compute the last n elements
         for(int j = 0; j < n; j++){
-            aux_N[j] = rho_N[j]*(z_hat_N[j] - z_N[j]);
+            aux_N[j] = rho_N[j]*(z_N[j] - v_N[j]);
         }
         for(int j = 0; j < n; j++){
             for(int i = 0; i < n; i++){
@@ -301,23 +324,26 @@ void RMPC_ADMM(double *pointer_x0, double *u_opt, int *pointer_k, int *e_flag, d
         // Compute the first m elements
         for(int j = 0; j < m; j++){
             res[j][0] = z1_0[j] - z_0[j];
+            res[j][0] = ( res[j][0] > 0.0 ) ? res[j][0] : -res[j][0]; // absolute value
         }
         // Compute all the other elements except for the last n
         for(int l = 0; l < N-1; l++){
             for(int j = 0; j < nm; j++){
                 res[j][l+1] = z1[j][l] - z[j][l];
+                res[j][l+1] = ( res[j][l+1] > 0.0 ) ? res[j][l+1] : -res[j][l+1]; // absolute value
             }
         }
         // Compute the last n elements
         for(int j = 0; j < n; j++){
             res[j][N] = z1_N[j] - z_N[j];
+            res[j][N] = ( res[j][N] > 0.0 ) ? res[j][N] : -res[j][N]; // absolute value
         }
 
         // Compute the 1-norm of the residual
         res_1 = 0;
         for(int l = 0; l < N-1; l++){
             for(int j = 0; j < nm; j++){
-                res_1 = my_max( res_1, my_absolute(res[j][l]));
+                res_1 = ( res_1 > res[j][l]) ? res_1 : res[j][l]; // maximum between the two
             }
         }
 
@@ -337,12 +363,12 @@ void RMPC_ADMM(double *pointer_x0, double *u_opt, int *pointer_k, int *e_flag, d
     // Control action
     #if in_engineering == 1
     for(int j = 0; j < m; j++){
-        u_opt[j] = z_0[j]*scaling_u[j] + OpPoint_u[j];
+        u_opt[j] = v_0[j]*scaling_u[j] + OpPoint_u[j];
     }
     #endif
     #if in_engineering == 0
     for(int j = 0; j < m; j++){
-        u_opt[j] = z_0[j];
+        u_opt[j] = v_0[j];
     }
     #endif
 

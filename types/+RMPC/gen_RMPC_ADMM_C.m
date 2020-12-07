@@ -51,6 +51,9 @@ function gen_RMPC_ADMM_C(stru, options, save_name)
     [vars, idx] = addLine(vars, idx, 'Pinv_half', stru.Pinv_half, 1, 'double', 'constant');
     [vars, idx] = addLine(vars, idx, 'Alpha', stru.Alpha, 1, 'double', 'constant');
     [vars, idx] = addLine(vars, idx, 'Beta', stru.Beta, 1, 'double', 'constant');
+    [vars, idx] = addLine(vars, idx, 'Q', stru.Q, 1, 'double', 'constant');
+    [vars, idx] = addLine(vars, idx, 'R', stru.R, 1, 'double', 'constant');
+    [vars, idx] = addLine(vars, idx, 'T', stru.T, 1, 'double', 'constant');
     if options.in_engineering
         [vars, idx] = addLine(vars, idx, 'scaling_x', stru.scaling_x, 1, 'double', 'constant');
         [vars, idx] = addLine(vars, idx, 'scaling_i_u', stru.scaling_u, 1, 'double', 'constant');
@@ -65,19 +68,23 @@ function gen_RMPC_ADMM_C(stru, options, save_name)
     [vars, idx] = addLine(vars, idx, 'z1', zeros(m+n, N-1), 0, 'double', 'variable');
     [vars, idx] = addLine(vars, idx, 'z1_0', zeros(m, 1), 0, 'double', 'variable');
     [vars, idx] = addLine(vars, idx, 'z1_N', zeros(n, 1), 0, 'double', 'variable');
-    [vars, idx] = addLine(vars, idx, 'z_hat', zeros(m+n, N-1), 0, 'double', 'variable');
-    [vars, idx] = addLine(vars, idx, 'z_hat_0', zeros(m, 1), 0, 'double', 'variable');
-    [vars, idx] = addLine(vars, idx, 'z_hat_N', zeros(n, 1), 0, 'double', 'variable');
+    %[vars, idx] = addLine(vars, idx, 'z_hat', zeros(m+n, N-1), 0, 'double', 'variable');
+    %[vars, idx] = addLine(vars, idx, 'z_hat_0', zeros(m, 1), 0, 'double', 'variable');
+    %[vars, idx] = addLine(vars, idx, 'z_hat_N', zeros(n, 1), 0, 'double', 'variable');
     [vars, idx] = addLine(vars, idx, 'aux_N', zeros(n, 1), 0, 'double', 'variable');
-    [vars, idx] = addLine(vars, idx, 'lambda', zeros(m+n, N-1), 0, 'double', 'variable');
-    [vars, idx] = addLine(vars, idx, 'lambda_0', zeros(m, 1), 0, 'double', 'variable');
-    [vars, idx] = addLine(vars, idx, 'lambda_N', zeros(n, 1), 0, 'double', 'variable');
+    %[vars, idx] = addLine(vars, idx, 'lambda', zeros(m+n, N-1), 0, 'double', 'variable');
+    %[vars, idx] = addLine(vars, idx, 'lambda_0', zeros(m, 1), 0, 'double', 'variable');
+    %[vars, idx] = addLine(vars, idx, 'lambda_N', zeros(n, 1), 0, 'double', 'variable');
     [vars, idx] = addLine(vars, idx, 'mu', zeros(n, N), 0, 'double', 'variable');
     [vars, idx] = addLine(vars, idx, 'res', zeros(n+m, N+1), 0, 'double', 'variable');
     [vars, idx] = addLine(vars, idx, 'res_1', 1, 0, 'double', 'variable');
     [vars, idx] = addLine(vars, idx, 'b', zeros(n, 1), 0, 'double', 'variable');
-    [vars, idx] = addLine(vars, idx, 'project_me', zeros(n, 1), 0, 'double', 'variable');
+    %[vars, idx] = addLine(vars, idx, 'project_me', zeros(n, 1), 0, 'double', 'variable');
     [vars, idx] = addLine(vars, idx, 'vPv', 0, 0, 'double', 'variable');
+    [vars, idx] = addLine(vars, idx, 'c', stru.c, 1, 'double', 'variable');
+    [vars, idx] = addLine(vars, idx, 'r', stru.r, 1, 'double', 'variable');
+    [vars, idx] = addLine(vars, idx, 'q', zeros(n+m, 1), 0, 'double', 'variable');
+    [vars, idx] = addLine(vars, idx, 'qT', zeros(n, 1), 0, 'double', 'variable');
     
     % Inputs and outputs
     %[vars, idx] = addLine(vars, idx, 'u', zeros(m, 1), 0, 'double', 'variable');

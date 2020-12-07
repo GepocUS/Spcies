@@ -91,6 +91,11 @@ function stru = Spcies_compute_RMPC_ADMM_ingredients(sys, param, options)
     stru.P = P;
     stru.P_half = P_half;
     stru.Pinv_half = inv(P)*P_half;
+    stru.Q = -diag(param.Q);
+    stru.R = -diag(param.R);
+    stru.T = -param.Pt;
+    stru.c = param.c;
+    stru.r = param.r;
     
     % Scaling vectors and operating point
     stru.scaling_x = sys.Nx;

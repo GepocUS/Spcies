@@ -1,6 +1,6 @@
 %% This is the sparse version of the RMPC solver
 
-function [z_0, k, e_flag, vars] = ADMM_for_RMPC_embedded(var, x0, varargin)
+function [v_0, k, e_flag, vars] = ADMM_for_RMPC_embedded(var, x0, xr, ur, varargin)
     timer_function = tic;
     
     %% Default values
@@ -71,9 +71,13 @@ function [z_0, k, e_flag, vars] = ADMM_for_RMPC_embedded(var, x0, varargin)
     z1_N = zeros(n, 1);
     z1 = zeros(n, 1); % Decision variable z1 in matrix form
     
-    z_hat_0 = zeros(m, 1);
-    z_hat_N = zeros(n, 1);
-    z_hat = zeros(n+m, N-1);
+    q_hat_0 = zeros(m, 1);
+    q_hat_N = zeros(n, 1);
+    q_hat = zeros(n, 1);
+    
+    v_0 = zeros(m, 1);
+    v_N = zeros(n, 1);
+    v = zeros(n+m, N-1);
     aux_N = zeros(n, 1);
     project_me = zeros(n, 1);
     
@@ -98,11 +102,24 @@ function [z_0, k, e_flag, vars] = ADMM_for_RMPC_embedded(var, x0, varargin)
     P_half = var.P_half;
     P = var.P;
     
+    % Update b with the current state x0
     for j = 1:n
         b(j) = 0;
         for i = 1:n
             b(j) = b(j) -AB(j, i)*x0(i);
         end
+    end
+    
+    % Update q with the current reference
+    for j = 1:n
+        q(j) = var.Q(j)*xr(j);
+        qT(j) = 0;
+        for i = 1:n
+            qT(j) = qT(j) + var.T(j, i)*xr(i);
+        end
+    end
+    for j = 1:m
+        q(j+n) = var.R(j)*ur(j);
     end
     
     %% Iterations
@@ -127,37 +144,57 @@ function [z_0, k, e_flag, vars] = ADMM_for_RMPC_embedded(var, x0, varargin)
             z1_N(j) = z_N(j);
         end
         
-        %% Step 1: Minimize w.r.t z_hat
+        %% Step 1: Minimize w.r.t z
         
+        % Compute q_hat = q + lambda - rho*v
+        % I save it in z to same a bit of memory and because I also because z has to be
+        % initiallized as q_hat further ahead, thus also saving some computations
+        
+            % Compute first n
+        for j = 1:m
+            z_0(j) = q(n+j) + lambda_0(j) - rho_0(j)*v_0(j);
+        end
+            % Compute all other elements except the last n
+        for l = 1:N-1
+            for j = 1:n+m
+               z(j, l) = q(j) + lambda(j, l) - rho(j, l)*v(j, l);
+            end
+        end
+            % Compute the last n
         for j = 1:n
-            mu(j, 1) = -Hi(j, 1)*(rho(j, 1)*z(j, 1) - lambda(j, 1)) - b(j);
+            z_N(j) = qT(j);
+            for i = 1:n
+                z_N(j) = z_N(j) + P_half(j, i)*lambda_N(i) - P(j, i)*rho_N(i)*v_N(i);
+            end
+        end
+        
+        % Compute r.h.s. of Wc system of equations, i.e., -G'*H_hat^(-1)*q_hat - b
+        % I store it in mu to save a bit of memory
+        
+            % Compute first n
+        for j = 1:n
+            mu(j, 1) = Hi(j, 1)*z(j, 1) - b(j);
             for i = 1:m
-                mu(j, 1) = mu(j, 1) + AB(j, i+n)*Hi_0(i)*(rho_0(i)*z_0(i) - lambda_0(i));
+                mu(j, 1) = mu(j, 1) - AB(j, i+n)*Hi_0(i)*z_0(i);
             end
         end
             % Compute all other elements except the last n
         for l = 2:N-1
             for j = 1:n
-                mu(j, l) = -Hi(j, l)*(rho(j, l)*z(j, l) - lambda(j, l));
+                mu(j, l) = Hi(j, l)*z(j, l);
                 for i = 1:n+m
-                    mu(j, l) = mu(j, l) + AB(j, i)*Hi(i, l-1)*(rho(i, l-1)*z(i, l-1) - lambda(i, l-1));
+                    mu(j, l) = mu(j, l) - AB(j, i)*Hi(i, l-1)*z(i, l-1);
                 end
             end
         end
             % Compute the last n
         for j = 1:n
-            aux_N(j) = 0;
-            for i = 1:n
-                aux_N(j) = aux_N(j) + P(j, i)*rho_N(i)*z_N(i) - P_half(j, i)*lambda_N(i);
-            end 
-        end
-        for j = 1:n
             mu(j, N) = 0;   
             for i = 1:n
-                mu(j, N) = mu(j, N) - Hi_N(j, i)*aux_N(i);
+                mu(j, N) = mu(j, N) + Hi_N(j, i)*z_N(i);
             end
             for i = 1:n+m
-                mu(j, N) = mu(j, N) + AB(j, i)*Hi(i, N-1)*(rho(i, N-1)*z(i, N-1) - lambda(i, N-1));
+                mu(j, N) = mu(j, N) - AB(j, i)*Hi(i, N-1)*z(i, N-1);
             end
         end
         
@@ -226,84 +263,77 @@ function [z_0, k, e_flag, vars] = ADMM_for_RMPC_embedded(var, x0, varargin)
             mu(j,1) = var.Beta(j, j, 1)*mu(j,1);
         end
         
-        % Compute z_hat
+        % Compute z (note that at this point z = q_hat)
             % Compute the first m
         for j = 1:m
-            z_hat_0(j) = lambda_0(j) - rho_0(j)*z_0(j);
             for i = 1:n
-                z_hat_0(j) = z_hat_0(j) + AB(i, j+n)*mu(i, 1);
+                z_0(j) = z_0(j) + AB(i, j+n)*mu(i, 1);
             end
-            z_hat_0(j) = -Hi_0(j)*z_hat_0(j);
+            z_0(j) = -Hi_0(j)*z_0(j);
         end
             % Compute all others except for the last n
         for l = 1:N-1
             for j = 1:n
-                z_hat(j, l) = lambda(j, l) - rho(j, l)*z(j, l) - mu(j, l);
-            end
-            for j = n+1:n+m
-                z_hat(j, l) = lambda(j, l) - rho(j, l)*z(j, l);
+                z(j, l) = z(j, l) - mu(j, l);
             end
             for j = 1:n+m
                 for i = 1:n
-                    z_hat(j, l) = z_hat(j, l) + AB(i, j)*mu(i, l+1);
+                    z(j, l) = z(j, l) + AB(i, j)*mu(i, l+1);
                 end
-                z_hat(j, l) = -Hi(j, l)*z_hat(j, l);
+                z(j, l) = -Hi(j, l)*z(j, l);
             end
         end
             % Compute the last n
         for j = 1:n
-            aux_N(j) = lambda_N(j) - rho_N(j)*z_N(j) - mu(j, N);
+            aux_N(j) = z_N(j) - mu(j, N);
         end
         for j = 1:n
-            z_hat_N(j) = 0;
+            z_N(j) = 0;
             for i = 1:n
-                z_hat_N(j) = z_hat_N(j) - Hi_N(j, i)*aux_N(i);
+                z_N(j) = z_N(j) - Hi_N(j, i)*aux_N(i);
             end
         end
         
-        %% Step 2: Minimize w.r.t. z
+        %% Step 2: Minimize w.r.t. v
         
         % First m variables
         for j = 1:m
-            z_0(j) = max( min( z_hat_0(j) + var.rho_i_0(j)*lambda_0(j), var.UBu0(j)), var.LBu0(j));
+            v_0(j) = max( min( z_0(j) + var.rho_i_0(j)*lambda_0(j), var.UBu0(j)), var.LBu0(j));
         end
         
         % All the rest except for the last n
         for l = 1:N-1
             for j = 1:n+m
-                z(j, l) = max( min( z_hat(j, l) + var.rho_i(j, l)*lambda(j, l), var.UBz(j, l)), var.LBz(j, l));
+                v(j, l) = max( min( z(j, l) + var.rho_i(j, l)*lambda(j, l), var.UBz(j, l)), var.LBz(j, l));
             end
         end
         
         % Last n elements
-            % Compute the vector to bee projected
+        
+        % Compute the vector to be projected
         for j = 1:n
-            project_me(j) = z_hat_N(j);
+            v_N(j) = z_N(j);
             for i = 1:n
-                project_me(j) = project_me(j) + var.Pinv_half(j, i)*var.rho_i_N(i)*lambda_N(i);
+                v_N(j) = v_N(j) + var.Pinv_half(j, i)*var.rho_i_N(i)*lambda_N(i);
             end
         end
         
-        % Compute project_me*P*project_me
+        % Compute (v_N - c)*P*(v_N - c)
         for j = 1:n
             aux_N(j) = 0;
             for i = 1:n
-                aux_N(j) = aux_N(j) + P(j, i)*project_me(i);
+                aux_N(j) = aux_N(j) + P(j, i)*(v_N(i) - var.c(i));
             end
         end
         vPv = 0;
         for j = 1:n
-            vPv = vPv + project_me(j)*aux_N(j);
+            vPv = vPv + (v_N(j) - var.c(j))*aux_N(j);
         end
         
-        if vPv <= 1 % If project_me belongs to the ellipsoid, return the same vector
+        if vPv > var.r^2 % If v_N belongs to the ellipsoid, I don't need to do anything else
+            vPv = var.r/sqrt(vPv);
             for j = 1:n
-                z_N(j) = project_me(j);
-            end
-        else % Otherwise, project to the ellipsoid
-            vPv = 1/sqrt(vPv);
-            for j = 1:n
-                z_N(j) = vPv*project_me(j);
+                v_N(j) = vPv*(v_N(j) - var.c(j)) + var.c(j);
             end
         end
         
@@ -311,17 +341,17 @@ function [z_0, k, e_flag, vars] = ADMM_for_RMPC_embedded(var, x0, varargin)
         
             % Compute the first n elements
         for j = 1:m
-            lambda_0(j) = lambda_0(j) + rho_0(j)*(z_hat_0(j) - z_0(j));
+            lambda_0(j) = lambda_0(j) + rho_0(j)*(z_0(j) - v_0(j));
         end
             % Compute all others except for the last n
         for l = 1:N-1
             for j = 1:n+m
-                lambda(j, l) = lambda(j, l) + rho(j, l)*(z_hat(j, l) - z(j, l));
+                lambda(j, l) = lambda(j, l) + rho(j, l)*(z(j, l) - v(j, l));
             end
         end
             % Compute the last n
         for j = 1:n
-            aux_N(j) = rho_N(j)*(z_hat_N(j) - z_N(j));
+            aux_N(j) = rho_N(j)*(z_N(j) - v_N(j));
         end
         for j = 1:n
             for i = 1:n
@@ -371,7 +401,7 @@ function [z_0, k, e_flag, vars] = ADMM_for_RMPC_embedded(var, x0, varargin)
     time = toc(timer_function);
     
     vars.z = [z_0; z(:); z_N];
-    vars.z_hat = [z_hat_0; z_hat(:); z_hat_N];
+    vars.v = [v_0; v(:); v_N];
     vars.lambda = [lambda_0; lambda(:); lambda_N];
     vars.res = res(:);
     vars.time = time;
