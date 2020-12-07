@@ -1,11 +1,25 @@
-%% Spcies_compute_RMPC_EADMM_ingredients
-% Computes the ingredients for the RMPC controller solved using the ADMM algorithm
-% This version uses the projection algorithm onto the ellipsoid
-
+%% Spcies_compute_ellipMPC_EADMM_ingredients
+% Computes the ingredients for the ADMM-based solver for MPC with ellipsoidal terminal constraint
+%
+% Information about this formulaiton and the solver  can be found at:
+%
+% t.b.d.
+% 
+% INPUTS:
+%   - controller: Contains the information of the controller
+%   - options: structure containing options of the EADMM solver.
+%              See documentation for the options available.
+% 
+% OUTPUTS:
+%   - vars: Structure containing the ingredients required by the solver.
+% 
+% This function is part of Spcies: https://github.com/GepocUS/Spcies
+% 
 % Author: Pablo Krupa (pkrupa@us.es)
 % 
 % Changelog: 
 %   v0.1 (2020/10/16): Initial commit version
+%   v0.2 (2020/12/07): Added parser and improved overall usability. Added documentation.
 %
 
 function vars = Spcies_compute_ellipMPC_ADMM_ingredients(controller, options)

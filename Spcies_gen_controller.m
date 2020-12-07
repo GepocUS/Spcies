@@ -4,7 +4,7 @@
 % input 'type' for the target embedded system designated by input 'target'.
 % This function tipically saves files to the current working directory.
 % 
-% INPUTS:
+% INPUTS (all inputs are name-value pairs):
 %   - type: type of controller generated. See documentation for a list and description of the controllers available.
 %   - target: target embedded system that the controller is generated for. See documentation for a list of supported ones.
 %   - sys: model of the system.
@@ -13,9 +13,11 @@
 %   - options: structure containing options of the solver.
 %              Each controller/solver will have different ones. See documantation for which ones.
 %   - save_name: string that determines the name of any files saved to the current directory.
+%   - override: Boolean that determines is the controller is overriden if the file already exists.
 % 
 % OUTPUTS:
-%   - str: Structure containing a variety of information
+%   - vars: Structure containing a variety of information
+%   - The function may also create files in the working directory
 %
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
@@ -29,7 +31,7 @@
 %   v0.4 (2020/12/07): Added parser and improved overall usability
 %
 
-function str = Spcies_gen_controller(varargin)
+function vars = Spcies_gen_controller(varargin)
     import utils.determine_type;
 
     %% Default values

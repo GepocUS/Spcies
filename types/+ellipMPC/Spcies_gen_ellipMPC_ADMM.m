@@ -1,11 +1,28 @@
-%% Spcies_gen_ellipMPC_ADMM - Generate the RMPC solver based on the ADMM alggorithm
-% This version uses the projection algorithm onto the ellipsoid
+%% Spcies_gen_ellipMPC_ADMM - Generate the ADMM-based solver for MPC with ellipsoidal terminal constraint
+% 
+% Information about this formulaiton and the solver  can be found at:
+% 
+% t.b.d.
+% 
+% INPUTS (all inputs are name-value pairs, except 'controller'):
+%   - controller: Contains the information of the controller
+%   - target: target embedded system that the controller is generated for
+%   - options: structure containing options of the EADMM solver.
+%              See documentation for the options available.
+%   - save_name: string that determines the name of any files saved to the current directory.
+%   - override: Boolean that determines is the controller is overriden if the file already exists.
+% 
+% OUTPUTS:
+%   - vars: Structure containing the necessary variables to run the solver
+% 
+% This function is part of Spcies: https://github.com/GepocUS/Spcies
+% 
 
 % Author: Pablo Krupa (pkrupa@us.es)
 % 
 % Changelog: 
 %   v0.1 (2020/10/16): Initial commit version
-%   v0.2 (2020/12/07): Added parser and improved overall usability
+%   v0.2 (2020/12/07): Added parser and improved overall usability. Added documentation.
 %
 
 function vars = Spcies_gen_ellipMPC_ADMM(varargin)

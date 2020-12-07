@@ -1,10 +1,26 @@
-%% gen_RMPC_ADMM_C - Generates the RMPC controller solved with the ADMM algorithm for C
-% This version uses the projection algorithm onto the ellipsoid
+%% gen_ellipMPC_ADMM_C
+% Generates the text in C for the ADMM-based solver for MPC with ellipsoidal terminal constraint
+% 
+% Information about this formulaiton and the solver  can be found at:
+% 
+% t.b.d.
+% 
+% INPUTS:
+%   - vars: Structure containing information needed to declare the variables.
+%   - options: Structure containing several options for the solver.
+%   - save_name: String containing the name of the file the controller is saved to.
+%   - override: Boolean that determines is the controller is overriden if the file already exists.
+% 
+% OUTPUT: Saves the controller into a txt file in the current directory
+% 
+% This function is part of Spcies: https://github.com/GepocUS/Spcies
+% 
 
 % Author: Pablo Krupa (pkrupa@us.es)
 % 
 % Changelog: 
 %   v0.1 (2020/10/16): Initial commit version
+%   v0.2 (2020/12/07): Added parser and improved overall usability. Added documentation.
 %
 
 function gen_ellipMPC_ADMM_C(vars, options, save_name, override)
