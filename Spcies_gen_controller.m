@@ -26,16 +26,64 @@
 %   v0.1 (2020/09/03): Initial commit version
 %   v0.2 (2020/09/17): Added documentation
 %   v0.3 (2020/10/16): Added RMPC_ADMM
+%   v0.4 (2020/12/07): Added parser and improved overall usability
 %
 
-function str = Spcies_gen_controller(type, target, sys, param, options, save_name)
+function str = Spcies_gen_controller(varargin)
+    import utils.determine_type;
 
-if strcmp(type, 'MPCT')
-    str = MPCT.Spcies_gen_MPCT_EADMM(target, sys, param, options, save_name);
-elseif strcmp(type, 'ellipMPC')
-    str = ellipMPC.Spcies_gen_ellipMPC_ADMM(target, sys, param, options, save_name);
-else
-    error('Type not recognized or supported');
-end
+    %% Default values
+    def_type = ''; % Default type
+    def_target = 'Matlab'; % Default target
+    def_options = []; % Default value of the options argument
+    def_save_name = ''; % Default value of the save_name argument
+    def_sys = []; % Default value for the sys argument
+    def_param = []; % Default value for the param argument
+    def_controller = []; % Default value for the controller argument
+    def_override = true; % Default value of the option that determines if files are overwritten
+    
+    %% Parser
+    par = inputParser;
+    par.CaseSensitive = false;
+    par.FunctionName = 'Spcies_gen_controller';
+    
+    % Name-value parameters
+    addParameter(par, 'sys', def_sys, @(x) isa(x, 'ss') || isa(x, 'ssModel') || isstruct(x));
+    addParameter(par, 'param', def_param, @(x) isstruct(x));
+    addParameter(par, 'controller', def_controller, @(x) isa(x, 'ssMPC'));
+    addParameter(par, 'save_name', def_save_name, @(x) ischar(x));
+    addParameter(par, 'options', def_options, @(x) isstruct(x));
+    addParameter(par, 'type', def_type, @(x) ischar(x));
+    addParameter(par, 'target', def_target, @(x) ischar(x));
+    addParameter(par, 'override', def_override, @(x) islogical(x) || x==1 || x==0);
+    
+    % Parse
+    parse(par, varargin{:});
+    
+    %% Create the controller structure, which either contains the param and sys structures or the controller object
+    if isempty(par.Results.controller)
+        controller.sys = par.Results.sys;
+        controller.param = par.Results.param;
+    else
+        controller = par.Results.controller;
+    end
+    
+    %% Determine the type of the controller
+    if isempty(par.Results.type)
+        type = determine_type(controller);
+    else
+        type = par.Results.type;
+    end
 
+    %% Generate the controller
+    if strcmp(type, 'MPCT')
+        str = MPCT.Spcies_gen_MPCT_EADMM(controller, 'target', par.Results.target, 'override', par.Results.override,...
+                                         'options', par.Results.options, 'save_name', par.Results.save_name);
+    elseif strcmp(type, 'ellipMPC')
+        str = ellipMPC.Spcies_gen_ellipMPC_ADMM(controller, 'target', par.Results.target, 'override', par.Results.override,...
+                                                'options', par.Results.options, 'save_name', par.Results.save_name);
+    else
+        error('Spcies:gen_controller:input_error', 'Type not recognized or supported');
+    end
+    
 end
