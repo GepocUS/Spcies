@@ -34,15 +34,7 @@ function gen_ellipMPC_ADMM_C(vars, options, save_name, override)
         save_name = def_save_name;
     end
     if ~override
-       if isfile([save_name '.c'])
-           number = 1;
-           new_save_name = [save_name '_v' num2str(number)];
-           while isfile([new_save_name '.c'])
-               number = number + 1;
-                new_save_name = [save_name '_v' num2str(number)];
-           end
-           save_name = new_save_name;
-       end
+        save_name = utils.find_unused_file_name(save_name, 'c');
     end
     
     %% Rename variables for convenience
