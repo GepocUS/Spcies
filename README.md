@@ -4,7 +4,7 @@
 
 # SPCIES
 
-#### Suite of Predictive Controllers for Industrial Embedded Systems_
+#### Suite of Predictive Controllers for Industrial Embedded Systems
 
 This Matlab toolbox generates solvers for _model predictive controllers_ (MPC) in different programming languages.
 

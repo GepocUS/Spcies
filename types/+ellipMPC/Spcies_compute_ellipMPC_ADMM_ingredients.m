@@ -39,7 +39,11 @@ function vars = Spcies_compute_ellipMPC_ADMM_ingredients(controller, options)
         r = controller.r;
     else
         A = controller.sys.A;
-        B = controller.sys.Bu;
+        if isa(controller.sys, 'ssModel')
+            B = controller.sys.Bu;
+        else
+            B = controller.sys.B;
+        end
         n = size(A, 1);
         m = size(B, 2);
         N = controller.param.N;

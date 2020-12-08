@@ -5,10 +5,9 @@
 % t.b.d.
 % 
 % INPUTS (all inputs are name-value pairs, except 'controller'):
-%   - controller: Contains the information of the controller
-%   - target: target embedded system that the controller is generated for
+%   - controller: Contains the information of the controller.
+%   - target: target embedded system that the controller is generated for.
 %   - options: structure containing options of the EADMM solver.
-%              See documentation for the options available.
 %   - save_name: string that determines the name of any files saved to the current directory.
 %   - override: Boolean that determines is the controller is overriden if the file already exists.
 % 
@@ -26,7 +25,7 @@
 %
 
 function vars = Spcies_gen_ellipMPC_ADMM(varargin)
-
+    
     %% Default values
     def_target = 'Matlab'; % Default target
     def_save_name = ''; % Default value of the save_name argument
@@ -61,6 +60,11 @@ function vars = Spcies_gen_ellipMPC_ADMM(varargin)
     else
         options = par.Results.options;
     end
+    if ~isfield(options, 'rho'); options.rho = def_rho; end
+    if ~isfield(options, 'tol'); options.tol = def_tol; end
+    if ~isfield(options, 'k_max'); options.k_max = def_k_max; end
+    if ~isfield(options, 'in_engineering'); options.in_engineering = def_in_engineering; end
+    if ~isfield(options, 'debuug'); options.debug = def_debug; end
     
     %% Compute the ingredients of the controller
     vars = ellipMPC.Spcies_compute_ellipMPC_ADMM_ingredients(par.Results.controller, options);
