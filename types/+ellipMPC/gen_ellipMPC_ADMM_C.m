@@ -11,7 +11,7 @@
 %   - save_name: String containing the name of the file the controller is saved to.
 %   - override: Boolean that determines is the controller is overriden if the file already exists.
 % 
-% OUTPUT: Saves the controller into a txt file in the current directory
+% OUTPUT: Saves the controller into a txt file in the current directory.
 % 
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 

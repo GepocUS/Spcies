@@ -6,9 +6,8 @@
 % t.b.d.
 % 
 % INPUTS:
-%   - controller: Contains the information of the controller
+%   - controller: Contains the information of the controller.
 %   - options: structure containing options of the EADMM solver.
-%              See documentation for the options available.
 % 
 % OUTPUTS:
 %   - vars: Structure containing the ingredients required by the solver.
@@ -171,7 +170,7 @@ function vars = Spcies_compute_ellipMPC_ADMM_ingredients(controller, options)
             vars.scaling_x = ones(n, 1);
         end
         if isfield(controller.sys, 'Nu')
-            vars.scaling_i_u = controller.sys.Nu;
+            vars.scaling_i_u = 1./controller.sys.Nu;
         else
             vars.scaling_i_u = ones(m, 1);
         end

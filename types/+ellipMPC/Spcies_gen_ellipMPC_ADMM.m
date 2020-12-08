@@ -64,7 +64,7 @@ function vars = Spcies_gen_ellipMPC_ADMM(varargin)
     if ~isfield(options, 'tol'); options.tol = def_tol; end
     if ~isfield(options, 'k_max'); options.k_max = def_k_max; end
     if ~isfield(options, 'in_engineering'); options.in_engineering = def_in_engineering; end
-    if ~isfield(options, 'debuug'); options.debug = def_debug; end
+    if ~isfield(options, 'debug'); options.debug = def_debug; end
     
     %% Compute the ingredients of the controller
     vars = ellipMPC.Spcies_compute_ellipMPC_ADMM_ingredients(par.Results.controller, options);
