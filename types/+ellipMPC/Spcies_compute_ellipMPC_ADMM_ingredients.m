@@ -47,8 +47,16 @@ function vars = Spcies_compute_ellipMPC_ADMM_ingredients(controller, options)
         R = controller.param.R;
         T = controller.param.T;
         P = controller.param.P;
-        c = controller.param.c;
-        r = controller.param.r;
+        if isfield(controller.param, 'c')
+            c = controller.param.c;
+        else
+            c = zeros(n, 1);
+        end
+        if isfield(controller.param, 'r')
+            r = controller.param.r;
+        else
+            r = 1;
+        end
     end
     
     %% Turn rho into a vector if scalar is provided
@@ -88,18 +96,31 @@ function vars = Spcies_compute_ellipMPC_ADMM_ingredients(controller, options)
         LBz = controller.LBz;
         UBz = controller.UBz;
     else
-        LBz = controller.sys.LBu; UBz = controller.sys.UBu;
-        if min(size(controller.param.incBx)) == 1
-            incBx = rechape(controller.param.incBx, n, N+1);
+       
+        % Determine value of incBx
+        if isfield(controller.param, 'incBx')  
+            if min(size(controller.param.incBx)) == 1
+                incBx = rechape(controller.param.incBx, n, N+1);
+            else
+                incBx = controller.param.incBx;
+            end
         else
-            incBx = controller.param.incBx;
-        end
-        if min(size(controller.param.incBu)) == 1
-            incBu = rechape(controller.param.incBu, m, N+1);
-        else
-            incBu = controller.param.incBu;
+            incBx = zeros(n, N+1);
         end
         
+        % Determine value of incBu
+        if isfield(controller.param, 'incBu') 
+            if min(size(controller.param.incBu)) == 1
+                incBu = rechape(controller.param.incBu, m, N+1);
+            else
+                incBu = controller.param.incBu;
+            end
+        else
+            incBu = zeros(m, N+1);
+        end
+        
+        % Generate LBz and UBz vectors
+        LBz = controller.sys.LBu; UBz = controller.sys.UBu;
         for i = 2:N
             LBz = [LBz; controller.sys.LBx + incBx(:, i); controller.sys.LBu + incBu(:, i)];
             UBz = [UBz; controller.sys.UBx - incBx(:, i); controller.sys.UBu - incBu(:, i)];
