@@ -5,17 +5,14 @@
 % 
 % "Implementation of model predictive control for tracking in embedded systems
 % using a sparse extended ADMM algorithm", by P. Krupa, I. Alvarado, D. Limon
-% and T. Alamo, arXiv preprint: 2008:09071, 2020.
+% and T. Alamo, arXiv preprint: 2008:09071v2, 2020.
 % 
 % INPUTS:
-%   - sys: model of the system.
-%   - param: structure containing  parameters of the MPCT controller.
-%            See documentation for the parameters needed.
+%   - controller: Contains the information of the controller.
 %   - options: structure containing options of the EADMM solver.
-%              See documentation for the options available.
 % 
 % OUTPUTS:
-%   - str: Structure containing the ingredients required by the solver.
+%   - vars: Structure containing the ingredients required by the solver.
 % 
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
@@ -25,47 +22,68 @@
 % Changelog: 
 %   v0.1 (2020/09/03): Initial commit version
 %   v0.2 (2020/09/17): Added documentation
+%   v0.2 (2020/12/08): Added parser and improved overall usability.
 %
 
-function str = Spcies_compute_MPCT_EADMM_ingredients(sys, param, options)
+function vars = Spcies_compute_MPCT_EADMM_ingredients(controller, options)
 
-    %% Variable extraction
-    n = sys.n_x;
-    m = sys.n_u;
-    A = sys.A;
-    B = sys.Bu;  
-    N = param.N;
-    Q = param.Q;
-    R = param.R;
-    T = param.T;
-    S = param.S;
-    if isfield(param, 'epsilon_x')
-        epsilon_x = param.epsilon_x;
+    %% Extract from controller
+    if isa(controller, 'TeackingMPC')
+        A = controller.model.A;
+        B = controller.model.Bu;
+        n = controller.model.n_x;
+        m = controller.model.n_u;
+        N = controller.N;
+        Q = controller.Q;
+        R = controller.R;
+        T = controller.T;
+        S = controller.S;
+        LBx = controller.model.LBx;
+        LBu = controller.model.LBu;
+        UBx = controller.model.UBx;
+        UBu = controller.model.UBu;
     else
-        epsilon_x = 1e-6;
-    end
-    if isfield(param, 'epsilon_u')
-        epsilon_u = param.epsilon_u;
-    else
-        epsilon_u = 1e-6;
-    end
-    if isfield(param, 'inf_bound_value')
-        inf_bound_value = param.inf_bound_value;
-    else
-        inf_bound_value =  100000;
-    end
-    if isfield(param, 'x0_bound_value')
-        x0_bound_value = param.x0_bound_value;
-    else
-        x0_bound_value = 100000;
+        A = controller.sys.A;
+        if isa(controller.sys, 'ssModel')
+            B = controller.sys.Bu;
+        else
+            B = controller.sys.B;
+        end
+        n = size(A, 1);
+        m = size(B, 2);
+        N = controller.param.N;
+        Q = controller.param.Q;
+        R = controller.param.R;
+        T = controller.param.T;
+        S = controller.param.S;
+        if isfield(controller.sys, 'LBx')
+            LBx = controller.sys.LBx;
+        else
+            LBx = -options.inf_bound;
+        end
+        if isfield(controller.sys, 'UBx')
+            UBx = controller.sys.UBx;
+        else
+            UBx = options.inf_bound;
+        end
+        if isfield(controller.sys, 'LBu')
+            LBu = controller.sys.LBu;
+        else
+            LBu = -options.inf_bound;
+        end
+        if isfield(controller.sys, 'UBu')
+            UBu = controller.sys.UBu;
+        else
+            UBu = options.inf_bound;
+        end
     end
     
     %% Extract or compute rho
-    if isfield(param, 'rho')
-        rho = param.rho;
+    if isfield(options, 'rho')
+        rho = options.rho;
     else
-        rho_base = param.rho_base;
-        rho_mult = param.rho_mult;
+        rho_base = options.rho_base;
+        rho_mult = options.rho_mult;
         rho = rho_base*ones((param.N+1)*(n+m) + n + 1*(n+m), 1);
         % Penalize constraints related to x
         rho(1:n) = 1*rho_mult*rho_base; % Initial constraint: x_0 = x. (6b)
@@ -76,12 +94,6 @@ function str = Spcies_compute_MPCT_EADMM_ingredients(sys, param, options)
         rho(end-2*(n+m)+n+1:end-n-m) = rho_mult*rho_base; % Final  z1 + z2 + z3 = 0. (6j)  for i = N
         rho(end-m+1:end) = rho_mult*rho_base; % u_N = u_s. (6l) 
     end
-    
-    %% Decision variables
-    z1_0 = zeros((N+1)*(n+m), 1); % z1 = (xi, ui)
-    z2_0 = zeros(n+m, 1); % z2 = (xs, us)
-    z3_0 = zeros((N+1)*(n+m), 1); % z3 = (hat_xi, hat_ui)
-    lambda_0 = zeros((N+1)*(n+m) + n + 1*(n+m), 1); % Dual variables
     
     %% Matrices A1, A2 and A3
     
@@ -101,22 +113,14 @@ function str = Spcies_compute_MPCT_EADMM_ingredients(sys, param, options)
     
     % QP1 matrices
     H1 = zeros((N+1)*(n+m)) + (rho.*A1)'*A1;
-    q1 = zeros((N+1)*(n+m), 1); % This has to be updated using A1, A2, A3, b, and the values of z1 and z3
-    Az1 = [];
-    bz1 = [];
-    LB1 = [kron(ones(N+1,1), [sys.LBx; sys.LBu])]; 
-    UB1 = [kron(ones(N+1,1), [sys.UBx; sys.UBu])];
     
     % Ingredients with minimal memory consumption
     H1i = 1./diag(H1);
     
     %% Problem 2: z2 = (xs, us)
     H2 = blkdiag(T, S) + (rho.*A2)'*A2;
-    q2 = zeros(n+m, 1); % This has to be updated using A1, A2, A3, b, and the values of z2 and z3
     Az2 = [(A - eye(n)) B];
-    bz2 = zeros(n,1);
-    LB2 = [sys.LBx; sys.LBu];
-    UB2 = [sys.UBx; sys.UBu];
+
     
     % Matrices for explicit solution
     H2i = inv(H2);
@@ -124,9 +128,6 @@ function str = Spcies_compute_MPCT_EADMM_ingredients(sys, param, options)
     
     %% Problem 3: z3 = (hat_xi, hat_ui)
     H3 = kron(eye(N+1), blkdiag(Q, R)) + (rho.*A3)'*A3;
-    q3 = zeros((N+1)*(n+m), 1);
-    LB3 = [];
-    UB3 = [];
 
     Az3 = kron(eye(N), [A B]); % Diagonal de la matriz
     j = 0;
@@ -135,8 +136,7 @@ function str = Spcies_compute_MPCT_EADMM_ingredients(sys, param, options)
         Az3(i:i+n-1,((j-1)*(n+m)+(m+n+1)):((j-1)*(n+m)+(n+m+1)+n-1)) = -eye(n);
     end
     Az3 = [Az3 [zeros((N-1)*n, n); -eye(n)] zeros(N*n, m)];
-    bz3 = zeros(N*n, 1); % This needs to be updated for the initial state
-
+    
     % Matrices for explicit solution
     W3 = Az3*inv(H3)*Az3';
     W3c = chol(W3);
@@ -155,7 +155,6 @@ function str = Spcies_compute_MPCT_EADMM_ingredients(sys, param, options)
     
     % Equality constraints
     Aeq = [A1 A2 A3];
-    beq = b;
     
     % The cost function that would result from grouping z = [z1; z2; z3; lambda] only due to the \theta_i functions
     H = blkdiag(zeros(dim_z1), blkdiag(T, S), kron(eye(N+1), blkdiag(Q, R)), zeros(dim_l));
@@ -179,58 +178,85 @@ function str = Spcies_compute_MPCT_EADMM_ingredients(sys, param, options)
     L = H_hat_inv*S_l'*Bz;
     
     % Extract from the matrix Ln
-    L_z1 = L(1:dim_z1, :);
     L_z2 = L(dim_z1 + (1:dim_z2),:);
     L_z3 = L(dim_z1 + dim_z2 + (1:dim_z3), :);
     L_l = L(dim_z1 + dim_z2 + dim_z3 + (1:dim_l), :);
     
     %% Construct str
-    str.N = N; % Prediction horizon
-    str.n = n; % Dimension of state space
-    str.m = m; % Dimension of input space
-    str.H1i = reshape(H1i, m+n, N+1); % Inverse of diagonal of H1 in matrix form
-    str.H3i = reshape(H3i, m+n, N+1); % Inverse of 
-    str.AB = [A B]; % Matrices of the system model
-    str.W2 = W2;
-    str.T = -T;
-    str.S = -S;
-    str.LB = [sys.LBx; sys.LBu];
-    str.LB(isinf(str.LB)) = -inf_bound_value;
-    str.UB = [sys.UBx; sys.UBu];
-    str.UB(isinf(str.UB)) = inf_bound_value;
-    str.LBs = [sys.LBx + epsilon_x*ones(n, 1); sys.LBu + epsilon_u*ones(m, 1)];
-    str.LBs(isinf(str.LBs)) = -inf_bound_value;
-    str.UBs = [sys.UBx - epsilon_x*ones(n, 1); sys.UBu - epsilon_u*ones(m, 1)];
-    str.UBs(isinf(str.UBs)) = inf_bound_value;
-    str.LB0 = [-x0_bound_value*ones(n,1); sys.LBu];
-    str.UB0 = [x0_bound_value*ones(n,1); sys.UBu];
+    vars.N = N; % Prediction horizon
+    vars.n = n; % Dimension of state space
+    vars.m = m; % Dimension of input space
+    vars.H1i = reshape(H1i, m+n, N+1); % Inverse of diagonal of H1 in matrix form
+    vars.H3i = reshape(H3i, m+n, N+1); % Inverse of 
+    vars.AB = [A B]; % Matrices of the system model
+    vars.W2 = W2;
+    vars.T = -T;
+    vars.S = -S;
+    vars.LB = [LBx; LBu];
+    vars.LB(isinf(vars.LB)) = -options.inf_bound;
+    vars.UB = [UBx; UBu];
+    vars.UB(isinf(vars.UB)) = options.inf_bound;
+    vars.LBs = [LBx + options.epsilon_x*ones(n, 1); LBu + options.epsilon_u*ones(m, 1)];
+    vars.LBs(isinf(vars.LBs)) = -options.inf_bound;
+    vars.UBs = [UBx - options.epsilon_x*ones(n, 1); UBu - options.epsilon_u*ones(m, 1)];
+    vars.UBs(isinf(vars.UBs)) = options.inf_bound;
+    vars.LB0 = [-xoptions.inf_bound*ones(n,1); LBu];
+    vars.UB0 = [options.inf_bound*ones(n,1); UBu];
     
     % Penalty parameter
-    str.rho = reshape(rho(n+1:end-n-m), m+n, N+1);
-    str.rho_0 = [rho(1:n); zeros(m,1)];
-    str.rho_s = rho(end-n-m+1:end);
+    vars.rho = reshape(rho(n+1:end-n-m), m+n, N+1);
+    vars.rho_0 = [rho(1:n); zeros(m,1)];
+    vars.rho_s = rho(end-n-m+1:end);
     
     % Warmstart
-    str.L_z2 = L_z2;
-    str.L_z3 = L_z3(1:n, :);
-    str.L_l = L_l(1:2*n, :); 
+    vars.L_z2 = L_z2;
+    vars.L_z3 = L_z3(1:n, :);
+    vars.L_l = L_l(1:2*n, :); 
     
     % Scaling vectors
-    str.scaling = [sys.Nx; sys.Nu];
-    str.scaling_inv_u = 1./sys.Nu;
-    str.OpPoint = [sys.x0; sys.u0];
+    if isa(controller, 'TrackingMPC')
+        vars.scaling = [controller.model.Nx; controller.model.Nu];
+        vars.scaling_inv_u = 1./controller.model.Nu;
+        vars.OpPoint = [controller.model.x0; controller.model.u0];
+    else
+        if isfield(controller.sys, 'Nx')
+            vars.scaling = controller.sys.Nx;
+        else
+            vars.scaling = ones(n, 1);
+        end
+        if isfield(controller.sys, 'Nu')
+            vars.scaling = [vars.scaling; controller.sys.Nu];
+        else
+            vars.scaling = [vars.scaling; ones(m, 1)];
+        end
+        if isfield(controller.sys, 'Nu')
+            vars.scaling_inv_u = 1./controller.sys.Nu;
+        else
+            vars.scaling_inv_u = ones(m, 1);
+        end
+        if isfield(controller.sys, 'x0')
+            vars.OpPoint = controller.sys.x0;
+        else
+            vars.OpPoin=  zeros(n, 1);
+        end
+        if isfield(controller.sys, 'u0')
+            vars.OpPoint = [vars.OpPoint; controller.sys.u0];
+        else
+            vars.OpPoint = [vars.OpPoint; zeros(m, 1)];
+        end
+    end
     
     % Alpha and Beta
-    str.Beta = zeros(n,n,N);
-    str.Alpha = zeros(n,n,N-1);
+    vars.Beta = zeros(n,n,N);
+    vars.Alpha = zeros(n,n,N-1);
     for i = 1:N
-        str.Beta(:,:,i) = W3c((i-1)*n+(1:n),(i-1)*n+(1:n));
+        vars.Beta(:,:,i) = W3c((i-1)*n+(1:n),(i-1)*n+(1:n));
         for j = 1:n
-            str.Beta(j,j,i) = 1/str.Beta(j,j,i);
+            vars.Beta(j,j,i) = 1/vars.Beta(j,j,i);
         end
     end
     for i = 1:N-1
-        str.Alpha(:,:,i) = W3c((i-1)*n+(1:n),i*n+(1:n));
+        vars.Alpha(:,:,i) = W3c((i-1)*n+(1:n),i*n+(1:n));
     end
     
 end
