@@ -107,18 +107,24 @@ function gen_ellipMPC_ADMM_C(vars, options, save_name, override)
     [varsCell, idx] = addLine(varsCell, idx, 'qT', zeros(n, 1), 0, 'double', 'variable');
     
     %% Create text for variables
-    var_text = C_code.declareVariables(varsCell);
+    variable_text = C_code.declareVariables(varsCell);
     
-    %% Create text for code
+    %% Load the different text files needed to contruct the solver
     full_path = mfilename('fullpath');
     this_path = fileparts(full_path);
-    code_text = fileread([this_path '/code_ellipMPC_ADMM_C.txt']);
+    controller_text = fileread([this_path '/struct_ellipMPC_ADMM_C.txt']);
+    solver_text = fileread([this_path '/code_ellipMPC_ADMM_C.txt']);
     header_text = fileread([this_path '/header_ellipMPC_ADMM_C.txt']);
-    
+       
     %% Merge and insert text
-    controller_text = strrep(code_text, "$INSERT_NAME$", save_name);
-    controller_text = strrep(controller_text, "$INSERT_VARIABLES$", var_text);
-    header_text = strrep(header_text, "$INSERT_NAME$", save_name);
+    
+    % Main .c file
+    controller_text = strrep(controller_text, "$INSERT_SOLVER$", solver_text); % Insert solver text
+    controller_text = strrep(controller_text, "$INSERT_VARIABLES$", variable_text); % Insert variable text
+    controller_text = strrep(controller_text, "$INSERT_NAME$", save_name); % Insert name of file where necessary
+    
+    % Header .h file
+    header_text = strrep(header_text, "$INSERT_NAME$", save_name); % Insert name of file where necessary
     
     %% Generate files for the controller
     

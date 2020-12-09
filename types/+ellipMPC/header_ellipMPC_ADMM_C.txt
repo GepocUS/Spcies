@@ -1,13 +1,7 @@
 #ifndef $INSERT_NAME$_h
 #define $INSERT_NAME$_h
 
-double max(double num1, double num2);
-
-double min(double num1, double num2);
-
-double absolute(double num);
-
-void RMPC_ADMM(double *pointer_x0, double *my_xr, double *my_ur, double *u_opt, int *pointer_k, int *e_flag, double *z_opt);
+void ellipMPC_ADMM(double *pointer_x0, double *my_xr, double *my_ur, double *u_opt, int *pointer_k, int *e_flag, double *z_opt);
 
 #endif
 
