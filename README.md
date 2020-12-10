@@ -1,6 +1,6 @@
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/GepocUS/Spcies?include_prereleases&style=plastic)
-![GitHub](https://img.shields.io/github/license/GepocUS/Spcies?style=plastic)
 ![GitHub tag (latest SemVer pre-release)](https://img.shields.io/github/v/tag/GepocUS/Spcies?include_prereleases&style=plastic)
+![GitHub](https://img.shields.io/github/license/GepocUS/Spcies?style=plastic)
 
 # SPCIES
 
@@ -25,7 +25,7 @@ All contributions are welcome. Please report any issues or bugs in the [Github i
 
 ## Licence
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## Notice
 
