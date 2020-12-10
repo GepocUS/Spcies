@@ -10,6 +10,19 @@ This Matlab toolbox generates solvers for _model predictive controllers_ (MPC) i
 
 We support various MPC formulations, providing solvers based on _first order methods_. We focus of providing solvers that are suitable for their implementation in embedded systems, either because they are sparse, or because the MPC formulation is particularly suitable for this paradigm.
 
+## Installation
+
+Clone or download the repository into a directory $SPCIES$. Then, add the following folders to the Matlab path,
+
+> * $SPCIES$
+> * $SPCIES$/types
+> * $SPCIES$/targets
+> * $SPCIES$/targets/Matlab
+
+## Contributing
+
+All contributions are welcome. Please report any issues or bugs in the [Github issue tracker](https://github.com/GepocUS/Spcies/issues).
+
 ## Licence
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE.md](LICENSE.md) file for details.

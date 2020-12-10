@@ -21,11 +21,6 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-% Author: Pablo Krupa (pkrupa@us.es)
-% 
-% Changelog: 
-%   v0.1 (2020/10/16): Initial commit version
-
 function s = decVar(var)
 
     %% Initialize and rename the fields of "var"

@@ -23,12 +23,6 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-% Author: Pablo Krupa (pkrupa@us.es)
-% 
-% Changelog: 
-%   v0.1 (2020/12/08): Initial commit version
-%
-
 function Spcies_gen_var_declaration(vars, language, varargin)
 
     %% Default values

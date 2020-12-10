@@ -16,13 +16,6 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-% Author: Pablo Krupa (pkrupa@us.es)
-% 
-% Changelog: 
-%   v0.1 (2020/10/16): Initial commit version
-%   v0.2 (2020/12/07): Added parser and improved overall usability. Added documentation.
-%
-
 function gen_ellipMPC_ADMM_C(vars, options, save_name, override)
     import utils.addLine
     

@@ -14,11 +14,6 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-% Author: Pablo Krupa (pkrupa@us.es)
-% 
-% Changelog: 
-%   v0.1 (2020/09/03): Initial commit version
-
 function s = declareVariables(vars)
     import Unity.decVar;
     

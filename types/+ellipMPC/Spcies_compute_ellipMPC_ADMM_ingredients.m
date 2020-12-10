@@ -13,12 +13,6 @@
 %   - vars: Structure containing the ingredients required by the solver.
 % 
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
-% 
-% Author: Pablo Krupa (pkrupa@us.es)
-% 
-% Changelog: 
-%   v0.1 (2020/10/16): Initial commit version
-%   v0.2 (2020/12/07): Added parser and improved overall usability. Added documentation.
 %
 
 function vars = Spcies_compute_ellipMPC_ADMM_ingredients(controller, options)

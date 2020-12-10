@@ -22,15 +22,6 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-% Author: Pablo Krupa (pkrupa@us.es)
-% 
-% Changelog: 
-%   v0.1 (2020/09/03): Initial commit version
-%   v0.2 (2020/09/17): Added documentation
-%   v0.3 (2020/10/16): Added RMPC_ADMM
-%   v0.4 (2020/12/07): Added parser and improved overall usability
-%
-
 function vars = Spcies_gen_controller(varargin)
     import utils.determine_type;
 

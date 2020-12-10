@@ -12,11 +12,6 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-% Author: Pablo Krupa (pkrupa@us.es)
-% 
-% Changelog: 
-%   v0.1 (2020/09/04): Initial commit version
-
 function text = merger_Unity(var_text, code_text, name)
 
     % Header

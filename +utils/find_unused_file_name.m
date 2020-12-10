@@ -14,12 +14,6 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-% Author: Pablo Krupa (pkrupa@us.es)
-% 
-% Changelog: 
-%   v0.1 (2020/12/08): Initial commit version
-%
-
 function name = find_unused_file_name(base_name, extension)
     
     name = base_name;

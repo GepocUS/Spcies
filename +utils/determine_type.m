@@ -9,12 +9,6 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-% Author: Pablo Krupa (pkrupa@us.es)
-% 
-% Changelog: 
-%   v0.1 (2020/12/07): Initial commit version
-%
-
 function type = determine_type(controller)
 
     detected = true; % Flag used to determine if the type of controller has been detected
