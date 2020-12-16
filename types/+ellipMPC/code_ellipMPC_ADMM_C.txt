@@ -335,7 +335,7 @@ void ellipMPC_ADMM(double *pointer_x0, double *my_xr, double *my_ur, double *u_o
 
         // Compute the 1-norm of the residual
         res_1 = 0;
-        for(int l = 0; l < N-1; l++){
+        for(int l = 0; l < N+1; l++){
             for(int j = 0; j < nm; j++){
                 res_1 = ( res_1 > res[j][l]) ? res_1 : res[j][l]; // maximum between the two
             }
