@@ -30,12 +30,6 @@ function gen_ellipMPC_ADMM_C(vars, options, save_name, override)
         save_name = utils.find_unused_file_name(save_name, 'c');
     end
     
-    if options.const_are_static
-        const_type = 'static constant';
-    else
-        const_type = 'constant';
-    end
-    
     %% Rename variables for convenience
     n = vars.n;
     m = vars.m;
@@ -55,42 +49,41 @@ function gen_ellipMPC_ADMM_C(vars, options, save_name, override)
     if options.debug
         [varsCell, idx] = addLine(varsCell, idx, 'debug', 1, 1, 'bool', 'define');
     end
-    defines_text = C_code.declareVariables(varsCell);
+    define_text = C_code.declareVariables(varsCell);
     
     % Constants
     varsCell = cell(1, 5); idx = 1;
-    [varsCell, idx] = addLine(varsCell, idx, 'rho', vars.rho, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'rho_0', vars.rho_0, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'rho_N', vars.rho_N, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'rho_i', vars.rho_i, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'rho_i_0', vars.rho_i_0, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'rho_i_N', vars.rho_i_N, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'LBu0', vars.LBu0, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'UBu0', vars.UBu0, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'LBz', vars.LBz, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'UBz', vars.UBz, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'Hi', vars.Hi, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'Hi_0', vars.Hi_0, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'Hi_N', vars.Hi_N, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'AB', vars.AB, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'P', vars.P, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'P_half', vars.P_half, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'Pinv_half', vars.Pinv_half, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'Alpha', vars.Alpha, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'Beta', vars.Beta, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'Q', vars.Q, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'R', vars.R, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'T', vars.T, 1, 'double', const_type);
+    [varsCell, idx] = addLine(varsCell, idx, 'rho', vars.rho, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'rho_0', vars.rho_0, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'rho_N', vars.rho_N, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'rho_i', vars.rho_i, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'rho_i_0', vars.rho_i_0, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'rho_i_N', vars.rho_i_N, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'LBu0', vars.LBu0, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'UBu0', vars.UBu0, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'LBz', vars.LBz, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'UBz', vars.UBz, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'Hi', vars.Hi, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'Hi_0', vars.Hi_0, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'Hi_N', vars.Hi_N, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'AB', vars.AB, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'P', vars.P, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'P_half', vars.P_half, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'Pinv_half', vars.Pinv_half, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'Alpha', vars.Alpha, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'Beta', vars.Beta, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'Q', vars.Q, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'R', vars.R, 1, 'double', 'constant');
+    [varsCell, idx] = addLine(varsCell, idx, 'T', vars.T, 1, 'double', 'constant');
     if options.in_engineering
-        [varsCell, idx] = addLine(varsCell, idx, 'scaling_x', vars.scaling_x, 1, 'double', const_type);
-        [varsCell, idx] = addLine(varsCell, idx, 'scaling_i_u', vars.scaling_u, 1, 'double', const_type);
-        [varsCell, idx] = addLine(varsCell, idx, 'OpPoint_x', vars.OpPoint_x, 1, 'double', const_type);
-        [varsCell, idx] = addLine(varsCell, idx, 'OpPoint_u', vars.OpPoint_u, 1, 'double', const_type);
+        [varsCell, idx] = addLine(varsCell, idx, 'scaling_x', vars.scaling_x, 1, 'double', 'constant');
+        [varsCell, idx] = addLine(varsCell, idx, 'scaling_i_u', vars.scaling_u, 1, 'double', 'constant');
+        [varsCell, idx] = addLine(varsCell, idx, 'OpPoint_x', vars.OpPoint_x, 1, 'double', 'constant');
+        [varsCell, idx] = addLine(varsCell, idx, 'OpPoint_u', vars.OpPoint_u, 1, 'double', 'constant');
     end
     constants_text = C_code.declareVariables(varsCell);
     
     % Variables
-    varsCell = cell(1, 5); idx = 1;
 %     [varsCell, idx] = addLine(varsCell, idx, 'z', zeros(m+n, N-1), 0, 'double', 'variable');
 %     [varsCell, idx] = addLine(varsCell, idx, 'z_0', zeros(m, 1), 0, 'double', 'variable');
 %     [varsCell, idx] = addLine(varsCell, idx, 'z_N', zeros(n, 1), 0, 'double', 'variable');
@@ -107,10 +100,10 @@ function gen_ellipMPC_ADMM_C(vars, options, save_name, override)
     [varsCell, idx] = addLine(varsCell, idx, 'r', vars.r, 1, 'double', 'variable');
 %     [varsCell, idx] = addLine(varsCell, idx, 'q', zeros(n+m, 1), 0, 'double', 'variable');
 %     [varsCell, idx] = addLine(varsCell, idx, 'qT', zeros(n, 1), 0, 'double', 'variable');
-    variables_text = C_code.declareVariables(varsCell);
+    constants_text = C_code.declareVariables(varsCell);
     
     %% Create text for variables
-    variables_text = C_code.declareVariables(varsCell);
+    variable_text = C_code.declareVariables(varsCell);
     
     %% Load the different text files needed to contruct the solver
     full_path = mfilename('fullpath');
@@ -123,9 +116,7 @@ function gen_ellipMPC_ADMM_C(vars, options, save_name, override)
     
     % Main .c file
     controller_text = strrep(controller_text, "$INSERT_SOLVER$", solver_text); % Insert solver text
-    controller_text = strrep(controller_text, "$INSERT_DEFINES$", defines_text); % Insert constants text
-    controller_text = strrep(controller_text, "$INSERT_VARIABLES$", variables_text); % Insert variable text
-    controller_text = strrep(controller_text, "$INSERT_CONSTANTS$", constants_text); % Insert constants text
+    controller_text = strrep(controller_text, "$INSERT_VARIABLES$", variable_text); % Insert variable text
     controller_text = strrep(controller_text, "$INSERT_NAME$", save_name); % Insert name of file where necessary
     
     % Header .h file

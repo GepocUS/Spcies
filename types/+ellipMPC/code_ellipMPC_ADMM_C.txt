@@ -16,43 +16,61 @@ void ellipMPC_ADMM(double *pointer_x0, double *my_xr, double *my_ur, double *u_o
     // Initialize ADMM variables
     int done = 0; // Flag used to determine when the algorithm should exit
     int k = 0; // Number of iterations
-    double x0[n];
-    double v[nm][N-1];
+    unsigned int res_1 = 0; // Used to determine if the solution has been found
+    double x0[n]; // Current system state
+    double v[nm][N-1]; // Decision variables v
     double v_0[m];
     double v_N[n];
-    double lambda[nm][N-1];
+    double lambda[nm][N-1]; // Dual variables lambda
     double lambda_0[m];
     double lambda_N[n];
-
+    double z[nm][N-1] = {{0.0}}; // Decision variables z
+    double z_0[m] = {0.0};
+    double z_N[n] = {0.0};
+    double z1[nm][N-1] = {{0.0}}; // Value of the decision variables z at the last iteration
+    double z1_0[m] = {0.0};
+    double z1_N[n] = {0.0};
+    double aux_N[n] = {0.0}; // Auxiliary array used for multiple purposes
+    double mu[n][N] = {{0.0}}; // Used to solve the system of equations
+    double res[nm][N+1] = {{0.0}}; // Residual z1 - z
+    double b[n] = {0.0}; // First n components of vector b (the rest are known to be zero)
+    double vPv; // Variable used to compute the P-projection onto the ellipsoid
+    double q[nm] = {0.0};
+    double qT[n] = {0.0};
+    $INSERT_VARIABLES$
+    
+    // Constant variables
+    $INSERT_CONSTANTS$
+    
     // Obtain variables in scaled units
     #if in_engineering == 1
-    for(int i = 0; i < nm; i++){
+    for(unsigned int i = 0; i < nm; i++){
         x0[i] = scaling_x[i]*( pointer_x0[i] - OpPoint_x[i] );
     }
     #endif
     #if in_engineering == 0
-    for(int i = 0; i < n; i++){
+    for(unsigned int i = 0; i < n; i++){
         x0[i] = pointer_x0[i];
     }
     #endif
 
     // Update first n elements of beq
-    for(int j = 0; j < n; j++){
+    for(unsigned int j = 0; j < n; j++){
         b[j] = 0.0;
-        for(int i = 0; i < n; i++){
+        for(unsigned int i = 0; i < n; i++){
             b[j] = b[j] - AB[j][i]*x0[i];
         }
     }
 
     // Update the reference
-    for(int j = 0; j < n; j++){
+    for(unsigned int j = 0; j < n; j++){
         q[j] = Q[j]*my_xr[j];
         qT[j] = 0.0;
-        for(int i = 0; i < n; i++){
+        for(unsigned int i = 0; i < n; i++){
             qT[j] = qT[j] + T[j][i]*my_xr[i];
         }
     }
-    for(int j = 0; j < m; j++){
+    for(unsigned int j = 0; j < m; j++){
         q[j+n] = R[j]*my_ur[j];
     }
 
@@ -62,23 +80,27 @@ void ellipMPC_ADMM(double *pointer_x0, double *my_xr, double *my_ur, double *u_o
         k += 1; // Increment iteration counter
 
         // Step 0: Save the value of z into variable z1
+        memcpy(z1_0,z_0,sizeof(double)*m);
+        memcpy(z1,z,sizeof(double)*(N-1)*nm);
+        memcpy(z1_N,z_N,sizeof(double)*n);
 
+        // TODO: Add as optional (if memcpy is not available in all devices) or delete this code
         // Compute the first m elements
-        for(int j = 0; j < m; j++){
-            z1_0[j] = z_0[j];
-        }
+        // for(unsigned int j = 0; j < m; j++){
+            // z1_0[j] = z_0[j];
+        // }
 
         // Compute all the other elements except the last n
-        for(int l = 0; l < N-1; l++){
-            for(int j = 0; j < nm; j++){
-                z1[j][l] = z[j][l];
-            }
-        }
+        // for(unsigned int l = 0; l < N-1; l++){
+            // for(unsigned int j = 0; j < nm; j++){
+                // z1[j][l] = z[j][l];
+            // }
+        // }
 
         // Compute the last n elements
-        for(int j = 0; j < n; j++){
-            z1_N[j] = z_N[j];
-        }
+        // for(unsigned int j = 0; j < n; j++){
+            // z1_N[j] = z_N[j];
+        // }
 
         // Step 1: Minimize w.r.t. z_hat
 
@@ -86,21 +108,21 @@ void ellipMPC_ADMM(double *pointer_x0, double *my_xr, double *my_ur, double *u_o
         // I store vector q_hat in z because I save memory and computation
         
         // Compute the firt m elements
-        for(int j = 0; j < m; j++){
+        for(unsigned int j = 0; j < m; j++){
             z_0[j] = q[j+n] + lambda_0[j] - rho_0[j]*v_0[j];
         }
 
         // Compute all the other elements except for the last n
-        for(int l = 0; l < N-1; l++){
-            for(int j = 0; j < nm; j++){
+        for(unsigned int j = 0; j < nm; j++){
+            for(unsigned int l = 0; l < N-1; l++){
                 z[j][l] = q[j] + lambda[j][l] - rho[j][l]*v[j][l];
             }
         }
 
         // Compute the last n elements
-        for(int j = 0; j < n; j++){
+        for(unsigned int j = 0; j < n; j++){
             z_N[j] = qT[j];
-            for(int i = 0; i < n; i++){
+            for(unsigned int i = 0; i < n; i++){
                 z_N[j] = z_N[j] + P_half[j][i]*lambda_N[i] - P[j][i]*rho_N[i]*v_N[i];
             }
         }
@@ -109,30 +131,31 @@ void ellipMPC_ADMM(double *pointer_x0, double *my_xr, double *my_ur, double *u_o
         // I store it in mu to save a bit of memory
 
         // Compute the firt n elements
-        for(int j = 0; j < n; j++){
+        for(unsigned int j = 0; j < n; j++){
             mu[j][0] = Hi[j][0]*z[j][0] - b[j];
-            for(int i = 0; i < m; i++){
+            for(unsigned int i = 0; i < m; i++){
                 mu[j][0] = mu[j][0] - AB[j][i+n]*Hi_0[i]*z_0[i];
             }
         }
 
         // Compute all the other elements except for the last n
-        for(int l = 1; l < N-1; l++){
-            for(int j = 0; j < n; j++){
+        for(unsigned int j = 0; j < n; j++){
+            for(unsigned int l = 1; l < N-1; l++){
                 mu[j][l] = Hi[j][l]*z[j][l];
-                for(int i = 0; i < nm; i++){
+                for(unsigned int i = 0; i < nm; i++){
                     mu[j][l] = mu[j][l] - AB[j][i]*Hi[i][l-1]*z[i][l-1];
                 }
             }
         }
 
         // Compute the last n elements
-        for(int j = 0; j < n; j++){
+        for(unsigned int j = 0; j < n; j++){
             mu[j][N-1] = 0.0;
-            for(int i = 0; i < n; i++){
+            for(unsigned int i = 0; i < n; i++){
                 mu[j][N-1] = mu[j][N-1] + Hi_N[j][i]*z_N[i];
             }
-            for(int i = 0; i < nm; i++){
+            // #pragma unroll 10000
+            for(unsigned int i = 0; i < nm; i++){
                 mu[j][N-1] = mu[j][N-1] - AB[j][i]*Hi[i][N-2]*z[i][N-2];
             }
         }
@@ -142,20 +165,20 @@ void ellipMPC_ADMM(double *pointer_x0, double *my_xr, double *my_ur, double *u_o
         // FORWARD SUBSTITUTION
 
         // Compute first n elements
-        for(int j = 0; j < n; j++){
-            for(int i = 0; i <= j-1; i++){
+        for(unsigned int j = 0; j < n; j++){
+            for(unsigned int i = 0; i < j; i++){
                 mu[j][0] = mu[j][0] - Beta[0][i][j]*mu[i][0];
             }
             mu[j][0] = Beta[0][j][j]*mu[j][0];
         }
 
         // Compute all the other elements except for the last n
-        for(int l = 1; l < N-1; l++){
-            for(int j = 0; j < n; j++){
-                for(int i = 0; i < n; i++){
+        for(unsigned int l = 1; l < N-1; l++){
+            for(unsigned int j = 0; j < n; j++){
+                for(unsigned int i = 0; i < n; i++){
                     mu[j][l] = mu[j][l] - Alpha[l-1][i][j]*mu[i][l-1];
                 }
-                for(int i = 0; i <= j-1; i++){
+                for(unsigned int i = 0; i < j; i++){
                     mu[j][l] = mu[j][l] - Beta[l][i][j]*mu[i][l];
                 }
                 mu[j][l] = Beta[l][j][j]*mu[j][l];
@@ -163,11 +186,11 @@ void ellipMPC_ADMM(double *pointer_x0, double *my_xr, double *my_ur, double *u_o
         }
 
         // Compute the last n elements
-        for(int j = 0; j < n; j++){
-            for(int i = 0; i < n; i++){
+        for(unsigned int j = 0; j < n; j++){
+            for(unsigned int i = 0; i < n; i++){
                 mu[j][N-1] = mu[j][N-1] - Alpha[N-2][i][j]*mu[i][N-2];
             }
-            for(int i = 0; i <= j-1; i++){
+            for(unsigned int i = 0; i < j; i++){
                 mu[j][N-1] = mu[j][N-1] - Beta[N-1][i][j]*mu[i][N-1];
             }
             mu[j][N-1] = Beta[N-1][j][j]*mu[j][N-1];
@@ -176,20 +199,20 @@ void ellipMPC_ADMM(double *pointer_x0, double *my_xr, double *my_ur, double *u_o
         // BACKWARD SUBSTITUTION
 
         // Compute the last n elements
-        for(int j = n-1; j >= 0; j--){
-            for(int i = n-1; i >= j+1; i--){
+        for(unsigned int j = n-1; j != -1; j--){
+            for(unsigned int i = n-1; i >= j+1; i--){
                 mu[j][N-1] = mu[j][N-1] - Beta[N-1][j][i]*mu[i][N-1];
             }
             mu[j][N-1] = Beta[N-1][j][j]*mu[j][N-1];
         }
 
         // Compute all the other elements except for the first n
-        for(int l = N-2; l >=1; l--){
-            for(int j = n-1; j >= 0; j--){
-                for(int i = n-1; i >= 0; i--){
+        for(unsigned int l = N-2; l >=1; l--){
+            for(unsigned int j = n-1; j != -1; j--){
+                for(unsigned int i = n-1; i != -1; i--){
                     mu[j][l] = mu[j][l] - Alpha[l][j][i]*mu[i][l+1];
                 }
-                for(int i = n-1; i >= j+1; i--){
+                for(unsigned int i = n-1; i >= j+1; i--){
                     mu[j][l] = mu[j][l] - Beta[l][j][i]*mu[i][l];
                 }
                 mu[j][l] = Beta[l][j][j]*mu[j][l];
@@ -197,11 +220,11 @@ void ellipMPC_ADMM(double *pointer_x0, double *my_xr, double *my_ur, double *u_o
         }
 
         // Compute the first n elements
-        for(int j = n-1; j >=0; j--){
-            for(int i = n-1; i >=0; i--){
+        for(unsigned int j = n-1; j != -1; j--){
+            for(unsigned int i = n-1; i != -1; i--){
                 mu[j][0] = mu[j][0] - Alpha[0][j][i]*mu[i][1];
             }
-            for(int i = n-1; i >= j+1; i--){
+            for(unsigned int i = n-1; i >= j+1; i--){
                 mu[j][0] = mu[j][0] - Beta[0][j][i]*mu[i][0];
             }
             mu[j][0] = Beta[0][j][j]*mu[j][0];
@@ -210,20 +233,20 @@ void ellipMPC_ADMM(double *pointer_x0, double *my_xr, double *my_ur, double *u_o
         // Compute z (note that, from before, we have that at this point z = q_hat)
 
         // Compute the first m elements
-        for(int j = 0; j < m; j++){
-            for(int i = 0; i < n; i++){
+        for(unsigned int j = 0; j < m; j++){
+            for(unsigned int i = 0; i < n; i++){
                 z_0[j] = z_0[j] + AB[i][j+n]*mu[i][0];
             }
             z_0[j] = -Hi_0[j]*z_0[j];
         }
 
         // Compute all the other elements except for the last n
-        for(int l = 0; l < N-1; l++){
-            for(int j = 0; j < n; j++){
+        for(unsigned int l = 0; l < N-1; l++){
+            for(unsigned int j = 0; j < n; j++){
                 z[j][l] = z[j][l] - mu[j][l];
             }
-            for(int j = 0; j < nm; j++){
-                for(int i = 0; i < n; i++){
+            for(unsigned int j = 0; j < nm; j++){
+                for(unsigned int i = 0; i < n; i++){
                     z[j][l] = z[j][l] + AB[i][j]*mu[i][l+1];
                 }
                 z[j][l] = -Hi[j][l]*z[j][l];
@@ -231,12 +254,12 @@ void ellipMPC_ADMM(double *pointer_x0, double *my_xr, double *my_ur, double *u_o
         }
 
         // Compute the last n elements
-        for(int j = 0; j < n; j++){
+        for(unsigned int j = 0; j < n; j++){
             aux_N[j] = z_N[j] - mu[j][N-1];
         }
-        for(int j = 0; j < n; j++){
+        for(unsigned int j = 0; j < n; j++){
             z_N[j] = 0.0;
-            for(int i = 0; i < n; i++){
+            for(unsigned int i = 0; i < n; i++){
                 z_N[j] = z_N[j] - Hi_N[j][i]*aux_N[i];
             }
         }
@@ -244,17 +267,15 @@ void ellipMPC_ADMM(double *pointer_x0, double *my_xr, double *my_ur, double *u_o
         // Step 2: Minimize w.r.t. v
 
         // Compute the first m variables
-        for(int j = 0; j < m; j++){
-
+        for(unsigned int j = 0; j < m; j++){
             v_0[j] = z_0[j] + rho_i_0[j]*lambda_0[j];
             v_0[j] = (v_0[j] > LBu0[j]) ? v_0[j] : LBu0[j]; // maximum between v and the lower bound
             v_0[j] = (v_0[j] > UBu0[j]) ? UBu0[j] : v_0[j]; // minimum between v and the upper bound
-
         }
 
         // Compute all the other elements except the last n
-        for(int l = 0; l < N-1; l++){
-            for(int j = 0; j < nm; j++){
+        for(unsigned int j = 0; j < nm; j++){
+            for(unsigned int l = 0; l < N-1; l++){
                 v[j][l] = z[j][l] + rho_i[j][l]*lambda[j][l];
                 v[j][l] = (v[j][l] > LBz[j][l]) ? v[j][l] : LBz[j][l]; // maximum between v and the lower bound
                 v[j][l] = (v[j][l] > UBz[j][l]) ? UBz[j][l] : v[j][l]; // minimum between v and the upper bound
@@ -264,29 +285,29 @@ void ellipMPC_ADMM(double *pointer_x0, double *my_xr, double *my_ur, double *u_o
         // Compute the last n elements
 
         // Compute the vector to be projected
-        for(int j = 0; j < n; j++){
+        for(unsigned int j = 0; j < n; j++){
             v_N[j] = z_N[j];
-            for(int i = 0; i < n; i++){
+            for(unsigned int i = 0; i < n; i++){
                 v_N[j] = v_N[j] + Pinv_half[j][i]*rho_i_N[i]*lambda_N[i];
             }
         }
 
         // Compute (v_N - c)'*P*(v_N - c)
-        for(int j = 0; j < n; j++){
+        for(unsigned int j = 0; j < n; j++){
             aux_N[j] = 0.0;
-            for(int i = 0; i < n; i++){
+            for(unsigned int i = 0; i < n; i++){
                 aux_N[j] = aux_N[j] + P[j][i]*( v_N[i] - c[i] );
             }
         }
         vPv = 0.0;
-        for(int j = 0; j < n; j++){
+        for(unsigned int j = 0; j < n; j++){
             vPv = vPv + ( v_N[j] - c[j] )*aux_N[j];
         }
 
         // If v_N does not belong to the ellipsoid I need to perform the projection step
         if( vPv > r*r){
             vPv = r/sqrt(vPv);
-            for(int j = 0; j < n; j++){
+            for(unsigned int j = 0; j < n; j++){
                 v_N[j] = vPv*( v_N[j] - c[j] ) + c[j];
             }
         }
@@ -294,56 +315,69 @@ void ellipMPC_ADMM(double *pointer_x0, double *my_xr, double *my_ur, double *u_o
         // Step 3: Update lambda
 
         // Compute the first m elements
-        for(int j = 0; j < m; j++){
+        for(unsigned int j = 0; j < m; j++){
             lambda_0[j] = lambda_0[j] + rho_0[j]*( z_0[j] - v_0[j] );
         }
+
         // Compute all the other elements except for the last n
-        for(int l = 0; l < N-1; l++){
-            for(int j = 0; j < nm; j++){
+        for(unsigned int j = 0; j < nm; j++){
+            for(unsigned int l = 0; l < N-1; l++){
                 lambda[j][l] = lambda[j][l] + rho[j][l]*( z[j][l] - v[j][l] );
             }
         }
+
         // Compute the last n elements
-        for(int j = 0; j < n; j++){
+        for(unsigned int j = 0; j < n; j++){
             aux_N[j] = rho_N[j]*(z_N[j] - v_N[j]);
         }
-        for(int j = 0; j < n; j++){
-            for(int i = 0; i < n; i++){
+        for(unsigned int j = 0; j < n; j++){
+            for(unsigned int i = 0; i < n; i++){
                 lambda_N[j] = lambda_N[j] + P_half[j][i]*aux_N[i];
             }
         }
         
         // Step 4: Compute the residual
+        res_1 = 0;
 
         // Compute the first m elements
-        for(int j = 0; j < m; j++){
+        for(unsigned int j = 0; j < m; j++){
             res[j][0] = z1_0[j] - z_0[j];
             res[j][0] = ( res[j][0] > 0.0 ) ? res[j][0] : -res[j][0]; // absolute value
-        }
-        // Compute all the other elements except for the last n
-        for(int l = 0; l < N-1; l++){
-            for(int j = 0; j < nm; j++){
-                res[j][l+1] = z1[j][l] - z[j][l];
-                res[j][l+1] = ( res[j][l+1] > 0.0 ) ? res[j][l+1] : -res[j][l+1]; // absolute value
+            if(res[j][0] > tol){
+                res_1 = 1;
+                break;
             }
-        }
-        // Compute the last n elements
-        for(int j = 0; j < n; j++){
-            res[j][N] = z1_N[j] - z_N[j];
-            res[j][N] = ( res[j][N] > 0.0 ) ? res[j][N] : -res[j][N]; // absolute value
         }
 
-        // Compute the 1-norm of the residual
-        res_1 = 0;
-        for(int l = 0; l < N+1; l++){
-            for(int j = 0; j < nm; j++){
-                res_1 = ( res_1 > res[j][l]) ? res_1 : res[j][l]; // maximum between the two
+        // Compute all the other elements except for the last n
+        if(res_1 == 0){
+        for(unsigned int j = 0; j < nm; j++){
+            for(unsigned int l = 0; l < N-1; l++){
+                res[j][l+1] = z1[j][l] - z[j][l];
+                res[j][l+1] = ( res[j][l+1] > 0.0 ) ? res[j][l+1] : -res[j][l+1]; // absolute value
+                if(res[j][l+1] > tol){
+                    res_1 = 1;
+                    break;
+                }
             }
+        }
+        }
+
+        // Compute the last n elements
+        if(res_1 == 0){
+        for(unsigned int j = 0; j < n; j++){
+            res[j][N] = z1_N[j] - z_N[j];
+            res[j][N] = ( res[j][N] > 0.0 ) ? res[j][N] : -res[j][N]; // absolute value
+            if(res[j][N] > tol){
+                res_1 = 1;
+                break;
+            }
+        }
         }
 
         // Step 5: Exit condition
 
-        if(res_1 <= tol){
+        if(res_1 == 0){
             done = 1;
             *e_flag = 1;
         }
@@ -356,12 +390,12 @@ void ellipMPC_ADMM(double *pointer_x0, double *my_xr, double *my_ur, double *u_o
 
     // Control action
     #if in_engineering == 1
-    for(int j = 0; j < m; j++){
+    for(unsigned int j = 0; j < m; j++){
         u_opt[j] = v_0[j]*scaling_u[j] + OpPoint_u[j];
     }
     #endif
     #if in_engineering == 0
-    for(int j = 0; j < m; j++){
+    for(unsigned int j = 0; j < m; j++){
         u_opt[j] = v_0[j];
     }
     #endif
@@ -373,24 +407,25 @@ void ellipMPC_ADMM(double *pointer_x0, double *my_xr, double *my_ur, double *u_o
     // Optimal decision variables
 
     // First m variables
-    int count_z = -1;
-    for(int j = 0; j < m; j++){
+    unsigned int count_z = -1;
+    for(unsigned int j = 0; j < m; j++){
         count_z++;
         z_opt[count_z] = z_0[j];
     }
     // All other elements except the last n
-    for(int l = 0; l < N-1; l++){
-        for(int j = 0; j < nm; j++){
+    for(unsigned int l = 0; l < N-1; l++){
+        for(unsigned int j = 0; j < nm; j++){
             count_z++;
             z_opt[count_z] = z[j][l];
         }
     }
     // Last n elements
-    for(int j = 0; j < n; j++){
+    for(unsigned int j = 0; j < n; j++){
         count_z++;
         z_opt[count_z] = z_N[j];
         
     }
     #endif
+
 
 }

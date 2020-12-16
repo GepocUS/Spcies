@@ -88,12 +88,8 @@ function s = decVar(var)
     
     % Add the const tag if the class is set to 'constant'
     if strcmp(class, 'constant')
+        if 
         s = [s sprintf('const ')];
-    end
-    
-    % Add the const tag if the class is set to 'constant'
-    if strcmp(class, 'static constant')
-        s = [s sprintf('static const ')];
     end
     
     % Set type and name

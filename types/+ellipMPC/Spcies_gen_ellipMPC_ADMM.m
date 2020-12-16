@@ -28,7 +28,9 @@ function vars = Spcies_gen_ellipMPC_ADMM(varargin)
     def_k_max = 1000;
     def_in_engineering = false;
     def_debug = false;
-    def_options = struct('rho', def_rho, 'tol', def_tol, 'k_max', def_k_max, 'in_engineering', def_in_engineering, 'debug', def_debug);
+    def_const_are_static = true;
+    def_options = struct('rho', def_rho, 'tol', def_tol, 'k_max', def_k_max, 'in_engineering',...
+                         def_in_engineering, 'debug', def_debug, 'const_are_static', def_const_are_static);
     
     %% Parser
     par = inputParser;
@@ -58,6 +60,7 @@ function vars = Spcies_gen_ellipMPC_ADMM(varargin)
     if ~isfield(options, 'k_max'); options.k_max = def_k_max; end
     if ~isfield(options, 'in_engineering'); options.in_engineering = def_in_engineering; end
     if ~isfield(options, 'debug'); options.debug = def_debug; end
+    if ~isfield(options, 'const_are_static'); options.const_are_static = def_const_are_static; end
     
     %% Compute the ingredients of the controller
     vars = ellipMPC.Spcies_compute_ellipMPC_ADMM_ingredients(par.Results.controller, options);
