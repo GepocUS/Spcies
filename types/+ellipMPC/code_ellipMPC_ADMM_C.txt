@@ -34,7 +34,9 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
     double z1_N[n] = {0.0};
     double aux_N[n] = {0.0}; // Auxiliary array used for multiple purposes
     double mu[n][N] = {{0.0}}; // Used to solve the system of equations
-    double res[nm][N+1] = {{0.0}}; // Residual z1 - z
+    unsigned int res_flag = 0; // Flag used to determine if the exit condition is satisfied
+    double res_fixed_point; // Variable used to determine if a fixed point has been reached
+    double res_primal_feas; // Variable used to determine if primal feasibility is satisfied
     double b[n] = {0.0}; // First n components of vector b (the rest are known to be zero)
     double vPv; // Variable used to compute the P-projection onto the ellipsoid
     double q[nm] = {0.0};
@@ -345,49 +347,61 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
                 lambda_N[j] = lambda_N[j] + P_half[j][i]*aux_N[i];
             }
         }
-        
+
         // Step 4: Compute the residual
-        res_1 = 0;
+
+        res_flag = 0; // Reset the residual flag
 
         // Compute the first m elements
         for(unsigned int j = 0; j < m; j++){
-            res[j][0] = z1_0[j] - z_0[j];
-            res[j][0] = ( res[j][0] > 0.0 ) ? res[j][0] : -res[j][0]; // absolute value
-            if(res[j][0] > tol){
-                res_1 = 1;
+            res_fixed_point = z1_0[j] - z_0[j];
+            res_primal_feas = z_0[j] - v_0[j];
+            // Obtain absolute values
+            res_fixed_point = ( res_fixed_point > 0.0 ) ? res_fixed_point : -res_fixed_point;
+            res_primal_feas = ( res_primal_feas > 0.0 ) ? res_primal_feas : -res_primal_feas;
+            if( res_fixed_point > tol || res_primal_feas > tol)
+                res_flag = 1;
                 break;
             }
         }
 
-        // Compute all the other elements except for the last n
-        if(res_1 == 0){
-        for(unsigned int j = 0; j < nm; j++){
-            for(unsigned int l = 0; l < N-1; l++){
-                res[j][l+1] = z1[j][l] - z[j][l];
-                res[j][l+1] = ( res[j][l+1] > 0.0 ) ? res[j][l+1] : -res[j][l+1]; // absolute value
-                if(res[j][l+1] > tol){
-                    res_1 = 1;
+        // Compute the last N elements
+        if(res_flag == 0){
+            for(unsigned int j = 0; j < n; j++){
+                res_fixed_point = z1_N[j] - z_N[j];
+                res_primal_feas = z_N[j] - v_N[j];
+                // Obtain absolute values
+                res_fixed_point = ( res_fixed_point > 0.0 ) ? res_fixed_point : -res_fixed_point;
+                res_primal_feas = ( res_primal_feas > 0.0 ) ? res_primal_feas : -res_primal_feas;
+                if( res_fixed_point > tol || res_primal_feas > tol)
+                    res_flag = 1;
                     break;
                 }
             }
         }
-        }
 
-        // Compute the last n elements
-        if(res_1 == 0){
-        for(unsigned int j = 0; j < n; j++){
-            res[j][N] = z1_N[j] - z_N[j];
-            res[j][N] = ( res[j][N] > 0.0 ) ? res[j][N] : -res[j][N]; // absolute value
-            if(res[j][N] > tol){
-                res_1 = 1;
-                break;
+        // Compute all the other elements
+        if(res_flag == 0){
+            for(unsigned int j = 0; j < nm; j++){
+                for(unsigned int l = 0; l < N-1; l++){
+                    res_fixed_point = z1[j][l] - z[j][l];
+                    res_primal_feas = z[j][l] - v[j][l];
+                    // Obtain absolute values
+                    res_fixed_point = ( res_fixed_point > 0.0 ) ? res_fixed_point : -res_fixed_point;
+                    res_primal_feas = ( res_primal_feas > 0.0 ) ? res_primal_feas : -res_primal_feas;
+                    if( res_fixed_point > tol || res_primal_feas > tol)
+                        res_flag = 1;
+                        break;
+                }
+                if(res_flag == 1){
+                    break;
+                }
             }
-        }
         }
 
         // Step 5: Exit condition
 
-        if(res_1 == 0){
+        if(res_flag == 0){
             done = 1;
             *e_flag = 1;
         }
