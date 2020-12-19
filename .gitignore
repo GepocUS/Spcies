@@ -1,5 +1,6 @@
 *.m~
 *.swp
 *.pdf
+*.asv
 /old/*
 /development/*

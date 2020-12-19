@@ -154,6 +154,7 @@ function vars = Spcies_compute_ellipMPC_ADMM_ingredients(controller, options)
     % Scaling vectors and operating point
     if isa(controller, 'ellipMPC')
         vars.scaling_x = controller.model.Nx;
+        vars.scaling_u = controller.model.Nu;
         vars.scaling_i_u = 1./controller.model.Nu;
         vars.OpPoint_x = controller.model.x0;
         vars.OpPoint_u = controllr.model.u0;
@@ -162,6 +163,11 @@ function vars = Spcies_compute_ellipMPC_ADMM_ingredients(controller, options)
             vars.scaling_x = controller.sys.Nx;
         else
             vars.scaling_x = ones(n, 1);
+        end
+        if isfield(controller.sys, 'Nu')
+            vars.scaling_u = controller.sys.Nu;
+        else
+            vars.scaling_u = ones(m, 1);
         end
         if isfield(controller.sys, 'Nu')
             vars.scaling_i_u = 1./controller.sys.Nu;

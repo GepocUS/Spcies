@@ -83,6 +83,7 @@ function gen_ellipMPC_ADMM_C(vars, options, save_name, override)
     [varsCell, idx] = addLine(varsCell, idx, 'T', vars.T, 1, 'double', const_type);
     if options.in_engineering
         [varsCell, idx] = addLine(varsCell, idx, 'scaling_x', vars.scaling_x, 1, 'double', const_type);
+        [varsCell, idx] = addLine(varsCell, idx, 'scaling_u', vars.scaling_u, 1, 'double', const_type);
         [varsCell, idx] = addLine(varsCell, idx, 'scaling_i_u', vars.scaling_u, 1, 'double', const_type);
         [varsCell, idx] = addLine(varsCell, idx, 'OpPoint_x', vars.OpPoint_x, 1, 'double', const_type);
         [varsCell, idx] = addLine(varsCell, idx, 'OpPoint_u', vars.OpPoint_u, 1, 'double', const_type);
