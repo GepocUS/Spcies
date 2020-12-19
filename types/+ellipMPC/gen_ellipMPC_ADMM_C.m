@@ -55,6 +55,7 @@ function gen_ellipMPC_ADMM_C(vars, options, save_name, override)
     if options.debug
         [varsCell, idx] = addLine(varsCell, idx, 'debug', 1, 1, 'bool', 'define');
     end
+    
     defines_text = C_code.declareVariables(varsCell);
     
     % Constants
@@ -88,26 +89,14 @@ function gen_ellipMPC_ADMM_C(vars, options, save_name, override)
         [varsCell, idx] = addLine(varsCell, idx, 'OpPoint_x', vars.OpPoint_x, 1, 'double', const_type);
         [varsCell, idx] = addLine(varsCell, idx, 'OpPoint_u', vars.OpPoint_u, 1, 'double', const_type);
     end
+    
     constants_text = C_code.declareVariables(varsCell);
     
     % Variables
     varsCell = cell(1, 5); idx = 1;
-%     [varsCell, idx] = addLine(varsCell, idx, 'z', zeros(m+n, N-1), 0, 'double', 'variable');
-%     [varsCell, idx] = addLine(varsCell, idx, 'z_0', zeros(m, 1), 0, 'double', 'variable');
-%     [varsCell, idx] = addLine(varsCell, idx, 'z_N', zeros(n, 1), 0, 'double', 'variable');
-%     [varsCell, idx] = addLine(varsCell, idx, 'z1', zeros(m+n, N-1), 0, 'double', 'variable');
-%     [varsCell, idx] = addLine(varsCell, idx, 'z1_0', zeros(m, 1), 0, 'double', 'variable');
-%     [varsCell, idx] = addLine(varsCell, idx, 'z1_N', zeros(n, 1), 0, 'double', 'variable');
-%     [varsCell, idx] = addLine(varsCell, idx, 'aux_N', zeros(n, 1), 0, 'double', 'variable');
-%     [varsCell, idx] = addLine(varsCell, idx, 'mu', zeros(n, N), 0, 'double', 'variable');
-%     [varsCell, idx] = addLine(varsCell, idx, 'res', zeros(n+m, N+1), 0, 'double', 'variable');
-%     [varsCell, idx] = addLine(varsCell, idx, 'res_1', 1, 0, 'double', 'variable');
-%     [varsCell, idx] = addLine(varsCell, idx, 'b', zeros(n, 1), 0, 'double', 'variable');
-%     [varsCell, idx] = addLine(varsCell, idx, 'vPv', 0, 0, 'double', 'variable');
     [varsCell, idx] = addLine(varsCell, idx, 'c', vars.c, 1, 'double', 'variable');
     [varsCell, idx] = addLine(varsCell, idx, 'r', vars.r, 1, 'double', 'variable');
-%     [varsCell, idx] = addLine(varsCell, idx, 'q', zeros(n+m, 1), 0, 'double', 'variable');
-%     [varsCell, idx] = addLine(varsCell, idx, 'qT', zeros(n, 1), 0, 'double', 'variable');
+    
     variables_text = C_code.declareVariables(varsCell);
     
     %% Create text for variables
