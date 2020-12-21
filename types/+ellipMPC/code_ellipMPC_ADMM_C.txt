@@ -76,14 +76,14 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
 
     // Update the reference
     for(unsigned int j = 0; j < n; j++){
-        q[j] = Q[j]*my_xr[j];
+        q[j] = Q[j]*xr[j];
         qT[j] = 0.0;
         for(unsigned int i = 0; i < n; i++){
-            qT[j] = qT[j] + T[j][i]*my_xr[i];
+            qT[j] = qT[j] + T[j][i]*xr[i];
         }
     }
     for(unsigned int j = 0; j < m; j++){
-        q[j+n] = R[j]*my_ur[j];
+        q[j+n] = R[j]*ur[j];
     }
 
     // Algorithm
@@ -359,7 +359,7 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
             // Obtain absolute values
             res_fixed_point = ( res_fixed_point > 0.0 ) ? res_fixed_point : -res_fixed_point;
             res_primal_feas = ( res_primal_feas > 0.0 ) ? res_primal_feas : -res_primal_feas;
-            if( res_fixed_point > tol || res_primal_feas > tol)
+            if( res_fixed_point > tol || res_primal_feas > tol){
                 res_flag = 1;
                 break;
             }
@@ -373,7 +373,7 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
                 // Obtain absolute values
                 res_fixed_point = ( res_fixed_point > 0.0 ) ? res_fixed_point : -res_fixed_point;
                 res_primal_feas = ( res_primal_feas > 0.0 ) ? res_primal_feas : -res_primal_feas;
-                if( res_fixed_point > tol || res_primal_feas > tol)
+                if( res_fixed_point > tol || res_primal_feas > tol){
                     res_flag = 1;
                     break;
                 }
@@ -389,9 +389,10 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
                     // Obtain absolute values
                     res_fixed_point = ( res_fixed_point > 0.0 ) ? res_fixed_point : -res_fixed_point;
                     res_primal_feas = ( res_primal_feas > 0.0 ) ? res_primal_feas : -res_primal_feas;
-                    if( res_fixed_point > tol || res_primal_feas > tol)
+                    if( res_fixed_point > tol || res_primal_feas > tol){
                         res_flag = 1;
                         break;
+                    }
                 }
                 if(res_flag == 1){
                     break;
