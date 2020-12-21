@@ -20,12 +20,12 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
     double x0[n]; // Current system state
     double xr[n]; // State reference
     double ur[m]; // Control input reference
-    double v[nm][N-1]; // Decision variables v
-    double v_0[m];
-    double v_N[n];
-    double lambda[nm][N-1]; // Dual variables lambda
-    double lambda_0[m];
-    double lambda_N[n];
+    double v[nm][N-1] = {0.0}; // Decision variables v
+    double v_0[m] = {0.0};
+    double v_N[n] = {0.0};
+    double lambda[nm][N-1] = {0.0}; // Dual variables lambda
+    double lambda_0[m] = {0.0};
+    double lambda_N[n] = {0.0};
     double z[nm][N-1] = {{0.0}}; // Decision variables z
     double z_0[m] = {0.0};
     double z_N[n] = {0.0};
