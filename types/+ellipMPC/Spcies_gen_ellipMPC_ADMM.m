@@ -66,12 +66,10 @@ function vars = Spcies_gen_ellipMPC_ADMM(varargin)
     vars = ellipMPC.Spcies_compute_ellipMPC_ADMM_ingredients(par.Results.controller, options);
     
     %% Call the funciton that constructs the controller
-    if strcmp(par.Results.target, 'C')
-        ellipMPC.gen_ellipMPC_ADMM_C(vars, options, par.Results.save_name, par.Results.override);   
+    if strcmp(par.Results.target, 'C') || strcmp(par.Results.target, 'Matlab')
+        ellipMPC.gen_ellipMPC_ADMM_C(vars, options, par.Results.save_name, par.Results.override, par.Results.target);
     else
-        if ~strcmp(par.Results.target, 'Matlab')
-            error('Target not recognized or supported');
-        end
+        error('Target not recognized or supported');
     end
     
 end
