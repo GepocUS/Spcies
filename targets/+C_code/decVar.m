@@ -194,11 +194,11 @@ function s = writeValue(value, type)
     if contains(type, 'int')
         s = sprintf('%d', value);
 
-    elseif contains(type, 'Bool')
+    elseif contains(type, 'bool')
         if value == true
-            s = sprintf('true');
+            s = sprintf('1');
         else
-            s = sprintf('false');
+            s = sprintf('0');
         end
 
     else
