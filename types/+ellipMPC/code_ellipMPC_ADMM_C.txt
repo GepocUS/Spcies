@@ -11,7 +11,7 @@
  * The optimal decision variables are returned in "z_opt" (only if "debug" is #defined).
  */
 
-#ifdef Matlab
+#ifdef CONF_MATLAB
 
 void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt){
 
@@ -23,7 +23,7 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
 
     // Initialize ADMM variables
     int done = 0; // Flag used to determine when the algorithm should exit
-    #ifdef Matlab    
+    #ifdef CONF_MATLAB
     double k = 0.0; // Number of iterations. In the Matlab case it is easier if it is defined as a double
     #else
     int k = 0; // Number of iterations
@@ -416,7 +416,7 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
 
         if(res_flag == 0){
             done = 1;
-            #ifdef Matlab
+            #ifdef CONF_MATLAB
             e_flag[0] = 1.0;
             #else
             *e_flag = 1;
@@ -424,7 +424,7 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
         }
         else if( k >= k_max ){
             done = 1;
-            #ifdef Matlab
+            #ifdef CONF_MATLAB
             e_flag[0] = -1.0;
             #else
             *e_flag = -1;
@@ -446,7 +446,7 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
     #endif
 
     // Resutn solutions
-    #ifdef Matlab
+    #ifdef CONF_MATLAB
     pointer_k[0] = k; // Number of iterations
     #else
     *pointer_k = k; // Number of iterations
@@ -475,6 +475,5 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
         
     }
     #endif
-
 
 }

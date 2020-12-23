@@ -1,7 +1,7 @@
 %% gen_ellipMPC_ADMM_C
 % Generates the text in C for the ADMM-based solver for MPC with ellipsoidal terminal constraint
 % 
-% Information about this formulaiton and the solver  can be found at:
+% Information about this formulaiton and the solver can be found at:
 % 
 % t.b.d.
 % 
@@ -10,14 +10,13 @@
 %   - options: Structure containing several options for the solver.
 %   - save_name: String containing the name of the file the controller is saved to.
 %   - override: Boolean that determines is the controller is overriden if the file already exists.
-%   - target: target embedded system that the controller is generated for.
 % 
 % OUTPUT: Saves the controller into a txt file in the current directory.
 % 
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function gen_ellipMPC_ADMM_C(vars, options, save_name, override, target)
+function gen_ellipMPC_ADMM_C(vars, options, save_name, override)
     import utils.addLine
     
     %% Evaluate function inputs
@@ -55,9 +54,6 @@ function gen_ellipMPC_ADMM_C(vars, options, save_name, override, target)
     [varsCell, idx] = addLine(varsCell, idx, 'in_engineering', options.in_engineering, 1, 'int', 'define');
     if options.debug
         [varsCell, idx] = addLine(varsCell, idx, 'debug', 1, 1, 'bool', 'define');
-    end
-    if strcmp(target, 'Matlab')
-        [varsCell, idx] = addLine(varsCell, idx, 'Matlab', 1, 1, 'bool', 'define');
     end
     
     defines_text = C_code.declareVariables(varsCell);
@@ -110,31 +106,24 @@ function gen_ellipMPC_ADMM_C(vars, options, save_name, override, target)
     full_path = mfilename('fullpath');
     this_path = fileparts(full_path);
     
-    if strcmp(target, 'C')
-        controller_text = fileread([this_path '/struct_ellipMPC_ADMM_C_plain.txt']);
-    elseif strcmp(target, 'Matlab')
-        controller_text = fileread([this_path '/struct_ellipMPC_ADMM_C_Matlab.txt']);
-    end
+    controller_text = fileread([this_path '/struct_ellipMPC_ADMM_C_plain.txt']);
     
     solver_text = fileread([this_path '/code_ellipMPC_ADMM_C.txt']);
     
-    if strcmp(target, 'C')
-        header_text = fileread([this_path '/header_ellipMPC_ADMM_C.txt']);
-    end
+    header_text = fileread([this_path '/header_ellipMPC_ADMM_C.txt']);
        
     %% Merge and insert text
     
     % Main .c file
     controller_text = strrep(controller_text, "$INSERT_SOLVER$", solver_text); % Insert solver text
-    controller_text = strrep(controller_text, "$INSERT_DEFINES$", defines_text); % Insert constants text
+    controller_text = strrep(controller_text, "$INSERT_DEFINES$", defines_text); % Insert defines text
     controller_text = strrep(controller_text, "$INSERT_VARIABLES$", variables_text); % Insert variable text
     controller_text = strrep(controller_text, "$INSERT_CONSTANTS$", constants_text); % Insert constants text
-    controller_text = strrep(controller_text, "$INSERT_NAME$", save_name); % Insert name of file where necessary
+    controller_text = strrep(controller_text, "$INSERT_NAME$", save_name); % Insert name of file
     
     % Header .h file
-    if strcmp(target, 'C')
-        header_text = strrep(header_text, "$INSERT_NAME$", save_name); % Insert name of file where necessary
-    end
+    header_text = strrep(header_text, "$INSERT_DEFINES$", defines_text); % Insert defines text
+    header_text = strrep(header_text, "$INSERT_NAME$", save_name); % Insert name of file
     
     %% Generate files for the controller
     
@@ -144,15 +133,8 @@ function gen_ellipMPC_ADMM_C(vars, options, save_name, override, target)
     fclose(controller_file);
     
     % Open write and save the header file
-    if strcmp(target, 'C')
-        header_file = fopen([save_name '.h'], 'wt');
-        fprintf(header_file, header_text);
-        fclose(header_file);
-    end
-    
-    %% Generate MEX file
-    if strcmp(target, 'Matlab')
-        eval(['mex ' save_name '.c']);
-    end
+    header_file = fopen([save_name '.h'], 'wt');
+    fprintf(header_file, header_text);
+    fclose(header_file);
     
 end
