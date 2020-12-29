@@ -190,6 +190,13 @@ end
 %% Auxiliary function that writes the value of the variable according to its type
 
 function s = writeValue(value, type)
+    max_inf = 1e20;
+    min_inf = -1e20;
+    value(value==inf) = max_inf;
+    value(value==-inf) = min_inf;
+    if value==-inf
+        disp('here');
+    end
     
     if contains(type, 'int')
         s = sprintf('%d', value);
