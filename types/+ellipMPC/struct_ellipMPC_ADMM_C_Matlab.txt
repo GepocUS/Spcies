@@ -33,19 +33,19 @@ void mexFunction(int nlhs, mxArray *plhs[],
     }
 
     // Check that x0 is of the correct dimension
-    if( !mxIsDouble(prhs[0]) || mxGetNumberOfElements(prhs[0]) != n ){
+    if( !mxIsDouble(prhs[0]) || mxGetNumberOfElements(prhs[0]) != nn ){
         mexErrMsgIdAndTxt("Spcies:ellipMPC:nrhs:x0",
-                          "x0 must be of dimension n");
+                          "x0 must be of dimension nn");
     }
     // Check that xr is of the correct dimension
-    if( !mxIsDouble(prhs[1]) || mxGetNumberOfElements(prhs[1]) != n ){
+    if( !mxIsDouble(prhs[1]) || mxGetNumberOfElements(prhs[1]) != nn ){
         mexErrMsgIdAndTxt("Spcies:ellipMPC:nrhs:xr",
-                          "xr must be of dimension n");
+                          "xr must be of dimension nn");
     }
     // Check that ur is of the correct dimension
-    if( !mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != m ){
+    if( !mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != mm ){
         mexErrMsgIdAndTxt("Spcies:ellipMPC:nrhs:ur",
-                          "ur must be of dimension m");
+                          "ur must be of dimension mm");
     }
 
     // Read input data
@@ -68,11 +68,11 @@ void mexFunction(int nlhs, mxArray *plhs[],
     #endif
 
     // Prepare output data
-    plhs[0] = mxCreateDoubleMatrix(m, 1, mxREAL); // u_opt
+    plhs[0] = mxCreateDoubleMatrix(mm, 1, mxREAL); // u_opt
     plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL); // k
     //plhs[1] = mxCreateNumericMatrix(1, 1, mxINT32_CLASS, mxREAL);
     plhs[2] = mxCreateDoubleMatrix(1, 1, mxREAL); // e_flag
-    plhs[3] = mxCreateDoubleMatrix(N*nm, 1, mxREAL); // z_opt
+    plhs[3] = mxCreateDoubleMatrix(NN*nm, 1, mxREAL); // z_opt
 
     #if MX_HAS_INTERLEAVED_COMPLEX
     u_opt = mxGetDoubles(plhs[0]);

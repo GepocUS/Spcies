@@ -45,10 +45,10 @@ function gen_ellipMPC_ADMM_C(vars, options, save_name, override)
     
     % Defines
     varsCell = cell(1, 5); idx = 1;
-    [varsCell, idx] = addLine(varsCell, idx, 'n', n, 1, 'uint', 'define');
-    [varsCell, idx] = addLine(varsCell, idx, 'm', m, 1, 'uint', 'define');
+    [varsCell, idx] = addLine(varsCell, idx, 'nn', n, 1, 'uint', 'define');
+    [varsCell, idx] = addLine(varsCell, idx, 'mm', m, 1, 'uint', 'define');
     [varsCell, idx] = addLine(varsCell, idx, 'nm', n+m, 1, 'uint', 'define');
-    [varsCell, idx] = addLine(varsCell, idx, 'N', N, 1, 'uint', 'define');
+    [varsCell, idx] = addLine(varsCell, idx, 'NN', N, 1, 'uint', 'define');
     [varsCell, idx] = addLine(varsCell, idx, 'k_max', options.k_max, 1, 'uint', 'define');
     [varsCell, idx] = addLine(varsCell, idx, 'tol', options.tol, 1, 'float', 'define');
     [varsCell, idx] = addLine(varsCell, idx, 'in_engineering', options.in_engineering, 1, 'int', 'define');
