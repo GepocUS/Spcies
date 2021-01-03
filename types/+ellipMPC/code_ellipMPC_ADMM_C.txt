@@ -11,13 +11,15 @@
  * The optimal decision variables are returned in "z_opt" (only if "debug" is #defined).
  */
 
+#include <stdio.h>
+
 #ifdef CONF_MATLAB
 
-void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt){
+void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt){
 
 #else
 
-void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, int *pointer_k, int *e_flag, double *z_opt){
+void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, int *pointer_k, int *e_flag, solution *sol){
 
 #endif
 
@@ -56,7 +58,6 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
     
     // Constant variables
     $INSERT_CONSTANTS$
-    
 
     // Obtain variables in scaled units
     #if in_engineering == 1
@@ -451,29 +452,69 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
     *pointer_k = k; // Number of iterations
     #endif
 
-    #ifdef debug
-    // Optimal decision variables
+    // Save solution into structure
+    #ifdef DEBUG
+
+    #ifdef CONF_MATLAB
 
     // First mm variables
-    unsigned int count_z = -1;
+    int count = -1;
     for(unsigned int j = 0; j < mm; j++){
-        count_z++;
-        z_opt[count_z] = z_0[j];
+        count++;
+        z_opt[count] = z_0[j];
+        v_opt[count] = v_0[j];
+        lambda_opt[count] = lambda_0[j];
     }
+
     // All other elements except the last nn
     for(unsigned int l = 0; l < NN-1; l++){
         for(unsigned int j = 0; j < nm; j++){
-            count_z++;
-            z_opt[count_z] = z[l][j];
+            count++;
+            z_opt[count] = z[l][j];
+            v_opt[count] = v[l][j];
+            lambda_opt[count] = lambda[l][j];
         }
     }
+
     // Last nn elements
     for(unsigned int j = 0; j < nn; j++){
-        count_z++;
-        z_opt[count_z] = z_N[j];
-        
+        count++;
+        z_opt[count] = z_N[j];
+        v_opt[count] = v_N[j];
+        lambda_opt[count] = lambda_N[j];
     }
+
+    #else
+
+    // First mm variables
+    int count = -1;
+    for(unsigned int j = 0; j < mm; j++){
+        count++;
+        sol->z[count] = z_0[j];
+        sol->v[count] = v_0[j];
+        sol->lambda[count] = lambda_0[j];
+    }
+
+    // All other elements except the last nn
+    for(unsigned int l = 0; l < NN-1; l++){
+        for(unsigned int j = 0; j < nm; j++){
+            count++;
+            sol->z[count] = z[l][j];
+            sol->v[count] = v[l][j];
+            sol->lambda[count] = lambda[l][j];
+        }
+    }
+
+    // Last nn elements
+    for(unsigned int j = 0; j < nn; j++){
+        count++;
+        sol->z[count] = z_N[j];
+        sol->v[count] = v_N[j];
+        sol->lambda[count] = lambda_N[j];
+    }
+
+    #endif
+
     #endif
 
 }
-

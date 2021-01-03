@@ -53,7 +53,7 @@ function gen_ellipMPC_ADMM_C(vars, options, save_name, override)
     [varsCell, idx] = addLine(varsCell, idx, 'tol', options.tol, 1, 'float', 'define');
     [varsCell, idx] = addLine(varsCell, idx, 'in_engineering', options.in_engineering, 1, 'int', 'define');
     if options.debug
-        [varsCell, idx] = addLine(varsCell, idx, 'debug', 1, 1, 'bool', 'define');
+        [varsCell, idx] = addLine(varsCell, idx, 'DEBUG', 1, 1, 'bool', 'define');
     end
     
     defines_text = C_code.declareVariables(varsCell);
