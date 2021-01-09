@@ -42,7 +42,7 @@ function gen_ellipMPC_ADMM_Matlab(vars, options, save_name, override)
     full_path = mfilename('fullpath');
     this_path = fileparts(full_path);
     
-    mex_text = fileread([this_path '/struct_ellipMPC_ADMM_C_Matlab.txt']);
+    mex_text = fileread([this_path '/struct_ellipMPC_ADMM_C_Matlab.c']);
     
     mex_text = strrep(mex_text, "$INSERT_NAME$", save_name); % Insert name of file
     

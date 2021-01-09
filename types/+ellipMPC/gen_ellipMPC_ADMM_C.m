@@ -106,11 +106,11 @@ function gen_ellipMPC_ADMM_C(vars, options, save_name, override)
     full_path = mfilename('fullpath');
     this_path = fileparts(full_path);
     
-    controller_text = fileread([this_path '/struct_ellipMPC_ADMM_C_plain.txt']);
+    controller_text = fileread([this_path '/struct_ellipMPC_ADMM_C_plain.c']);
     
-    solver_text = fileread([this_path '/code_ellipMPC_ADMM_C.txt']);
+    solver_text = fileread([this_path '/code_ellipMPC_ADMM_C.c']);
     
-    header_text = fileread([this_path '/header_ellipMPC_ADMM_C.txt']);
+    header_text = fileread([this_path '/header_ellipMPC_ADMM_C.h']);
        
     %% Merge and insert text
     
