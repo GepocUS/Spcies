@@ -17,6 +17,8 @@ function type = determine_type(controller)
     if isa(controller, 'ssMPC')
         if isa(controller, 'TrackingMPC')
             type = 'MPCT'; % MPC for traking formulation
+        elseif isa(controller, 'LaxMPC')
+            type = 'laxMPC';
         else
             detected = false;
         end
@@ -33,6 +35,9 @@ function type = determine_type(controller)
         % Test for MPC with ellipsoidal terminal set
         elseif isfield(controller.param, 'c')
             type = 'ellipMPC';
+            detected = true;
+        elseif isfield(controller.param, 'P')
+            type = 'laxMPC';
             detected = true;
         end
     end

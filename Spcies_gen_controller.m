@@ -75,6 +75,9 @@ function vars = Spcies_gen_controller(varargin)
     elseif strcmp(type, 'ellipMPC')
         vars = ellipMPC.Spcies_gen_ellipMPC_ADMM(controller, 'target', par.Results.target, 'override', par.Results.override,...
                                                 'options', par.Results.options, 'save_name', par.Results.save_name);
+    elseif strcmp(type, 'laxMPC')
+        vars = laxMPC.Spcies_gen_laxMPC_ADMM(controller, 'target', par.Results.target, 'override', par.Results.override,...
+                                                'options', par.Results.options, 'save_name', par.Results.save_name);
     else
         error('Spcies:gen_controller:input_error', 'Type not recognized or supported');
     end
