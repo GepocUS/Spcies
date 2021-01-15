@@ -30,6 +30,7 @@ function vars = Spcies_gen_controller(varargin)
     def_target = 'Matlab'; % Default target
     def_options = []; % Default value of the options argument
     def_save_name = ''; % Default value of the save_name argument
+    def_directory = './'; % Default value of the directory where to save files
     def_sys = []; % Default value for the sys argument
     def_param = []; % Default value for the param argument
     def_controller = []; % Default value for the controller argument
@@ -45,6 +46,7 @@ function vars = Spcies_gen_controller(varargin)
     addParameter(par, 'param', def_param, @(x) isstruct(x));
     addParameter(par, 'controller', def_controller, @(x) isa(x, 'ssMPC'));
     addParameter(par, 'save_name', def_save_name, @(x) ischar(x));
+    addParameter(par, 'directory', def_directory, @(x) ischar(x));
     addParameter(par, 'options', def_options, @(x) isstruct(x));
     addParameter(par, 'type', def_type, @(x) ischar(x));
     addParameter(par, 'target', def_target, @(x) ischar(x));
@@ -52,6 +54,12 @@ function vars = Spcies_gen_controller(varargin)
     
     % Parse
     parse(par, varargin{:});
+    directory = par.Results.directory;
+    
+    % Check arguments
+    if isempty(directory)
+        directory = def_directory;
+    end
     
     %% Create the controller structure, which either contains the param and sys structures or the controller object
     if isempty(par.Results.controller)
@@ -71,13 +79,13 @@ function vars = Spcies_gen_controller(varargin)
     %% Generate the controller
     if strcmp(type, 'MPCT')
         vars = MPCT.Spcies_gen_MPCT_EADMM(controller, 'target', par.Results.target, 'override', par.Results.override,...
-                                         'options', par.Results.options, 'save_name', par.Results.save_name);
+                                         'options', par.Results.options, 'save_name', par.Results.save_name, 'directory', directory);
     elseif strcmp(type, 'ellipMPC')
         vars = ellipMPC.Spcies_gen_ellipMPC_ADMM(controller, 'target', par.Results.target, 'override', par.Results.override,...
-                                                'options', par.Results.options, 'save_name', par.Results.save_name);
+                                                'options', par.Results.options, 'save_name', par.Results.save_name, 'directory', directory);
     elseif strcmp(type, 'laxMPC')
         vars = laxMPC.Spcies_gen_laxMPC_ADMM(controller, 'target', par.Results.target, 'override', par.Results.override,...
-                                                'options', par.Results.options, 'save_name', par.Results.save_name);
+                                                'options', par.Results.options, 'save_name', par.Results.save_name, 'directory', directory);
     else
         error('Spcies:gen_controller:input_error', 'Type not recognized or supported');
     end
