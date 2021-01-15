@@ -23,6 +23,7 @@ function vars = Spcies_gen_laxMPC_ADMM(varargin)
     %% Default values
     def_target = 'Matlab'; % Default target
     def_save_name = ''; % Default value of the save_name argument
+    def_directory = './'; % Default value of the directory where to save files
     % Default values of the options argumenr
     def_rho = 1e-2;
     def_tol = 1e-4;
@@ -44,6 +45,7 @@ function vars = Spcies_gen_laxMPC_ADMM(varargin)
     % Name-value parameters
     addParameter(par, 'target', def_target, @(x) ischar(x));
     addParameter(par, 'save_name', def_save_name, @(x) ischar(x));
+    addParameter(par, 'directory', def_directory, @(x) ischar(x));
     addParameter(par, 'options', def_options, @(x) isstruct(x) || isempty(x));
     addParameter(par, 'override', [], @(x) islogical(x) || x==1 || x==0);
     
@@ -68,9 +70,9 @@ function vars = Spcies_gen_laxMPC_ADMM(varargin)
     
     %% Call the funciton that constructs the controller
     if strcmp(par.Results.target, 'C') 
-        laxMPC.gen_laxMPC_ADMM_C(vars, options, par.Results.save_name, par.Results.override);
+        laxMPC.gen_laxMPC_ADMM_C(vars, options, par.Results.save_name, par.Results.directory, par.Results.override);
     elseif strcmp(par.Results.target, 'Matlab')
-        laxMPC.gen_laxMPC_ADMM_Matlab(vars, options, par.Results.save_name, par.Results.override);
+        laxMPC.gen_laxMPC_ADMM_Matlab(vars, options, par.Results.save_name, par.Results.directory, par.Results.override);
     else
         error('Target not recognized or supported');
     end

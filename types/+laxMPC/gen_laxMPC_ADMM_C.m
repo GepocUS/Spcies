@@ -17,7 +17,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function gen_laxMPC_ADMM_C(vars, options, save_name, override)
+function gen_laxMPC_ADMM_C(vars, options, save_name, directory, override)
     import utils.addLine
     
     %% Evaluate function inputs
@@ -117,12 +117,12 @@ function gen_laxMPC_ADMM_C(vars, options, save_name, override)
     %% Generate files for the controller
     
     % Open write and save the controller file
-    controller_file = fopen([save_name '.c'], 'wt');
+    controller_file = fopen([directory save_name '.c'], 'wt');
     fprintf(controller_file, controller_text);
     fclose(controller_file);
     
     % Open write and save the header file
-    header_file = fopen([save_name '.h'], 'wt');
+    header_file = fopen([directory save_name '.h'], 'wt');
     fprintf(header_file, header_text);
     fclose(header_file);
     

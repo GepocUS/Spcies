@@ -26,8 +26,9 @@
 function Spcies_gen_var_declaration(vars, language, varargin)
 
     %% Default values
-    def_save_name = 'var_dec';
-    def_override = true;
+    def_save_name = 'var_dec';  % Default value of the save_name argument
+    def_directory = './'; % Default value of the directory where to save files
+    def_override = true; % Default value of the option that determines if files are overwritten
     
     %% Parser
     par = inputParser;
@@ -40,10 +41,17 @@ function Spcies_gen_var_declaration(vars, language, varargin)
     
     % Name-value parameters
     addParameter(par, 'save_name', def_save_name, @(x) ischar(x));
+    addParameter(par, 'directory', def_directory, @(x) ischar(x));
     addParameter(par, 'override', def_override, @(x) islogical(x) || x==1 || x==0);
     
     % Parse
     parse(par,  vars, language, varargin{:})
+    directory = par.Results.directory;
+    
+    % Check arguments
+    if isempty(directory)
+        directory = def_directory;
+    end
     
     %% Generate text containing the variables
     if strcmp(language, 'C')
@@ -63,7 +71,7 @@ function Spcies_gen_var_declaration(vars, language, varargin)
     if ~par.Results.override
         par.Results.save_name = utils.find_unused_file_name(par.Results.save_name, extension);
     end
-    my_file = fopen([par.Results.save_name '.' extension], 'wt');
+    my_file = fopen([directory par.Results.save_name '.' extension], 'wt');
     fprintf(my_file, var_text);
     fclose(my_file);
     

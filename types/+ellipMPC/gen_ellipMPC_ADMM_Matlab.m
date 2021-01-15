@@ -16,7 +16,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function gen_ellipMPC_ADMM_Matlab(vars, options, save_name, override)
+function gen_ellipMPC_ADMM_Matlab(vars, options, save_name, directory, override)
 
     %% Evaluate function inputs
     def_save_name = 'ellipMPC';
@@ -36,7 +36,7 @@ function gen_ellipMPC_ADMM_Matlab(vars, options, save_name, override)
     end
     
     %% Create the plain C files
-    ellipMPC.gen_ellipMPC_ADMM_C(vars, options, [save_name '_C'], override);
+    ellipMPC.gen_ellipMPC_ADMM_C(vars, options, [save_name '_C'], directory, override);
     
     %% Create mex C file
     full_path = mfilename('fullpath');
@@ -47,11 +47,11 @@ function gen_ellipMPC_ADMM_Matlab(vars, options, save_name, override)
     mex_text = strrep(mex_text, "$INSERT_NAME$", save_name); % Insert name of file
     
     %% Create plain C mex file
-    mex_file = fopen([save_name '.c'], 'wt');
+    mex_file = fopen([directory save_name '.c'], 'wt');
     fprintf(mex_file, mex_text);
     fclose(mex_file);
     
     %% Create the mex file
-    eval(['mex ' save_name '.c ' save_name '_C.c -DCONF_MATLAB -lm']);
+    eval(['mex ' directory save_name '.c ' directory save_name '_C.c -DCONF_MATLAB -lm']);
     
 end
