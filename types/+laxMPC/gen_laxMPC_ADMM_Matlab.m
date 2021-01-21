@@ -17,27 +17,25 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function gen_laxMPC_ADMM_Matlab(vars, options, save_name, directory, override)
+function gen_laxMPC_ADMM_Matlab(vars, options, spcies_options)
 
     %% Evaluate function inputs
     def_save_name = 'laxMPC';
 
     % Determine the name of the file if it already exists
-    if isempty(save_name)
+    if isempty(spcies_options.save_name)
         save_name = def_save_name;
+    else
+        save_name = spcies_options.save_name;
     end
-    if ~override
+    spcies_options.save_name = [save_name '_C'];
+    
+    if ~spcies_options.override
         save_name = utils.find_unused_file_name(save_name, 'c');
     end
     
-    if options.const_are_static
-        const_type = 'static constant';
-    else
-        const_type = 'constant';
-    end
-    
     %% Create the plain C files
-    laxMPC.gen_laxMPC_ADMM_C(vars, options, [save_name '_C'], directory, override);
+    laxMPC.gen_laxMPC_ADMM_C(vars, options, spcies_options);
     
     %% Create mex C file
     full_path = mfilename('fullpath');
@@ -48,11 +46,11 @@ function gen_laxMPC_ADMM_Matlab(vars, options, save_name, directory, override)
     mex_text = strrep(mex_text, "$INSERT_NAME$", save_name); % Insert name of file
     
     %% Create plain C mex file
-    mex_file = fopen([directory save_name '.c'], 'wt');
+    mex_file = fopen([spcies_options.directory save_name '.c'], 'wt');
     fprintf(mex_file, mex_text);
     fclose(mex_file);
     
     %% Create the mex file
-    eval(['mex ' directory save_name '.c ' directory save_name '_C.c -DCONF_MATLAB -lm']);
+    eval(['mex ' spcies_options.directory save_name '.c ' spcies_options.directory save_name '_C.c -DCONF_MATLAB -lm']);
     
 end
