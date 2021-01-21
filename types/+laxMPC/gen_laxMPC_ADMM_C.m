@@ -17,17 +17,20 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function gen_laxMPC_ADMM_C(vars, options, save_name, directory, override)
+function gen_laxMPC_ADMM_C(vars, options, spcies_options)
     import utils.addLine
     
     %% Evaluate function inputs
     def_save_name = 'laxMPC';
 
     % Determine the name of the file if it already exists
-    if isempty(save_name)
+    if isempty(spcies_options.save_name)
         save_name = def_save_name;
+    else
+        save_name = spcies_options.save_name;
     end
-    if ~override
+    
+    if ~spcies_options.override
         save_name = utils.find_unused_file_name(save_name, 'c');
     end
     
@@ -117,12 +120,12 @@ function gen_laxMPC_ADMM_C(vars, options, save_name, directory, override)
     %% Generate files for the controller
     
     % Open write and save the controller file
-    controller_file = fopen([directory save_name '.c'], 'wt');
+    controller_file = fopen([spcies_options.directory save_name '.c'], 'wt');
     fprintf(controller_file, controller_text);
     fclose(controller_file);
     
     % Open write and save the header file
-    header_file = fopen([directory save_name '.h'], 'wt');
+    header_file = fopen([spcies_options.directory save_name '.h'], 'wt');
     fprintf(header_file, header_text);
     fclose(header_file);
     

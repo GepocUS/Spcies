@@ -20,10 +20,8 @@
 function vars = Spcies_gen_ellipMPC_ADMM(varargin)
     
     %% Default values
-    def_target = 'Matlab'; % Default target
-    def_save_name = ''; % Default value of the save_name argument
-    def_directory = './'; % Default value of the directory where to save files
-    % Default values of the options argumenr
+    def_spcies_opt = Spcies_default_options();
+    % Default values of the options argument
     def_rho = 1e-2;
     def_tol = 1e-4;
     def_k_max = 1000;
@@ -41,12 +39,9 @@ function vars = Spcies_gen_ellipMPC_ADMM(varargin)
     % Required
     addRequired(par, 'controller', @(x) isa(x, 'ssMPC') || isstruct(x));
     
-    % Name-value parameters
-    addParameter(par, 'target', def_target, @(x) ischar(x));
-    addParameter(par, 'save_name', def_save_name, @(x) ischar(x));
-    addParameter(par, 'directory', def_directory, @(x) ischar(x));
-    addParameter(par, 'options', def_options, @(x) isstruct(x) || isempty(x));
-    addParameter(par, 'override', [], @(x) islogical(x) || x==1 || x==0);
+    % Optional
+    addOptional(par, 'options', def_options, @(x) isstruct(x) || isempty(x));
+    addOptional(par, 'spcies_options', def_spcies_opt, @(x) isstruct(x) || isempty(x));
     
     % Parse
     parse(par, varargin{:})
@@ -68,10 +63,10 @@ function vars = Spcies_gen_ellipMPC_ADMM(varargin)
     vars = ellipMPC.Spcies_compute_ellipMPC_ADMM_ingredients(par.Results.controller, options);
     
     %% Call the funciton that constructs the controller
-    if strcmp(par.Results.target, 'C') 
-        ellipMPC.gen_ellipMPC_ADMM_C(vars, options, par.Results.save_name, par.Results.directory, par.Results.override);
-    elseif strcmp(par.Results.target, 'Matlab')
-        ellipMPC.gen_ellipMPC_ADMM_Matlab(vars, options, par.Results.save_name, par.Results.directory, par.Results.override);
+    if strcmp(par.Results.spcies_options.target, 'C')
+        ellipMPC.gen_ellipMPC_ADMM_C(vars, options, par.Results.spcies_options);
+    elseif strcmp(par.Results.spcies_options.target, 'Matlab')
+        ellipMPC.gen_ellipMPC_ADMM_Matlab(vars, options, par.Results.spcies_options);
     else
         error('Target not recognized or supported');
     end
