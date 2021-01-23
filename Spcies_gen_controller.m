@@ -50,12 +50,14 @@ function vars = Spcies_gen_controller(varargin)
         addParameter(par, 'save_name', def_spcies_options.save_name, @(x) ischar(x));
         addParameter(par, 'directory', def_spcies_options.directory, @(x) ischar(x));
         addParameter(par, 'override', def_spcies_options.override, @(x) islogical(x) || x==1 || x==0);
+        addParameter(par, 'force_vector_rho', def_spcies_options.force_vector_rho, @(x) islogical(x) || x==1 || x==0);
     
     % Parse
     parse(par, varargin{:});
     if isempty(par.Results.spcies_options)
         spcies_options = struct('target', par.Results.target, 'save_name', par.Results.save_name,...
-                            'directory', par.Results.directory, 'override', par.Results.override);
+                            'directory', par.Results.directory, 'override', par.Results.override,...
+                            'force_vector_rho', par.Results.force_vector_rho);
     else
         spcies_options = par.Results.spcies_options;
     end

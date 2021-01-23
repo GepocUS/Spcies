@@ -60,7 +60,7 @@ function vars = Spcies_gen_ellipMPC_ADMM(varargin)
     if ~isfield(options, 'const_are_static'); options.const_are_static = def_const_are_static; end
     
     %% Compute the ingredients of the controller
-    vars = ellipMPC.Spcies_compute_ellipMPC_ADMM_ingredients(par.Results.controller, options);
+    vars = ellipMPC.Spcies_compute_ellipMPC_ADMM_ingredients(par.Results.controller, options, par.Results.spcies_options);
     
     %% Call the funciton that constructs the controller
     if strcmp(par.Results.spcies_options.target, 'C')

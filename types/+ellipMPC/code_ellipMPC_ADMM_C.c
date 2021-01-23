@@ -134,13 +134,21 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
         
         // Compute the firt mm elements
         for(unsigned int j = 0; j < mm; j++){
+            #ifdef SCALAR_RHO
+            z_0[j] = q[j+nn] + lambda_0[j] - rho*v_0[j];
+            #else
             z_0[j] = q[j+nn] + lambda_0[j] - rho_0[j]*v_0[j];
+            #endif
         }
 
         // Compute all the other elements except for the last nn
         for(unsigned int l = 0; l < NN-1; l++){
             for(unsigned int j = 0; j < nm; j++){
+                #ifdef SCALAR_RHO
+                z[l][j] = q[j] + lambda[l][j] - rho*v[l][j];
+                #else
                 z[l][j] = q[j] + lambda[l][j] - rho[l][j]*v[l][j];
+                #endif
             }
         }
 
@@ -148,7 +156,11 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
         for(unsigned int j = 0; j < nn; j++){
             z_N[j] = qT[j];
             for(unsigned int i = 0; i < nn; i++){
+                #ifdef SCALAR_RHO
+                z_N[j] = z_N[j] + P_half[j][i]*lambda_N[i] - P[j][i]*rho*v_N[i];
+                #else
                 z_N[j] = z_N[j] + P_half[j][i]*lambda_N[i] - P[j][i]*rho_N[i]*v_N[i];
+                #endif
             }
         }
 
@@ -292,7 +304,11 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
 
         // Compute the first mm variables
         for(unsigned int j = 0; j < mm; j++){
+            #ifdef SCALAR_RHO
+            v_0[j] = z_0[j] + rho_i*lambda_0[j];
+            #else
             v_0[j] = z_0[j] + rho_i_0[j]*lambda_0[j];
+            #endif
             v_0[j] = (v_0[j] > LBu0[j]) ? v_0[j] : LBu0[j]; // maximum between v and the lower bound
             v_0[j] = (v_0[j] > UBu0[j]) ? UBu0[j] : v_0[j]; // minimum between v and the upper bound
         }
@@ -300,7 +316,11 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
         // Compute all the other elements except the last nn
         for(unsigned int l = 0; l < NN-1; l++){
             for(unsigned int j = 0; j < nm; j++){
+                #ifdef SCALAR_RHO
+                v[l][j] = z[l][j] + rho_i*lambda[l][j];
+                #else
                 v[l][j] = z[l][j] + rho_i[l][j]*lambda[l][j];
+                #endif
                 v[l][j] = (v[l][j] > LBz[l][j]) ? v[l][j] : LBz[l][j]; // maximum between v and the lower bound
                 v[l][j] = (v[l][j] > UBz[l][j]) ? UBz[l][j] : v[l][j]; // minimum between v and the upper bound
             }
@@ -312,7 +332,11 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
         for(unsigned int j = 0; j < nn; j++){
             v_N[j] = z_N[j];
             for(unsigned int i = 0; i < nn; i++){
+                #ifdef SCALAR_RHO
+                v_N[j] = v_N[j] + Pinv_half[j][i]*rho_i*lambda_N[i];
+                #else
                 v_N[j] = v_N[j] + Pinv_half[j][i]*rho_i_N[i]*lambda_N[i];
+                #endif
             }
         }
 
@@ -340,19 +364,31 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
 
         // Compute the first mm elements
         for(unsigned int j = 0; j < mm; j++){
+            #ifdef SCALAR_RHO
+            lambda_0[j] = lambda_0[j] + rho*( z_0[j] - v_0[j] );
+            #else
             lambda_0[j] = lambda_0[j] + rho_0[j]*( z_0[j] - v_0[j] );
+            #endif
         }
 
         // Compute all the other elements except for the last nn
         for(unsigned int l = 0; l < NN-1; l++){
             for(unsigned int j = 0; j < nm; j++){
+                #ifdef SCALAR_RHO
+                lambda[l][j] = lambda[l][j] + rho*( z[l][j] - v[l][j] );
+                #else
                 lambda[l][j] = lambda[l][j] + rho[l][j]*( z[l][j] - v[l][j] );
+                #endif
             }
         }
 
         // Compute the last nn elements
         for(unsigned int j = 0; j < nn; j++){
+            #ifdef SCALAR_RHO
+            aux_N[j] = rho*(z_N[j] - v_N[j]);
+            #else
             aux_N[j] = rho_N[j]*(z_N[j] - v_N[j]);
+            #endif
         }
         for(unsigned int j = 0; j < nn; j++){
             for(unsigned int i = 0; i < nn; i++){
