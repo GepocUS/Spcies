@@ -15,7 +15,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 %
 
-function vars = Spcies_compute_ellipMPC_ADMM_ingredients(controller, options)
+function vars = Spcies_compute_ellipMPC_ADMM_ingredients(controller, options, spcies_options)
 
     %% Extract from controller
     if isa(controller, 'ellipMPC')
@@ -56,11 +56,16 @@ function vars = Spcies_compute_ellipMPC_ADMM_ingredients(controller, options)
         end
     end
     
-    %% Turn rho into a vector if scalar is provided
-    if isscalar(options.rho)
+    %% Turn rho into a vector
+    if isscalar(options.rho) && spcies_options.force_vector_rho
         rho = options.rho*ones(N*(n+m), 1);
     else
         rho = options.rho;
+    end
+    if isscalar(rho)
+        vars.rho_is_scalar = true;
+    else
+        vars.rho_is_scalar = false;
     end
     
     %% Compute the Hessian H and the vector q
@@ -136,12 +141,6 @@ function vars = Spcies_compute_ellipMPC_ADMM_ingredients(controller, options)
     vars.LBu0 = LBz(1:m);
     vars.UBz = reshape(UBz(m+1:end), n+m, N-1)';
     vars.LBz = reshape(LBz(m+1:end), n+m, N-1)';
-    vars.rho_0 = rho(1:m);
-    vars.rho = reshape(rho(m+1:end-n), n+m, N-1)';
-    vars.rho_N = rho(end-n+1:end);
-    vars.rho_i_0 = 1./rho(1:m);
-    vars.rho_i = reshape(1./rho(m+1:end-n), n+m, N-1)';
-    vars.rho_i_N = 1./rho(end-n+1:end);
     vars.P = P;
     vars.P_half = P_half;
     vars.Pinv_half = inv(P)*P_half;
@@ -150,6 +149,19 @@ function vars = Spcies_compute_ellipMPC_ADMM_ingredients(controller, options)
     vars.T = -T;
     vars.c = c;
     vars.r = r;
+    
+    % rho
+    if (vars.rho_is_scalar)
+        vars.rho = rho;
+        vars.rho_i = 1/rho;
+    else
+        vars.rho_0 = rho(1:m);
+        vars.rho = reshape(rho(m+1:end-n), n+m, N-1)';
+        vars.rho_N = rho(end-n+1:end);
+        vars.rho_i_0 = 1./rho(1:m);
+        vars.rho_i = reshape(1./rho(m+1:end-n), n+m, N-1)';
+        vars.rho_i_N = 1./rho(end-n+1:end);
+    end
     
     % Scaling vectors and operating point
     if isa(controller, 'ellipMPC')

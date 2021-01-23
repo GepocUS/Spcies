@@ -47,59 +47,66 @@ function gen_ellipMPC_ADMM_C(vars, options, spcies_options)
     %% Create vars cell matrix: Name, value, initialize, type(int, float, etc), class(variable, constant, define, etc)
     
     % Defines
-    varsCell = cell(1, 5); idx = 1;
-    [varsCell, idx] = addLine(varsCell, idx, 'nn', n, 1, 'uint', 'define');
-    [varsCell, idx] = addLine(varsCell, idx, 'mm', m, 1, 'uint', 'define');
-    [varsCell, idx] = addLine(varsCell, idx, 'nm', n+m, 1, 'uint', 'define');
-    [varsCell, idx] = addLine(varsCell, idx, 'NN', N, 1, 'uint', 'define');
-    [varsCell, idx] = addLine(varsCell, idx, 'k_max', options.k_max, 1, 'uint', 'define');
-    [varsCell, idx] = addLine(varsCell, idx, 'tol', options.tol, 1, 'float', 'define');
-    [varsCell, idx] = addLine(varsCell, idx, 'in_engineering', options.in_engineering, 1, 'int', 'define');
+    defCell = [];
+    defCell = addLine(defCell, 'nn', n, 1, 'uint', 'define');
+    defCell = addLine(defCell, 'mm', m, 1, 'uint', 'define');
+    defCell= addLine(defCell, 'nm', n+m, 1, 'uint', 'define');
+    defCell = addLine(defCell, 'NN', N, 1, 'uint', 'define');
+    defCell = addLine(defCell, 'k_max', options.k_max, 1, 'uint', 'define');
+    defCell= addLine(defCell, 'tol', options.tol, 1, 'float', 'define');
+    defCell = addLine(defCell, 'in_engineering', options.in_engineering, 1, 'int', 'define');
     if options.debug
-        [varsCell, idx] = addLine(varsCell, idx, 'DEBUG', 1, 1, 'bool', 'define');
+        defCell = addLine(defCell, 'DEBUG', 1, 1, 'bool', 'define');
     end
-    
-    defines_text = C_code.declareVariables(varsCell);
     
     % Constants
-    varsCell = cell(1, 5); idx = 1;
-    [varsCell, idx] = addLine(varsCell, idx, 'rho', vars.rho, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'rho_0', vars.rho_0, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'rho_N', vars.rho_N, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'rho_i', vars.rho_i, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'rho_i_0', vars.rho_i_0, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'rho_i_N', vars.rho_i_N, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'LBu0', vars.LBu0, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'UBu0', vars.UBu0, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'LBz', vars.LBz, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'UBz', vars.UBz, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'Hi', vars.Hi, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'Hi_0', vars.Hi_0, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'Hi_N', vars.Hi_N, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'AB', vars.AB, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'P', vars.P, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'P_half', vars.P_half, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'Pinv_half', vars.Pinv_half, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'Alpha', vars.Alpha, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'Beta', vars.Beta, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'Q', vars.Q, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'R', vars.R, 1, 'double', const_type);
-    [varsCell, idx] = addLine(varsCell, idx, 'T', vars.T, 1, 'double', const_type);
+    constCell = [];
+    constCell = addLine(constCell, 'LBu0', vars.LBu0, 1, 'double', const_type);
+    constCell = addLine(constCell, 'UBu0', vars.UBu0, 1, 'double', const_type);
+    constCell = addLine(constCell, 'LBz', vars.LBz, 1, 'double', const_type);
+    constCell = addLine(constCell, 'UBz', vars.UBz, 1, 'double', const_type);
+    constCell = addLine(constCell, 'Hi', vars.Hi, 1, 'double', const_type);
+    constCell = addLine(constCell, 'Hi_0', vars.Hi_0, 1, 'double', const_type);
+    constCell = addLine(constCell, 'Hi_N', vars.Hi_N, 1, 'double', const_type);
+    constCell = addLine(constCell, 'AB', vars.AB, 1, 'double', const_type);
+    constCell = addLine(constCell, 'P', vars.P, 1, 'double', const_type);
+    constCell = addLine(constCell, 'P_half', vars.P_half, 1, 'double', const_type);
+    constCell = addLine(constCell, 'Pinv_half', vars.Pinv_half, 1, 'double', const_type);
+    constCell = addLine(constCell, 'Alpha', vars.Alpha, 1, 'double', const_type);
+    constCell = addLine(constCell, 'Beta', vars.Beta, 1, 'double', const_type);
+    constCell= addLine(constCell, 'Q', vars.Q, 1, 'double', const_type);
+    constCell = addLine(constCell, 'R', vars.R, 1, 'double', const_type);
+    constCell = addLine(constCell, 'T', vars.T, 1, 'double', const_type);
     if options.in_engineering
-        [varsCell, idx] = addLine(varsCell, idx, 'scaling_x', vars.scaling_x, 1, 'double', const_type);
-        [varsCell, idx] = addLine(varsCell, idx, 'scaling_u', vars.scaling_u, 1, 'double', const_type);
-        [varsCell, idx] = addLine(varsCell, idx, 'scaling_i_u', vars.scaling_u, 1, 'double', const_type);
-        [varsCell, idx] = addLine(varsCell, idx, 'OpPoint_x', vars.OpPoint_x, 1, 'double', const_type);
-        [varsCell, idx] = addLine(varsCell, idx, 'OpPoint_u', vars.OpPoint_u, 1, 'double', const_type);
+        constCell = addLine(constCell, idx, 'scaling_x', vars.scaling_x, 1, 'double', const_type);
+        constCell = addLine(constCell, idx, 'scaling_u', vars.scaling_u, 1, 'double', const_type);
+        constCell = addLine(constCell, idx, 'scaling_i_u', vars.scaling_u, 1, 'double', const_type);
+        constCell = addLine(constCell, idx, 'OpPoint_x', vars.OpPoint_x, 1, 'double', const_type);
+        constCell = addLine(constCell, idx, 'OpPoint_u', vars.OpPoint_u, 1, 'double', const_type);
     end
     
-    constants_text = C_code.declareVariables(varsCell);
-    
     % Variables
-    varsCell = cell(1, 5); idx = 1;
-    [varsCell, idx] = addLine(varsCell, idx, 'c', vars.c, 1, 'double', 'variable');
-    [varsCell, idx] = addLine(varsCell, idx, 'r', vars.r, 1, 'double', 'variable');
+    varsCell = [];
+    varsCell = addLine(varsCell, 'c', vars.c, 1, 'double', 'variable');
+    varsCell = addLine(varsCell, 'r', vars.r, 1, 'double', 'variable');
     
+    % rho
+    if vars.rho_is_scalar
+        defCell = addLine(defCell, 'SCALAR_RHO', 1, 0, 'bool', 'define');
+        defCell = addLine(defCell, 'rho', vars.rho, 1, 'double', 'define');
+        defCell = addLine(defCell, 'rho_i', vars.rho_i, 1, 'double', 'define');
+    else
+        constCell = addLine(constCell, 'rho', vars.rho, 1, 'double', const_type);
+        constCell = addLine(constCell, 'rho_0', vars.rho_0, 1, 'double', const_type);
+        constCell = addLine(constCell, 'rho_N', vars.rho_N, 1, 'double', const_type);
+        constCell = addLine(constCell, 'rho_i', vars.rho_i, 1, 'double', const_type);
+        constCell = addLine(constCell, 'rho_i_0', vars.rho_i_0, 1, 'double', const_type);
+        constCell = addLine(constCell, 'rho_i_N', vars.rho_i_N, 1, 'double', const_type);
+    end
+    
+    % Declare variales
+    defines_text = C_code.declareVariables(defCell);
+    constants_text = C_code.declareVariables(constCell);
     variables_text = C_code.declareVariables(varsCell);
     
     %% Load the different text files needed to contruct the solver

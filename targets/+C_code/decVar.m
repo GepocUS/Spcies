@@ -83,7 +83,11 @@ function s = decVar(var)
     
     % Add the #define tag if the class is set to 'define'
     if strcmp(class, 'define')
-        s = [s sprintf('#define %s ', name) writeValue(value, type) '\n'];
+        if initialize
+            s = [s sprintf('#define %s ', name) writeValue(value, type) '\n'];
+        else
+            s = [s sprintf('#define %s ', name) '\n'];
+        end
     else
     
     % Add the const tag if the class is set to 'constant'

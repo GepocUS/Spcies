@@ -132,19 +132,31 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         
         // Compute the firt mm elements
         for(unsigned int j = 0; j < mm; j++){
+            #ifdef SCALAR_RHO
+            z_0[j] = q[j+nn] + lambda_0[j] - rho*v_0[j];
+            #else
             z_0[j] = q[j+nn] + lambda_0[j] - rho_0[j]*v_0[j];
+            #endif
         }
 
         // Compute all the other elements except for the last nn
         for(unsigned int l = 0; l < NN-1; l++){
             for(unsigned int j = 0; j < nm; j++){
+                #ifdef SCALAR_RHO
+                z[l][j] = q[j] + lambda[l][j] - rho*v[l][j];
+                #else
                 z[l][j] = q[j] + lambda[l][j] - rho[l][j]*v[l][j];
+                #endif
             }
         }
 
         // Compute the last nn elements
         for(unsigned int j = 0; j < nn; j++){
+            #ifdef SCALAR_RHO
+            z_N[j] = qP[j] + lambda_N[j] - rho*v_N[j];
+            #else
             z_N[j] = qP[j] + lambda_N[j] - rho_N[j]*v_N[j];
+            #endif
         }
 
         // Compute r.h.s of the Wc system of equations, i.e., -G'*H_hat^(-1)*q_hat - b
@@ -287,7 +299,11 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
         // Compute the first mm variables
         for(unsigned int j = 0; j < mm; j++){
+            #ifdef SCALAR_RHO
+            v_0[j] = z_0[j] + rho_i*lambda_0[j];
+            #else
             v_0[j] = z_0[j] + rho_i_0[j]*lambda_0[j];
+            #endif
             v_0[j] = (v_0[j] > LB[j+nn]) ? v_0[j] : LB[j+nn]; // maximum between v and the lower bound
             v_0[j] = (v_0[j] > UB[j+nn]) ? UB[j+nn] : v_0[j]; // minimum between v and the upper bound
         }
@@ -295,7 +311,11 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // Compute all the other elements except the last nn
         for(unsigned int l = 0; l < NN-1; l++){
             for(unsigned int j = 0; j < nm; j++){
+                #ifdef SCALAR_RHO
+                v[l][j] = z[l][j] + rho_i*lambda[l][j];
+                #else
                 v[l][j] = z[l][j] + rho_i[l][j]*lambda[l][j];
+                #endif
                 v[l][j] = (v[l][j] > LB[j]) ? v[l][j] : LB[j]; // maximum between v and the lower bound
                 v[l][j] = (v[l][j] > UB[j]) ? UB[j] : v[l][j]; // minimum between v and the upper bound
             }
@@ -303,7 +323,11 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
         // Compute the last nn elements
         for(unsigned int j = 0; j < nn; j++){
+            #ifdef SCALAR_RHO
+            v_N[j] = z_N[j] + rho_i*lambda_N[j];
+            #else
             v_N[j] = z_N[j] + rho_i_N[j]*lambda_N[j];
+            #endif
             v_N[j] = (v_N[j] > LB[j]) ? v_N[j] : LB[j]; // maximum between v and the lower bound
             v_N[j] = (v_N[j] > UB[j]) ? UB[j] : v_N[j]; // minimum between v and the upper bound
         }
@@ -312,19 +336,31 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
         // Compute the first mm elements
         for(unsigned int j = 0; j < mm; j++){
+            #ifdef SCALAR_RHO
+            lambda_0[j] = lambda_0[j] + rho*( z_0[j] - v_0[j] );
+            #else
             lambda_0[j] = lambda_0[j] + rho_0[j]*( z_0[j] - v_0[j] );
+            #endif
         }
 
         // Compute all the other elements except for the last nn
         for(unsigned int l = 0; l < NN-1; l++){
             for(unsigned int j = 0; j < nm; j++){
+                #ifdef SCALAR_RHO
+                lambda[l][j] = lambda[l][j] + rho*( z[l][j] - v[l][j] );
+                #else
                 lambda[l][j] = lambda[l][j] + rho[l][j]*( z[l][j] - v[l][j] );
+                #endif
             }
         }
 
         // Compute the last nn elements
         for(unsigned int j = 0; j < nn; j++){
+            #ifdef SCALAR_RHO
+            lambda_N[j] = lambda_N[j] + rho*( z_N[j] - v_N[j] );
+            #else
             lambda_N[j] = lambda_N[j] + rho_N[j]*( z_N[j] - v_N[j] );
+            #endif
         }
 
         // Step 4: Compute the residual
