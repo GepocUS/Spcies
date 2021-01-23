@@ -12,7 +12,11 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function [dict, idx] = addLine(dict, idx, varargin)
-    dict(idx, :) = varargin(:);
-    idx = idx + 1;
+function dict = addLine(dict, varargin)
+    if isempty(dict)
+        dict = varargin(:)';
+    else
+        idx = size(dict, 1) + 1;
+        dict(idx, :) = varargin(:);
+    end
 end
