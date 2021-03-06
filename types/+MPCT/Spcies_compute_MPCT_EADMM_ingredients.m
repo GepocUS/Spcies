@@ -17,10 +17,10 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function vars = Spcies_compute_MPCT_EADMM_ingredients(controller, options)
+function vars = Spcies_compute_MPCT_EADMM_ingredients(controller, options, spcies_options)
 
     %% Extract from controller
-    if isa(controller, 'TeackingMPC')
+    if isa(controller, 'TrackingMPC')
         A = controller.model.A;
         B = controller.model.Bu;
         n = controller.model.n_x;
@@ -51,22 +51,22 @@ function vars = Spcies_compute_MPCT_EADMM_ingredients(controller, options)
         if isfield(controller.sys, 'LBx')
             LBx = controller.sys.LBx;
         else
-            LBx = -options.inf_bound;
+            LBx = -options.inf_bound*ones(n, 1);
         end
         if isfield(controller.sys, 'UBx')
             UBx = controller.sys.UBx;
         else
-            UBx = options.inf_bound;
+            UBx = options.inf_bound*ones(n, 1);
         end
         if isfield(controller.sys, 'LBu')
             LBu = controller.sys.LBu;
         else
-            LBu = -options.inf_bound;
+            LBu = -options.inf_bound*ones(m, 1);
         end
         if isfield(controller.sys, 'UBu')
             UBu = controller.sys.UBu;
         else
-            UBu = options.inf_bound;
+            UBu = options.inf_bound*ones(m, 1);
         end
     end
     
@@ -76,7 +76,7 @@ function vars = Spcies_compute_MPCT_EADMM_ingredients(controller, options)
     else
         rho_base = options.rho_base;
         rho_mult = options.rho_mult;
-        rho = rho_base*ones((param.N+1)*(n+m) + n + 1*(n+m), 1);
+        rho = rho_base*ones((N+1)*(n+m) + n + 1*(n+m), 1);
         % Penalize constraints related to x
         rho(1:n) = 1*rho_mult*rho_base; % Initial constraint: x_0 = x. (6b)
         rho(n+1:2*n) = 1*rho_mult*rho_base; % Initial z1 + z2 + z3 = 0. (6i) for i = 0
@@ -178,8 +178,8 @@ function vars = Spcies_compute_MPCT_EADMM_ingredients(controller, options)
     vars.N = N; % Prediction horizon
     vars.n = n; % Dimension of state space
     vars.m = m; % Dimension of input space
-    vars.H1i = reshape(H1i, m+n, N+1); % Inverse of diagonal of H1 in matrix form
-    vars.H3i = reshape(H3i, m+n, N+1); % Inverse of 
+    vars.H1i = reshape(H1i, m+n, N+1)'; % Inverse of diagonal of H1 in matrix form
+    vars.H3i = reshape(H3i, m+n, N+1)'; % Inverse of 
     vars.AB = [A B]; % Matrices of the system model
     vars.W2 = W2;
     vars.T = -T;
@@ -192,11 +192,11 @@ function vars = Spcies_compute_MPCT_EADMM_ingredients(controller, options)
     vars.LBs(isinf(vars.LBs)) = -options.inf_bound;
     vars.UBs = [UBx - options.epsilon_x*ones(n, 1); UBu - options.epsilon_u*ones(m, 1)];
     vars.UBs(isinf(vars.UBs)) = options.inf_bound;
-    vars.LB0 = [-xoptions.inf_bound*ones(n,1); LBu];
+    vars.LB0 = [-options.inf_bound*ones(n,1); LBu];
     vars.UB0 = [options.inf_bound*ones(n,1); UBu];
     
     % Penalty parameter
-    vars.rho = reshape(rho(n+1:end-n-m), m+n, N+1);
+    vars.rho = reshape(rho(n+1:end-n-m), m+n, N+1)';
     vars.rho_0 = [rho(1:n); zeros(m,1)];
     vars.rho_s = rho(end-n-m+1:end);
     
@@ -207,34 +207,36 @@ function vars = Spcies_compute_MPCT_EADMM_ingredients(controller, options)
     
     % Scaling vectors
     if isa(controller, 'TrackingMPC')
-        vars.scaling = [controller.model.Nx; controller.model.Nu];
-        vars.scaling_inv_u = 1./controller.model.Nu;
-        vars.OpPoint = [controller.model.x0; controller.model.u0];
+        vars.scaling_x = controller.model.Nx;
+        vars.scaling_u = controller.model.Nu;
+        vars.scaling_i_u = 1./controller.model.Nu;
+        vars.OpPoint_x = controller.model.x0;
+        vars.OpPoint_u = controllr.model.u0;
     else
         if isfield(controller.sys, 'Nx')
-            vars.scaling = controller.sys.Nx;
+            vars.scaling_x = controller.sys.Nx;
         else
-            vars.scaling = ones(n, 1);
+            vars.scaling_x = ones(n, 1);
         end
         if isfield(controller.sys, 'Nu')
-            vars.scaling = [vars.scaling; controller.sys.Nu];
+            vars.scaling_u = controller.sys.Nu;
         else
-            vars.scaling = [vars.scaling; ones(m, 1)];
+            vars.scaling_u = ones(m, 1);
         end
         if isfield(controller.sys, 'Nu')
-            vars.scaling_inv_u = 1./controller.sys.Nu;
+            vars.scaling_i_u = 1./controller.sys.Nu;
         else
-            vars.scaling_inv_u = ones(m, 1);
+            vars.scaling_i_u = ones(m, 1);
         end
         if isfield(controller.sys, 'x0')
-            vars.OpPoint = controller.sys.x0;
+            vars.OpPoint_x = controller.sys.x0;
         else
-            vars.OpPoin=  zeros(n, 1);
+            vars.OpPoint_x = zeros(n, 1);
         end
         if isfield(controller.sys, 'u0')
-            vars.OpPoint = [vars.OpPoint; controller.sys.u0];
+            vars.OpPoint_u = controller.sys.u0;
         else
-            vars.OpPoint = [vars.OpPoint; zeros(m, 1)];
+            vars.OpPoint_u = zeros(m, 1);
         end
     end
     

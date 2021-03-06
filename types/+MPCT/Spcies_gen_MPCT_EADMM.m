@@ -22,8 +22,7 @@
 function vars = Spcies_gen_MPCT_EADMM(varargin)
 
     %% Default values
-    def_target = 'Matlab'; % Default target
-    def_save_name = ''; % Default value of the save_name argument
+    def_spcies_opt = Spcies_default_options();
     % Default values of the options argumenr
     def_rho_base = 3;
     def_rho_mult = 20;
@@ -35,9 +34,11 @@ function vars = Spcies_gen_MPCT_EADMM(varargin)
     def_k_inc_max = [];
     def_in_engineering = false;
     def_debug = false;
+    def_const_are_static = true;
     def_options = struct('rho_base', def_rho_base, 'rho_mult', def_rho_mult, 'epsilon_x', def_epsilon_x,...
                          'epsilon_u', def_epsilon_u, 'inf_bound', def_inf_bound, 'tol', def_tol, 'k_max', def_k_max,...
-                         'in_engineering', def_in_engineering, 'debug', def_debug, 'k_inc_max', def_k_inc_max);
+                         'in_engineering', def_in_engineering, 'debug', def_debug, 'k_inc_max', def_k_inc_max,...
+                         'const_are_static', def_const_are_static);
     
     %% Parser
     par = inputParser;
@@ -48,10 +49,8 @@ function vars = Spcies_gen_MPCT_EADMM(varargin)
     addRequired(par, 'controller', @(x) isa(x, 'ssMPC') || isstruct(x));
     
     % Name-value parameters
-    addParameter(par, 'target', def_target, @(x) ischar(x));
-    addParameter(par, 'save_name', def_save_name, @(x) ischar(x));
-    addParameter(par, 'options', def_options, @(x) isstruct(x) || isempty(x));
-    addParameter(par, 'override', [], @(x) islogical(x) || x==1 || x==0);
+    addOptional(par, 'options', def_options, @(x) isstruct(x) || isempty(x));
+    addOptional(par, 'spcies_options', def_spcies_opt, @(x) isstruct(x) || isempty(x));
     
     % Parse
     parse(par, varargin{:})
@@ -71,17 +70,24 @@ function vars = Spcies_gen_MPCT_EADMM(varargin)
     if ~isfield(options, 'k_max'); options.k_max = def_k_max; end
     if ~isfield(options, 'in_engineering'); options.in_engineering = def_in_engineering; end
     if ~isfield(options, 'debug'); options.debug = def_debug; end
+    if ~isfield(options, 'const_are_static'); options.const_are_static = def_const_are_static; end
     if ~isfield(options, 'k_inc_max'); options.k_inc_max = def_k_inc_max; end
-    if isempty(options.k_inc_max); options.k_inc_max = options.k_inc; end
+    if isempty(options.k_inc_max); options.k_inc_max = options.k_max; end
     
     %% Compute the ingredients of the controller
-    vars = MPCT.Spcies_compute_MPCT_EADMM_ingredients(sys, param, options);
+    vars = MPCT.Spcies_compute_MPCT_EADMM_ingredients(par.Results.controller, options, par.Results.spcies_options);
     
     %% Call the funciton that constructs the controller
-    if strcmp(target, 'Arduino')
-        MPCT.gen_MPCT_EADMM_Arduino(vars, options, par.Results.save_name, par.Results.override); 
-    elseif strcmp(target, 'Unity')
-        MPCT.gen_MPCT_EADMM_Unity(vars, options, par.Results.save_name, par.Results.override);      
+    if strcmp(par.Results.spcies_options.target, 'Arduino')
+        %MPCT.gen_MPCT_EADMM_Arduino(vars, options, par.Results.spcies_options); % Commented because it is not up to date
+        error('The Arduino version of the MPCT solver needs to be updated to work with the newest changes');
+    elseif strcmp(par.Results.spcies_options.target, 'Unity')
+        %MPCT.gen_MPCT_EADMM_Unity(vars, options, par.Results.spcies_options); % Commented because it is not up to date
+        error('The Unity version of the MPCT solver needs to be updated to work with the newest changes');
+    elseif strcmp(par.Results.spcies_options.target, 'C') 
+        MPCT.gen_MPCT_EADMM_C(vars, options, par.Results.spcies_options);
+    elseif strcmp(par.Results.spcies_options.target, 'Matlab')
+        MPCT.gen_MPCT_EADMM_Matlab(vars, options, par.Results.spcies_options);
     else
         if ~strcmp(target, 'Matlab')
             error('Target not recognized or supported');
