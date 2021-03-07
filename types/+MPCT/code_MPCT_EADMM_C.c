@@ -38,7 +38,6 @@ double z2[nm] = {0.0}; // Decision variable z2
 double z3[NN+1][nm] = {{0.0}}; // Decision variable z3
 double lambda[NN+3][nm] = {{0.0}}; // Dual variables
 double q2[nm] = {0.0}; // Vector used to solve the z2 QP
-double q3[NN+1][nm] = {{0.0}}; // Vector used to solve the z3 QP
 double mu[NN][nn] = {{0.0}}; // Used to solve the system of equations
 double res[NN+3][nm] = {{0.0}}; // Vector to store the residual
 double res_abs = 0.0; // For storing the absolute value of res
@@ -298,7 +297,7 @@ while(done == 0){
 
     // Compute the last nm elements of lambda
     for(unsigned int j = 0; j < nm; j++){
-        lambda[NN+2][j] + lambda[NN+2][j] + rho_s[j]*res[NN+2][j];
+        lambda[NN+2][j] = lambda[NN+2][j] + rho_s[j]*res[NN+2][j];
     }
 
     //********** Exit condition **********//
