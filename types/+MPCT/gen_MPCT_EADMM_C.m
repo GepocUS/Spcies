@@ -81,7 +81,7 @@ function gen_MPCT_EADMM_C(vars, options, spcies_options)
     if options.in_engineering
         constCell = addLine(constCell, 'scaling_x', vars.scaling_x, 1, 'double', const_type);
         constCell = addLine(constCell, 'scaling_u', vars.scaling_u, 1, 'double', const_type);
-        constCell = addLine(constCell, 'scaling_i_u', vars.scaling_u, 1, 'double', const_type);
+        constCell = addLine(constCell, 'scaling_i_u', vars.scaling_i_u, 1, 'double', const_type);
         constCell = addLine(constCell, 'OpPoint_x', vars.OpPoint_x, 1, 'double', const_type);
         constCell = addLine(constCell, 'OpPoint_u', vars.OpPoint_u, 1, 'double', const_type);
     end

@@ -344,7 +344,7 @@ while(done == 0){
 // Extract control action
 #if in_engineering == 1
 for(unsigned int j = 0; j < mm; j++){
-    u_opt[j] = z1[0][nn+j]*scaling_u[j] + OpPoint_u[j];
+    u_opt[j] = z1[0][nn+j]*scaling_i_u[j] + OpPoint_u[j];
 }
 #endif
 #if in_engineering == 0

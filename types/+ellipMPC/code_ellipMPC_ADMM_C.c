@@ -472,7 +472,7 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
     // Control action
     #if in_engineering == 1
     for(unsigned int j = 0; j < mm; j++){
-        u_opt[j] = v_0[j]*scaling_u[j] + OpPoint_u[j];
+        u_opt[j] = v_0[j]*scaling_i_u[j] + OpPoint_u[j];
     }
     #endif
     #if in_engineering == 0

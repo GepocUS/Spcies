@@ -80,7 +80,7 @@ function gen_ellipMPC_ADMM_C(vars, options, spcies_options)
     if options.in_engineering
         constCell = addLine(constCell, idx, 'scaling_x', vars.scaling_x, 1, 'double', const_type);
         constCell = addLine(constCell, idx, 'scaling_u', vars.scaling_u, 1, 'double', const_type);
-        constCell = addLine(constCell, idx, 'scaling_i_u', vars.scaling_u, 1, 'double', const_type);
+        constCell = addLine(constCell, idx, 'scaling_i_u', vars.scaling_i_u, 1, 'double', const_type);
         constCell = addLine(constCell, idx, 'OpPoint_x', vars.OpPoint_x, 1, 'double', const_type);
         constCell = addLine(constCell, idx, 'OpPoint_u', vars.OpPoint_u, 1, 'double', const_type);
     end
