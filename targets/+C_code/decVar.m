@@ -213,7 +213,7 @@ function s = writeValue(value, type)
         end
 
     else
-        s = sprintf('%1.10f', value);
+        s = sprintf('%1.15f', value);
     end
     
 end
