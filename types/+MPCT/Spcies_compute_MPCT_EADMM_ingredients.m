@@ -17,7 +17,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function vars = Spcies_compute_MPCT_EADMM_ingredients(controller, options, spcies_options)
+function [vars, vars_nonsparse] = Spcies_compute_MPCT_EADMM_ingredients(controller, options, spcies_options)
 
     %% Extract from controller
     if isa(controller, 'TrackingMPC')
@@ -48,24 +48,24 @@ function vars = Spcies_compute_MPCT_EADMM_ingredients(controller, options, spcie
         R = controller.param.R;
         T = controller.param.T;
         S = controller.param.S;
-        if isfield(controller.sys, 'LBx')
+        try
             LBx = controller.sys.LBx;
-        else
+        catch
             LBx = -options.inf_bound*ones(n, 1);
         end
-        if isfield(controller.sys, 'UBx')
+        try
             UBx = controller.sys.UBx;
-        else
+        catch
             UBx = options.inf_bound*ones(n, 1);
         end
-        if isfield(controller.sys, 'LBu')
+        try
             LBu = controller.sys.LBu;
-        else
+        catch
             LBu = -options.inf_bound*ones(m, 1);
         end
-        if isfield(controller.sys, 'UBu')
+        try
             UBu = controller.sys.UBu;
-        else
+        catch
             UBu = options.inf_bound*ones(m, 1);
         end
     end
@@ -252,5 +252,36 @@ function vars = Spcies_compute_MPCT_EADMM_ingredients(controller, options, spcie
     for i = 1:N-1
         vars.Alpha(:,:,i) = W3c((i-1)*n+(1:n),i*n+(1:n));
     end
+    
+    %% Compute non-sparse variables (used by the non-sparse solver)
+    vars_nonsparse.N = N;
+    vars_nonsparse.n = n;
+    vars_nonsparse.m = m;
+    vars_nonsparse.A1 = A1;
+    vars_nonsparse.A2 = A2;
+    vars_nonsparse.A3 = A3;
+    vars_nonsparse.rho = rho;
+    
+    % For P1
+    vars_nonsparse.H1i = H1i; % Inverse of the diagonal of H_1
+    vars_nonsparse.LB = [vars.LB0; kron(ones(N-1, 1), vars.LB); vars.LBs]; % Lower bounds
+    vars_nonsparse.UB = [vars.UB0; kron(ones(N-1, 1), vars.UB); vars.UBs]; % Upper bounds
+    vars_nonsparse.b = b;
+    
+    % For P2
+    vars_nonsparse.T = T;
+    vars_nonsparse.S = S;
+    vars_nonsparse.W2 = W2;
+    
+    % For P3
+    vars_nonsparse.H3inv = inv(H3);
+    vars_nonsparse.Az3 = Az3;
+    vars_nonsparse.W3 = W3;
+    
+    % Scaling
+    vars_nonsparse.scaling_x = vars.scaling_x ;
+    vars_nonsparse.scaling_u = vars.scaling_u ;
+    vars_nonsparse.OpPoint_x = vars.OpPoint_x;
+    vars_nonsparse.OpPoint_u = vars.OpPoint_u;
     
 end
