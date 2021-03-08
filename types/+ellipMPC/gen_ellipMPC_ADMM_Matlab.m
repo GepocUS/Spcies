@@ -50,6 +50,6 @@ function gen_ellipMPC_ADMM_Matlab(vars, options, spcies_options)
     fclose(mex_file);
     
     %% Create the mex file
-    eval(['mex ' spcies_options.directory save_name '.c ' spcies_options.directory save_name '_C.c -DCONF_MATLAB -lm']);
+    eval(['mex ' spcies_options.directory save_name '.c ' spcies_options.directory save_name '_C.c -DCONF_MATLAB -lm COPTIMFLAGS="-O3"']);
     
 end
