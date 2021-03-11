@@ -17,6 +17,7 @@
 % 
 
 function gen_MPCT_EADMM_Matlab(vars, options, spcies_options)
+    import utils.gen_mex;
 
     %% Evaluate function inputs
     def_save_name = 'MPCT_solver';
@@ -50,6 +51,6 @@ function gen_MPCT_EADMM_Matlab(vars, options, spcies_options)
     fclose(mex_file);
     
     %% Create the mex file
-    eval(['mex -silent ' spcies_options.directory save_name '.c ' spcies_options.directory save_name '_C.c -DCONF_MATLAB -lm COPTIMFLAGS="-O3"']);
+    gen_mex(save_name, spcies_options.directory);
     
 end
