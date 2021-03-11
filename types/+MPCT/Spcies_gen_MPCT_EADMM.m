@@ -78,20 +78,12 @@ function vars = Spcies_gen_MPCT_EADMM(varargin)
     vars = MPCT.Spcies_compute_MPCT_EADMM_ingredients(par.Results.controller, options, par.Results.spcies_options);
     
     %% Call the funciton that constructs the controller
-    if strcmp(par.Results.spcies_options.target, 'Arduino')
-        %MPCT.gen_MPCT_EADMM_Arduino(vars, options, par.Results.spcies_options); % Commented because it is not up to date
-        error('The Arduino version of the MPCT solver needs to be updated to work with the newest changes');
-    elseif strcmp(par.Results.spcies_options.target, 'Unity')
-        %MPCT.gen_MPCT_EADMM_Unity(vars, options, par.Results.spcies_options); % Commented because it is not up to date
-        error('The Unity version of the MPCT solver needs to be updated to work with the newest changes');
-    elseif strcmp(par.Results.spcies_options.target, 'C') 
+    if strcmp(par.Results.spcies_options.target, 'C') 
         MPCT.gen_MPCT_EADMM_C(vars, options, par.Results.spcies_options);
     elseif strcmp(par.Results.spcies_options.target, 'Matlab')
         MPCT.gen_MPCT_EADMM_Matlab(vars, options, par.Results.spcies_options);
     else
-        if ~strcmp(target, 'Matlab')
             error('Target not recognized or supported');
-        end
     end
     
 end
