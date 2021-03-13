@@ -102,11 +102,6 @@ while(done == 0){
         #endif
     }
 
-    // for(unsigned int j = 0; j < nn; j++){
-        // q_hat[j] = xr[j];
-    // k = j;
-    // }
-
     // Compute the right-hand-side of the W*mu = rhs system of equations
     // We first perform a sparse (CSR) matrix-vector multiplication
     for(unsigned int i = 0; i < nrow_AHi; i++){
@@ -148,18 +143,6 @@ while(done == 0){
     // Compute z
 
     // Add the Hi*q_hat term
-    // for(unsigned int l = 0; l < NN; l++){
-        // for(unsigned int j = 0; j < 2*nn; j++){
-            // for(unsigned int i = 0; i < 2*nn; i++){
-                // z[l*dnm+j] += Qzi[j][i]*q_hat[l*2*mm+i];
-            // }
-        // }
-        // for(unsigned int j = 0; j < 2*mm; j++){
-            // for(unsigned int i = 0; i < 2*mm; i++){
-                // z[l*dnm+2*nn+j] += Rzi[j][i]*q_hat[l*dnm+2*nn+i];
-            // }
-        // }
-    // }
 
     for(unsigned int i = 0; i < NN*dnm; i++){
             z[i] = 0.0;
@@ -263,14 +246,6 @@ for(unsigned int j = 0; j < NN*dnm; j++){
     v_opt[j] = v[j];
     lambda_opt[j] = lambda[j];
 }
-// for(unsigned int j = 0; j < NN*dnm; j++){
-    //v_opt[j] = q[j % dnm] +lambda[j] -rho*v[j];
-    // v_opt[j] = aux[j];
-// }
-// for(unsigned int j = 0; j < nrow_AHi; j++){
-    // z_opt[j] = mu[j];
-// }
-
 
 #else
 
