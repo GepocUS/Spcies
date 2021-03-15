@@ -17,6 +17,7 @@
 % 
 
 function gen_ellipMPC_ADMM_Matlab(vars, options, spcies_options)
+    import utils.gen_mex;
 
     %% Evaluate function inputs
     def_save_name = 'ellipMPC';
