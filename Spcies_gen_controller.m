@@ -85,6 +85,8 @@ function vars = Spcies_gen_controller(varargin)
     %% Generate the controller
     if strcmp(type, 'MPCT')
         vars = MPCT.Spcies_gen_MPCT_EADMM(controller, 'options', par.Results.options, 'spcies_option', spcies_options);
+    elseif strcmp(type, 'MPCT_ess')
+        vars = MPCT.Spcies_gen_MPCT_extended_ss_ADMM(controller, 'options', par.Results.options, 'spcies_option', spcies_options);
     elseif strcmp(type, 'ellipMPC')
         vars = ellipMPC.Spcies_gen_ellipMPC_ADMM(controller, 'options', par.Results.options, 'spcies_option', spcies_options);
     elseif strcmp(type, 'laxMPC')
