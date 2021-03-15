@@ -36,11 +36,15 @@ double ur[mm] = {0.0}; // Control input reference
 double z1[NN+1][nm] = {{0.0}}; // Decision variable z1
 double z2[nm] = {0.0}; // Decision variable z2
 double z3[NN+1][nm] = {{0.0}}; // Decision variable z3
+double z2_prev[nm] = {0.0}; // Value of z2 in the previous iteration
+double z3_prev[NN+1][nm] = {{0.0}}; // Value of z3 in the previous iteration
 double lambda[NN+3][nm] = {{0.0}}; // Dual variables
 double q2[nm] = {0.0}; // Vector used to solve the z2 QP
 double mu[NN][nn] = {{0.0}}; // Used to solve the system of equations
 double res[NN+3][nm] = {{0.0}}; // Vector to store the residual
 double res_abs = 0.0; // For storing the absolute value of res
+double res_z2; // Variable used to determine if z2 is converging to a fixed point
+double res_z3; // Variable used to determine if z2 is converging to a fixed point
 unsigned int res_flag = 0; // Flag used to determine if the exit condition is satisfied
 
 // Constant variables
@@ -70,7 +74,11 @@ for(unsigned int i = 0; i < mm; i++){
 // Algorithm
 while(done == 0){
 
-        k += 1; // Increment iteration counter
+    k += 1; // Increment iteration counter
+
+    // Save the past value of z2 and z3
+    memcpy(z2_prev, z2, sizeof(double)*nm);
+    memcpy(z3_prev, z3, sizeof(double)*(NN+1)*nm);
 
     //********** Problem P1 **********//
     // This problem updates z1
@@ -306,19 +314,46 @@ while(done == 0){
 
     res_flag = 0; // Reset the residual flag
 
-    for(unsigned int l = 0; l < NN+3; l++){
-        for(unsigned int j = 0; j < nm; j++){
-            res_abs = (res[l][j] > 0.0) ? res[l][j] : -res[l][j]; // Get absolute value
-            if(res_abs > tol){
-                res_flag = 1;
-                break;
-            }
-        }
-        if(res_flag == 1){
+    for(unsigned int j = 0; j < nm; j++){
+        res_z2 = z2_prev[j] - z2[j];
+        res_z2 = (res_z2 > 0.0) ? res_z2 : -res_z2;
+        if(res_z2 > tol){
+            res_flag = 1;
             break;
         }
     }
 
+    if(res_flag == 0){
+        for(unsigned int l = 0; l < NN+3; l++){
+            for(unsigned int j = 0; j < nm; j++){
+                res_abs = (res[l][j] > 0.0) ? res[l][j] : -res[l][j]; // Get absolute value
+                if(res_abs > tol){
+                    res_flag = 1;
+                    break;
+                }
+            }
+            if(res_flag == 1){
+                break;
+            }
+        }
+    }
+
+    if(res_flag == 0){
+        for(unsigned int l = 0; l < NN+1; l++){
+            for(unsigned int j = 0; j < mm; j++){
+                res_z3 = z3_prev[l][j] - z3[l][j];
+                res_z3 = (res_z3 > 0.0) ? res_z3 : -res_z3;
+                if(res_z3 > tol){
+                    res_flag = 1;
+                    break;
+                }
+            }
+            if(res_flag == 1){
+                break;
+            }
+        }
+    }
+    
     if(res_flag == 0){
         done = 1;
         #ifdef CONF_MATLAB
