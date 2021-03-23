@@ -109,7 +109,11 @@ function vars = Spcies_gen_controller(varargin)
                             'force_vector_rho', par.Results.force_vector_rho);
     else
         spcies_options = par.Results.spcies_options;
-        % TODO: fill in missing fields
+        if ~isfield(spcies_options, 'target'); spcies_options.target = par.Results.target; end
+        if ~isfield(spcies_options, 'save_name'); spcies_options.save_name = par.Results.save_name; end
+        if ~isfield(spcies_options, 'directory'); spcies_options.directory = par.Results.directory; end
+        if ~isfield(spcies_options, 'override'); spcies_options.override = par.Results.override; end
+        if ~isfield(spcies_options, 'force_vector_rho'); spcies_options.force_vector_rho = par.Results.force_vector_rho; end
     end
     
     % Use the default directory if non is provided
