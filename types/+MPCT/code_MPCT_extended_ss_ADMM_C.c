@@ -91,7 +91,6 @@ for(unsigned int j = 0; j < mm; j++){
 while(done == 0){
 
     k += 1; // Increment iteration counter
-    printf("k = %d", k);
 
     // Save the value of z into variable z1
     memcpy(z1, z, sizeof(double)*NN*dnm);
