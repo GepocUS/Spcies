@@ -1,22 +1,33 @@
 %% Spcies_gen_var_declaration - Generation of variable declaration code
 %
-% This is a standalone function used to generate the code needed to declare variables in
-% the languages supported by Spcies.
-% It saves the variable declaration code as a txt file so that it is easy to copy
-% and paste into the user's project.
+% This is a standalone function used to generate the code needed to 
+% declare variables in the programming languages supported by Spcies.
+% It saves the variable declaration code as a txt file so that it can
+% directly copied into the source code.
 %
 % INPUTS:
-%   - vars: This a cell with 5 columns and as many rows as variables are to be declared.
-%           Each column is a piece of the information needed to declare the variable.
+%   - vars: This a cell with 5 columns and as many rows as variables are
+%           to be declared. Each column is a piece of the information
+%           required to declare the variable.
 %           - Column 1: Name of the variable (String).
-%           - Column 2: Variable from the Matlab workspace to be saves in the target language.
-%           - Column 3: Boolean that determines is the variable is initialized (true) or not (false).
+%           - Column 2: Variable from the Matlab workspace to be saved
+%                       in the target language.
+%           - Column 3: Boolean that determines is the variable is
+%                       initialized (true) or not (false).
 %           - Column 4: Type of variable in the target language (String).
-%           - Column 5: Additional type of the variable (such as 'constant', 'define', etc).
-%   - language: Target language in which to write the variable declaration.
-%   - save_name: Optional string ("var_dec"). Determines the name of the file in which to save the code.
-%   - override: Optional boolean. Determines if the file is overriden if one with the same name already
-%               exists in the working directory.
+%           - Column 5: Additional type of the variable, such as
+%                       'constant', 'define', etc.
+%   - language: String that determines the target language in which to
+%               write the variable declaration. Currently, the supported
+%               languages are:
+%               - 'C': For plain C.
+%               - 'Arduino': Specifically for Arduino. very similar to 'C'.
+%               - 'Unity': For Unity Pro XL (IDE for Schneider PLCs).
+%   - save_name: Optional string that determines the name of the file in
+%                which the code declaration is written.
+%                It defaults to 'var_dec'.
+%   - override: Optional boolean. Determines if the file is overwritten if
+%               it already exists in the working directory.
 %
 % OUTPUTS: The function generates a .txt file in the working directory.
 % 
@@ -76,3 +87,4 @@ function Spcies_gen_var_declaration(vars, language, varargin)
     fclose(my_file);
     
 end
+

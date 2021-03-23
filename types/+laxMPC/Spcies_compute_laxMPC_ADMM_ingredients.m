@@ -1,4 +1,5 @@
 %% Spcies_compute_laxMPC_EADMM_ingredients
+%
 % Computes the ingredients for the ADMM-based solver for the lax MPC formulation
 %
 % Information about this formulation and the solver  can be found at:
@@ -6,9 +7,12 @@
 % P. Krupa, D. Limon, T. Alamo, "Implementation of model predictive control in
 % programmable logic controllers", Transactions on Control Systems Technology, 2020.
 % 
+% Specifically, this formulation is given in equation (9) of the above reference.
+%
 % INPUTS:
 %   - controller: Contains the information of the controller.
-%   - options: structure containing options of the ADMM solver.
+%   - options: Structure containing options of the EADMM solver.
+%   - spcies_options: Structure containing the options of the toolbox.
 % 
 % OUTPUTS:
 %   - vars: Structure containing the ingredients required by the solver.
@@ -172,3 +176,4 @@ function vars = Spcies_compute_laxMPC_ADMM_ingredients(controller, options, spci
     end
     
 end
+

@@ -1,23 +1,72 @@
-%% Spcies_gen_controller - Generation of embedded MPC controllers
+%% Spcies_gen_controller - Generation of solvers for embedded MPC
+%
+% This function generated solvers for the specified MPC controller.
+% For a list of the available MPC formulations, please refer to the
+% documentation of the toolbox, which can be found at its GitHub
+% repository https://github.com/GepocUS/Spcies.
 % 
-% This function is the main Spcies function. It generates the controller designated by
-% input 'type' for the target embedded system designated by input 'target'.
-% This function tipically saves files to the current working directory.
-% 
-% INPUTS (all inputs are name-value pairs):
-%   - type: type of controller generated. See documentation for a list and description of the controllers available.
-%   - target: target embedded system that the controller is generated for. See documentation for a list of supported ones.
-%   - sys: model of the system.
-%   - param: structure containing  parameters of the controller.
-%            Each controller will require different parameters. See documentation for which ones.
-%   - options: structure containing options of the solver.
-%              Each controller/solver will have different ones. See documantation for which ones.
-%   - save_name: string that determines the name of any files saved to the current directory.
-%   - override: Boolean that determines is the controller is overriden if the file already exists.
-% 
+% INPUTS:
+%
+% All the inputs of this function are passed as name-value pairs.
+% This toolbox can be used in conjunction with the GepocToolbox, 
+% which is available at https://github.com/GepocUS/GepocToolbox.
+% Some of the inputs may be given as classes defined in GepocToolbox.
+%
+%   - sys: State space model of the system. It should either be an
+%          instance of the ssModel class of the GepocToolbox or a
+%          structure containing:
+%          - .A: matrix A of the state space model.
+%          - .B: matrix B of the state space model.
+%          It can optionally also contain the following fields:
+%          - .xOptPoint: operating point for the system state.
+%          - .uOptPoint: operating point for the system input.
+%          - .LBx: Lower bound for the system state.
+%          - .UBx: Upper bound for the system state.
+%          - .LBu: Upper bound for the system input.
+%          - .UBu: Upper bound for the system input.
+%          - .Nx: Vector defining the scaling of the system state.
+%          - .nU: Vector defining the scaling of the system input.
+%   - param: Structure containing the ingredients of the MPC controller.
+%            Its fields will depend on the chosen MPC formulation.
+%            Please, refer to the documentation for additional help.
+%   - controller: The sys and param arguments can be omitted and instead
+%            replaced by this argument, which must be an instance of
+%            a subclass of the ssMPC class of the GepocToolbox that is 
+%            supported by Spcies.
+%   - type: String that determines the type of MPC controller.
+%           Currently, it can take the following values:
+%           - 'laxMPC': Standard MPC without terminal constraint.
+%           - 'MPCT': Model predictive control for tracking (using EADMM).
+%           - 'MPCT_ess': MPCT using an extended state-space along ADMM.
+%           - 'ellipMPC': Standard MPC with a terminal quadratic constraint.
+%           If an empty string is provided, the function tries to determine
+%           the type automatically based on the other arguments.
+%   - options: Structure containing the options of the solver.
+%              Its fields will depend on the chosen MPC formulation.
+%              Please, refer to the documentation for additional help.
+%              Default values are provided, so this argument is optional.
+%   - spcies_options: Options of the Spcies toolbox. These control aspects
+%                     such as directories where files are saved, or the
+%                     name of the saved files. See Spcies_default_options
+%                     for a list of the available options. Not all fields
+%                     need to be provided, since default options are given.
+%                     The most important of its fields is .target, which
+%                     is a string containing the target embedded system
+%                     of the code generation routine. Currently, the
+%                     supported targets are:
+%                     - 'C': For plain C. A .c and a .h file are generated.
+%                     - 'Matlab' (default): A mex file is generated.
+%   - The fields of the spcies_options argument can also be provided
+%     individually as name-value arguments. In such a case, the name-value
+%     parameter will take prevalence against the same field of the
+%     spcies_options argument if both are provided.
+%           
 % OUTPUTS:
-%   - vars: Structure containing a variety of information
-%   - The function may also create files in the working directory
+%   - vars: A structure containing a variety of information.
+%           The exact contents will depend on the MPC formulation and target
+%           system selected.
+%   - This function will also save files into the directory provided in the 
+%     spcies_options argument.
 %
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
@@ -31,7 +80,7 @@ function vars = Spcies_gen_controller(varargin)
     def_controller = []; % Default value for the controller argument
     def_type = ''; % Default type
     def_options = []; % Default value of the options argument
-    def_spcies_options = Spcies_default_options();
+    def_spcies_options = Spcies_default_options(); % Get the default options of the toolbox
     
     %% Parser
     par = inputParser;
@@ -60,9 +109,10 @@ function vars = Spcies_gen_controller(varargin)
                             'force_vector_rho', par.Results.force_vector_rho);
     else
         spcies_options = par.Results.spcies_options;
+        % TODO: fill in missing fields
     end
     
-    % Check arguments
+    % Use the default directory if non is provided
     if isempty(spcies_options.directory)
         spcies_options.directory = def_spcies_options.directory;
     end
@@ -75,7 +125,7 @@ function vars = Spcies_gen_controller(varargin)
         controller = par.Results.controller;
     end
     
-    %% Determine the type of the controller
+    %% Determine the type of the controller if it is not provided
     if isempty(par.Results.type)
         type = determine_type(controller);
     else
@@ -85,14 +135,19 @@ function vars = Spcies_gen_controller(varargin)
     %% Generate the controller
     if strcmp(type, 'MPCT')
         vars = MPCT.Spcies_gen_MPCT_EADMM(controller, 'options', par.Results.options, 'spcies_option', spcies_options);
+
     elseif strcmp(type, 'MPCT_ess')
         vars = MPCT.Spcies_gen_MPCT_extended_ss_ADMM(controller, 'options', par.Results.options, 'spcies_option', spcies_options);
+
     elseif strcmp(type, 'ellipMPC')
         vars = ellipMPC.Spcies_gen_ellipMPC_ADMM(controller, 'options', par.Results.options, 'spcies_option', spcies_options);
+
     elseif strcmp(type, 'laxMPC')
         vars = laxMPC.Spcies_gen_laxMPC_ADMM(controller, 'options', par.Results.options, 'spcies_option', spcies_options);
+
     else
         error('Spcies:gen_controller:input_error', 'Type not recognized or supported');
     end
     
 end
+

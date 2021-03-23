@@ -1,17 +1,38 @@
 %% Spcies_gen_MPCT_extended_ss_ADMM - Generate the MPCT solver using ADMM on an extended state space
 % 
-% The solver extends the state and constol inputs by adding the artificial reference to them.
+% This function is called by Spcies_gen_controller if the 'type' argument is set to 'MPCT_ess'.
+% 
+% The solver extends the state and control inputs by adding the artificial reference to them.
 % Currently, there is no additional documentation available for the solver.
 % 
 % INPUTS (all inputs are name-value pairs, except 'controller'):
-%   - controller: Contains the information of the controller.
-%   - target: target embedded system that the controller is generated for.
-%   - options: structure containing options of the EADMM solver.
-%   - save_name: string that determines the name of any files saved to the current directory.
-%   - override: Boolean that determines is the controller is overriden if the file already exists.
+%   - controller: Structure containing the information of the controller.
+%                 It must contain the fields .sys and .param.
+%                 - .sys: Structure containing the state space model (see Spcies_gen_controller).
+%                 - .param: Structure containing the ingredients of the controller:
+%                           - .Q: Cost function matrix Q.
+%                           - .R: Cost function matrix R.
+%                           - .T: Cost function matrix T.
+%                           - .S: Cost function matrix S.
+%                           - .N: Prediction horizon.
+%   - options: Structure containing options of the EADMM solver.
+%              - .rho: Penalty parameter. Scalar of vector. Defaults to the scalar 1e-2.
+%                      If a vector is provided, it must have the same dimensions as the decision variables.
+%              - .epsilon_x: Vector by which the bound for x_s are reduced.
+%              - .epsilon_u: Vector by which the bound for u_s are reduced.
+%              - .inf_bound: Scalar. Determines the value given to components without bound.
+%              - .tol: Exit tolerance of the solver. Defaults to 1e-4.
+%              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
+%              - .in_engineering: Boolean that determines if the arguments of the solver are given in
+%                                 engineering units (true) or incremental ones (false - default).
+%              - .debug: Boolean that determines if debugging options are enables in the solver.
+%                        Defaults to false.
+%              - .const_are_static: Boolean that determines if constants are defined as static variables.
+%                                   Defaults to true.
+%   - spcies_options: Structure containing the options of the toolbox. See Spcies_default_options.
 % 
 % OUTPUTS:
-%   - vars: Structure containing a variety of information
+%   - vars: Structure containing the necessary variables to run the solver.
 % 
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
@@ -68,13 +89,16 @@ function vars = Spcies_gen_MPCT_extended_ss_ADMM(varargin)
     %% Compute the ingredients of the controller
     vars = MPCT.Spcies_compute_MPCT_extended_ss_ADMM_ingredients(par.Results.controller, options, par.Results.spcies_options);
     
-    %% Call the funciton that constructs the controller
+    %% Call the function that constructs the controller
     if strcmp(par.Results.spcies_options.target, 'C') 
         MPCT.gen_MPCT_extended_ss_ADMM_C(vars, options, par.Results.spcies_options);
+
     elseif strcmp(par.Results.spcies_options.target, 'Matlab')
         MPCT.gen_MPCT_extended_ss_ADMM_Matlab(vars, options, par.Results.spcies_options);
+
     else
         error('Target not recognized or supported');
     end
     
 end
+

@@ -1,4 +1,5 @@
 %% Spcies_compute_MPCT_EADMM_ingredients
+%
 % Computes the ingredients for the MPCT controller solved using the EADMM algorithm
 %
 % Information about this formulaiton and the solver  can be found at:
@@ -9,10 +10,12 @@
 % 
 % INPUTS:
 %   - controller: Contains the information of the controller.
-%   - options: structure containing options of the EADMM solver.
+%   - options: Structure containing options of the EADMM solver.
+%   - spcies_options: Structure containing the options of the toolbox.
 % 
 % OUTPUTS:
 %   - vars: Structure containing the ingredients required by the solver.
+%   - vars_nonsparse: Structure containing the ingredients for the non-sparse solver.
 % 
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
@@ -285,3 +288,4 @@ function [vars, vars_nonsparse] = Spcies_compute_MPCT_EADMM_ingredients(controll
     vars_nonsparse.OpPoint_u = vars.OpPoint_u;
     
 end
+

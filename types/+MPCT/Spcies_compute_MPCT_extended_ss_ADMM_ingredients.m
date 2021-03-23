@@ -1,12 +1,14 @@
 %% Spcies_compute_MPCT_EADMM_ingredients
+%
 % Computes the ingredients for the MPCT controller solved using ADMM on an extended state space
 %
-% The solver extends the state and constol inputs by adding the artificial reference to them.
+% The solver extends the state and control inputs by adding the artificial reference to them.
 % Currently, there is no additional documentation available for the solver.
 % 
 % INPUTS:
 %   - controller: Contains the information of the controller.
-%   - options: structure containing options of the EADMM solver.
+%   - options: Structure containing options of the EADMM solver.
+%   - spcies_options: Structure containing the options of the toolbox.
 % 
 % OUTPUTS:
 %   - vars: Structure containing the ingredients required by the solver.
@@ -119,8 +121,6 @@ function vars = Spcies_compute_MPCT_extended_ss_ADMM_ingredients(controller, opt
     
     LB = kron(ones(N, 1), [LBz; LBv]);
     UB = kron(ones(N, 1), [UBz; UBv]);
-%     LB = [LBz; LBv];
-%     UB = [UBz; UBv];
     
     %% Compute ingredients for solving the W*dec_var = rhs system of equations
     Hinv = inv(Hhat);
@@ -158,7 +158,7 @@ function vars = Spcies_compute_MPCT_extended_ss_ADMM_ingredients(controller, opt
     vars.Hi_CSR = Hi_CSR;
     
     % Scaling vectors and operating point
-    if isa(controller, 'LaxMPC')
+    if isa(controller, 'TrackingMPC')
         vars.scaling_x = controller.model.Nx;
         vars.scaling_u = controller.model.Nu;
         vars.scaling_i_u = 1./controller.model.Nu;
@@ -193,3 +193,4 @@ function vars = Spcies_compute_MPCT_extended_ss_ADMM_ingredients(controller, opt
     end
     
 end
+

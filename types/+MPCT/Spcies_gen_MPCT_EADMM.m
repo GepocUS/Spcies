@@ -1,20 +1,41 @@
-%% Spcies_gen_MPCT_EADMM - Generate the MPCT solver based on the EADMM alggorithm
+%% Spcies_gen_MPCT_EADMM - Generate the MPCT solver based on the EADMM algorithm
 % 
-% Information about this formulaiton and the solver  can be found at:
+% This function is called by Spcies_gen_controller if the 'type' argument is set to 'MPCT'.
+%
+% Information about this formulation and the solver can be found at:
 % 
 % "Implementation of model predictive control for tracking in embedded systems
 % using a sparse extended ADMM algorithm", by P. Krupa, I. Alvarado, D. Limon
 % and T. Alamo, arXiv preprint: 2008:09071v2, 2020.
 % 
 % INPUTS (all inputs are name-value pairs, except 'controller'):
-%   - controller: Contains the information of the controller.
-%   - target: target embedded system that the controller is generated for.
-%   - options: structure containing options of the EADMM solver.
-%   - save_name: string that determines the name of any files saved to the current directory.
-%   - override: Boolean that determines is the controller is overriden if the file already exists.
+%   - controller: Structure containing the information of the controller.
+%                 It must contain the fields .sys and .param.
+%                 - .sys: Structure containing the state space model (see Spcies_gen_controller).
+%                 - .param: Structure containing the ingredients of the controller:
+%                           - .Q: Cost function matrix Q.
+%                           - .R: Cost function matrix R.
+%                           - .T: Cost function matrix T.
+%                           - .S: Cost function matrix S.
+%                           - .N: Prediction horizon.
+%   - options: Structure containing options of the EADMM solver.
+%              - .rho_base: Scalar. Base value of the penalty parameter.
+%              - .rho_mult: Scalar. Multiplication factor of the base value.
+%              - .epsilon_x: Vector by which the bound for x_s are reduced.
+%              - .epsilon_u: Vector by which the bound for u_s are reduced.
+%              - .inf_bound: Scalar. Determines the value given to components without bound.
+%              - .tol: Exit tolerance of the solver. Defaults to 1e-4.
+%              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
+%              - .in_engineering: Boolean that determines if the arguments of the solver are given in
+%                                 engineering units (true) or incremental ones (false - default).
+%              - .debug: Boolean that determines if debugging options are enables in the solver.
+%                        Defaults to false.
+%              - .const_are_static: Boolean that determines if constants are defined as static variables.
+%                                   Defaults to true.
+%   - spcies_options: Structure containing the options of the toolbox. See Spcies_default_options.
 % 
 % OUTPUTS:
-%   - vars: Structure containing a variety of information
+%   - vars: Structure containing the necessary variables to run the solver.
 % 
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
@@ -77,13 +98,16 @@ function vars = Spcies_gen_MPCT_EADMM(varargin)
     %% Compute the ingredients of the controller
     vars = MPCT.Spcies_compute_MPCT_EADMM_ingredients(par.Results.controller, options, par.Results.spcies_options);
     
-    %% Call the funciton that constructs the controller
+    %% Call the function that constructs the controller
     if strcmp(par.Results.spcies_options.target, 'C') 
         MPCT.gen_MPCT_EADMM_C(vars, options, par.Results.spcies_options);
+
     elseif strcmp(par.Results.spcies_options.target, 'Matlab')
         MPCT.gen_MPCT_EADMM_Matlab(vars, options, par.Results.spcies_options);
+
     else
             error('Target not recognized or supported');
     end
     
 end
+

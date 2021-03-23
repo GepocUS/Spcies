@@ -1,18 +1,40 @@
 %% Spcies_gen_ellipMPC_ADMM - Generate the ADMM-based solver for MPC with ellipsoidal terminal constraint
 % 
-% Information about this formulaiton and the solver  can be found at:
+% This function is called by Spcies_gen_controller if the 'type' argument is set to 'ellipMPC'.
 % 
-% t.b.d.
+% Information about this formulation and the solver can be found at:
+% 
+% t.b.d. (it will be available shortly in an arXic preprint)
 % 
 % INPUTS (all inputs are name-value pairs, except 'controller'):
-%   - controller: Contains the information of the controller.
-%   - target: target embedded system that the controller is generated for.
-%   - options: structure containing options of the EADMM solver.
-%   - save_name: string that determines the name of any files saved to the current directory.
-%   - override: Boolean that determines is the controller is overriden if the file already exists.
+%   - controller: Structure containing the information of the controller.
+%                 It must contain the fields .sys and .param.
+%                 - .sys: Structure containing the state space model (see Spcies_gen_controller).
+%                 - .param: Structure containing the ingredients of the controller:
+%                           - .Q: Cost function matrix Q.
+%                           - .R: Cost function matrix R.
+%                           - .T: Cost function matrix T.
+%                           - .N: Prediction horizon.
+%                           - .P: Matrix defining the geometry of the ellipsoidal terminal constraint.
+%                           - .c: Matrix defining the center of the ellipsoidal terminal constraint.
+%                                 Defaults to a vector of zeros (i.e., the origin).
+%                           - .r: Scalar defining the size of the ellipsoidal terminal constraint.
+%                                 Defaults to 1.
+%   - options: Structure containing options of the EADMM solver.
+%              - .rho: Penalty parameter. Scalar of vector. Defaults to the scalar 1e-2.
+%                      If a vector is provided, it must have the same dimensions as the decision variables.
+%              - .tol: Exit tolerance of the solver. Defaults to 1e-4.
+%              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
+%              - .in_engineering: Boolean that determines if the arguments of the solver are given in
+%                                 engineering units (true) or incremental ones (false - default).
+%              - .debug: Boolean that determines if debugging options are enables in the solver.
+%                        Defaults to false.
+%              - .const_are_static: Boolean that determines if constants are defined as static variables.
+%                                   Defaults to true.
+%   - spcies_options: Structure containing the options of the toolbox. See Spcies_default_options.
 % 
 % OUTPUTS:
-%   - vars: Structure containing the necessary variables to run the solver
+%   - vars: Structure containing the necessary variables to run the solver.
 % 
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
@@ -62,13 +84,16 @@ function vars = Spcies_gen_ellipMPC_ADMM(varargin)
     %% Compute the ingredients of the controller
     vars = ellipMPC.Spcies_compute_ellipMPC_ADMM_ingredients(par.Results.controller, options, par.Results.spcies_options);
     
-    %% Call the funciton that constructs the controller
+    %% Call the function that constructs the controller
     if strcmp(par.Results.spcies_options.target, 'C')
         ellipMPC.gen_ellipMPC_ADMM_C(vars, options, par.Results.spcies_options);
+
     elseif strcmp(par.Results.spcies_options.target, 'Matlab')
         ellipMPC.gen_ellipMPC_ADMM_Matlab(vars, options, par.Results.spcies_options);
+
     else
         error('Target not recognized or supported');
     end
     
 end
+

@@ -1,13 +1,15 @@
 %% Spcies_compute_ellipMPC_EADMM_ingredients
-% Computes the ingredients for the ADMM-based solver for MPC with ellipsoidal terminal constraint
 %
-% Information about this formulaiton and the solver  can be found at:
+% Computes the ingredients of the ADMM-based solver for MPC with ellipsoidal terminal constraint
 %
-% t.b.d.
+% Information about this formulation and the solver can be found at:
+%
+% t.b.d. (it will be available shortly in an arXic preprint)
 % 
 % INPUTS:
 %   - controller: Contains the information of the controller.
-%   - options: structure containing options of the EADMM solver.
+%   - options: Structure containing options of the EADMM solver.
+%   - spcies_options: Structure containing the options of the toolbox.
 % 
 % OUTPUTS:
 %   - vars: Structure containing the ingredients required by the solver.
@@ -212,3 +214,4 @@ function vars = Spcies_compute_ellipMPC_ADMM_ingredients(controller, options, sp
     end
     
 end
+
