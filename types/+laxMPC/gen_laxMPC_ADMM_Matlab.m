@@ -1,18 +1,20 @@
 %% gen_laxMPC_ADMM_Matlab
-% Generates a MEX file for the ADMM-based solver for for the lax MPC formulation
+%
+% Generates the MEX file of the ADMM-based solver for for the lax MPC formulation
 % 
 % Information about this formulation and the solver can be found at:
 % 
 % P. Krupa, D. Limon, T. Alamo, "Implementation of model predictive control in
 % programmable logic controllers", Transactions on Control Systems Technology, 2020.
 % 
+% Specifically, this formulation is given in equation (9) of the above reference.
+% 
 % INPUTS:
 %   - vars: Structure containing information needed to declare the variables.
-%   - options: Structure containing several options for the solver.
-%   - save_name: String containing the name of the file the controller is saved to.
-%   - override: Boolean that determines is the controller is overriden if the file already exists.
+%   - options: Structure containing options of the EADMM solver.
+%   - spcies_options: Structure containing the options of the toolbox.
 % 
-% OUTPUT: Saves the controller into a txt file in the current directory.
+% OUTPUT: Saves the mex and any additional files into the appropriate directory.
 % 
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
@@ -55,3 +57,4 @@ function gen_laxMPC_ADMM_Matlab(vars, options, spcies_options)
     gen_mex(save_name, spcies_options.directory);
     
 end
+

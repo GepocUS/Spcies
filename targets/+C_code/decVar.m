@@ -1,5 +1,6 @@
 %% decVar - C version
-% Writes the code for declaring a variable in Arduino
+%
+% Writes the code for declaring a variable in C
 %
 % INPUTS: 
 %   - var: variable to be declared. Single-rowed cell with 5 columns.

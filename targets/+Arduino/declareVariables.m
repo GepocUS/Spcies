@@ -1,4 +1,5 @@
 %% declareVariables - Arduino version
+%
 % Function that declares the variables for Arduino
 % 
 % INPUTS:

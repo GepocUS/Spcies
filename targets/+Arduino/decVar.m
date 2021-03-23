@@ -1,4 +1,5 @@
 %% decVar - Arduino version
+%
 % Writes the code for declaring a variable in Arduino
 %
 % INPUTS: 

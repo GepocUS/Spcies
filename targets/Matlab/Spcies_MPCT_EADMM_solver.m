@@ -1,6 +1,69 @@
 %% Spcies_MPCT_EADMM_solver - Solver for the MPCT formulation using the EADMM algorithm
+%
 % This is a non-sparse solver of the MPC for Tracking formulation from the Spcies toolbox.
 %
+% Information about this formulation and the solver can be found at:
+% 
+% "Implementation of model predictive control for tracking in embedded systems
+% using a sparse extended ADMM algorithm", by P. Krupa, I. Alvarado, D. Limon
+% and T. Alamo, arXiv preprint: 2008:09071v2, 2020.
+%
+% [u, k, e_flag, sol] = Spcies_MPCT_EADMM_solver(x0, xr, ur, 'name', value, 'name', ...) 
+%
+% INPUTS:
+%   - x0: Current system state
+%   - xr: State reference
+%   - ur: Input reference
+% 
+% NAME-VALUE INPUTS (optional):
+%   - sys: State space model of the system. It should either be an
+%          instance of the ssModel class of the GepocToolbox or a
+%          structure containing:
+%          - .A: matrix A of the state space model.
+%          - .B: matrix B of the state space model.
+%          It can optionally also contain the following fields:
+%          - .xOptPoint: operating point for the system state.
+%          - .uOptPoint: operating point for the system input.
+%          - .LBx: Lower bound for the system state.
+%          - .UBx: Upper bound for the system state.
+%          - .LBu: Upper bound for the system input.
+%          - .UBu: Upper bound for the system input.
+%          - .Nx: Vector defining the scaling of the system state.
+%          - .nU: Vector defining the scaling of the system input.
+%   - param: Structure containing the ingredients of the MPCT controller.
+%          - .Q: Cost function matrix Q.
+%          - .R: Cost function matrix R.
+%          - .T: Cost function matrix T.
+%          - .S: Cost function matrix S.
+%          - .N: Prediction horizon.
+%   - controller: Alternatively, the sys and param arguments can be omitted 
+%                 and instead substituted by an instance of the TrackingMPC
+%                 class of the GepocToolbox (https://github.com/GepocUS/GepocToolbox).
+%   - options: Structure containing options of the EADMM solver.
+%              - .rho_base: Scalar. Base value of the penalty parameter.
+%              - .rho_mult: Scalar. Multiplication factor of the base value.
+%              - .epsilon_x: Vector by which the bound for x_s are reduced.
+%              - .epsilon_u: Vector by which the bound for u_s are reduced.
+%              - .inf_bound: Scalar. Determines the value given to components without bound.
+%              - .tol: Exit tolerance of the solver. Defaults to 1e-4.
+%              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
+%              - .in_engineering: Boolean that determines if the arguments of the solver are given in
+%                                 engineering units (true) or incremental ones (false - default).
+% 
+% OUTPUTS:
+%   - u: Control action to be applied to the system.
+%   - k: Number of iterations of the algorithm.
+%   - e_flag: Exit flag of the algorithm.
+%       - 1: Optimal solution found.
+%       - -1: Maximum iterations reaches. Returns last iterate.
+%   - sol: Structure containing the optimal solution of the decision variables and dual variables.
+%       - .z1: Optimal decision variables z1.
+%       - .z2: Optimal decision variables z2.
+%       - .z3: Optimal decision variables z3.
+%       - .lambda: Optimal dual variables.
+%       - .res: Value of the residual.
+%
+% This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
 function [u, k, e_flag, sol] = Spcies_MPCT_EADMM_solver(x0, xr, ur, varargin)
@@ -51,7 +114,7 @@ function [u, k, e_flag, sol] = Spcies_MPCT_EADMM_solver(x0, xr, ur, varargin)
     if ~isfield(options, 'k_max'); options.k_max = def_k_max; end
     if ~isfield(options, 'in_engineering'); options.in_engineering = def_in_engineering; end
     
-    % Create te controler structure
+    % Create the controller structure
     if isempty(par.Results.controller)
         controller.sys = par.Results.sys;
         controller.param = par.Results.param;
@@ -153,3 +216,4 @@ function [u, k, e_flag, sol] = Spcies_MPCT_EADMM_solver(x0, xr, ur, varargin)
     sol.res = res;
         
 end
+

@@ -1,4 +1,5 @@
 %% declareVariables - C version
+%
 % Function that declares the variables for C
 % 
 % INPUTS:
@@ -9,7 +10,7 @@
 %           C does not require any additional steps before calling the decVar function.
 %
 % OUTPUTS:
-%   - s: String containing the text for the variable declaration in the Arduino environment.
+%   - s: String containing the text for the variable declaration in C.
 %
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 

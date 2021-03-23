@@ -1,5 +1,6 @@
 %% declareVariables - Unity version
-% Function that declares the variables for Unity
+%
+% Function that declares the variables for Unity Pro XL
 % 
 % INPUTS:
 %   - vars: cell containing the information of each variable in each row.
@@ -9,7 +10,7 @@
 %           Unity distinguishes various classes of variables: inputs, outputs, public and private.
 %
 % OUTPUTS:
-%   - s: String containing the text for the variable declaration in the Unity environment.
+%   - s: String containing the text for the variable declaration in the Unity Pro XL.
 %
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 

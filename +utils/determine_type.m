@@ -48,3 +48,4 @@ function type = determine_type(controller)
     end
 
 end
+

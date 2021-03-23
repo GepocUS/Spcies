@@ -1,17 +1,19 @@
 %% gen_MMPCT_EADMM_C
-% Generates the text in C for the EADMM-based solver for the MPCT formulation
+%
+% Generates the C code of the EADMM-based solver for the MPCT formulation
 % 
 % Information about this formulation and the solver can be found at:
 % 
-% P. Krupa, I. Alvarado, D. Limon, T. Alamo, "Implementation of model predictive control for 
-% tracking in embedded systems using a sparse extended ADMM algorithm", arXiv: 2008.09071v1, 2020.
+% "Implementation of model predictive control for tracking in embedded systems
+% using a sparse extended ADMM algorithm", by P. Krupa, I. Alvarado, D. Limon
+% and T. Alamo, arXiv preprint: 2008:09071v2, 2020.
 % 
 % INPUTS:
 %   - vars: Structure containing information needed to declare the variables.
-%   - options: Structure containing several options for the solver.
-%   - spcies_options: Structure containing several options for the code generation.
+%   - options: Structure containing options of the EADMM solver.
+%   - spcies_options: Structure containing the options of the toolbox.
 % 
-% OUTPUT: Saves the controller into a file in the current directory.
+% OUTPUT: Generates the C code and saves it into the appropriate files.
 % 
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
@@ -86,12 +88,12 @@ function gen_MPCT_EADMM_C(vars, options, spcies_options)
         constCell = addLine(constCell, 'OpPoint_u', vars.OpPoint_u, 1, 'double', const_type);
     end
     
-    % Declare variales
+    % Declare variables
     defines_text = C_code.declareVariables(defCell);
     constants_text = C_code.declareVariables(constCell);
     variables_text = '';
     
-    %% Load the different text files needed to contruct the solver
+    %% Load the different text files needed to construct the solver
     full_path = mfilename('fullpath');
     this_path = fileparts(full_path);
     
@@ -128,7 +130,3 @@ function gen_MPCT_EADMM_C(vars, options, spcies_options)
     
 end
 
-    
-    
-    
-    

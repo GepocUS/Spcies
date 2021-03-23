@@ -4,6 +4,8 @@
 % representation of the (sparse) matrix M.
 % 
 % INPUTS:
+%   - threshold: Any number smaller than this value is considered 0.
+%                This in an optional argument that defaults to 0.
 %   - M: Matrix to be converted
 %
 % OUTPUS:
@@ -23,9 +25,9 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function M_sparse = full2CSR(M, threshhold)
+function M_sparse = full2CSR(M, threshold)
     if nargin == 1
-        threshhold = 0; % Any number smaller than threshhold is considered a 0
+        threshold = 0; % Any number smaller than threshold is considered a 0
     end
     
     %% Initialize
@@ -39,7 +41,7 @@ function M_sparse = full2CSR(M, threshhold)
     for i = 1:n
         row(i) = nnz + 1;
         for j = 1:m
-            if abs(M(i, j)) > threshhold
+            if abs(M(i, j)) > threshold
                 val = [val M(i, j)];
                 col = [col j];
                 nnz = nnz + 1;
@@ -58,3 +60,4 @@ function M_sparse = full2CSR(M, threshhold)
     M_sparse.ncol = m;
 
 end
+

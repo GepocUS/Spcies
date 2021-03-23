@@ -1,5 +1,6 @@
 %% decVar - Unity version
-% Writes the code for declaring a variable in Unity
+%
+% Writes the code for declaring a variable in Unity Pro XL
 %
 % INPUTS: 
 %   - var: variable to be declared. Single-rowed cell with 5 columns.
@@ -14,7 +15,7 @@
 %                   - input, output, public, private
 % 
 % OUTPUTS:
-%   - s: String containing the text for the variable declaration.
+%   - s: String containing the text for the variable declaration in Unity Pro XL.
 %
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 

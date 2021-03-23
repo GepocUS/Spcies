@@ -1,15 +1,16 @@
 %% gen_MPCT_extended_ss_ADMM_C
-% Generates the text in C for the MPCT solver using ADMM on an extended state space
+%
+% Generates the C code of the MPCT solver using ADMM on an extended state space
 % 
-% The solver extends the state and constol inputs by adding the artificial reference to them.
+% The solver extends the state and control inputs by adding the artificial reference to them.
 % Currently, there is no additional documentation available for the solver.
 % 
 % INPUTS:
 %   - vars: Structure containing information needed to declare the variables.
-%   - options: Structure containing several options for the solver.
-%   - spcies_options: Structure containing several options for the code generation.
+%   - options: Structure containing options of the EADMM solver.
+%   - spcies_options: Structure containing the options of the toolbox.
 % 
-% OUTPUT: Saves the controller into a file in the current directory.
+% OUTPUT: Generates the C code and saves it into the appropriate files.
 % 
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
@@ -92,12 +93,12 @@ function gen_MPCT_extended_ss_ADMM_C(vars, options, spcies_options)
         constCell = addLine(constCell, 'OpPoint_u', vars.OpPoint_u, 1, 'double', const_type);
     end
     
-    % Declare variales
+    % Declare variables
     defines_text = C_code.declareVariables(defCell);
     constants_text = C_code.declareVariables(constCell);
     variables_text = '';
     
-    %% Load the different text files needed to contruct the solver
+    %% Load the different text files needed to construct the solver
     full_path = mfilename('fullpath');
     this_path = fileparts(full_path);
     
@@ -134,3 +135,4 @@ function gen_MPCT_extended_ss_ADMM_C(vars, options, spcies_options)
     fclose(header_file);
     
 end
+

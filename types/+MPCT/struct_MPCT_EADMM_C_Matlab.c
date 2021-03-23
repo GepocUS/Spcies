@@ -25,29 +25,29 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     // Check number of inputs
     if(nrhs != 3){
-        mexErrMsgIdAndTxt("Spcies:laxpMPC:nrhs:number",
+        mexErrMsgIdAndTxt("Spcies:MPCT_EADMM:nrhs:number",
                           "Not enough inputs");
     }
 
     // Check number of outputs
     if(nlhs == 0){
-        mexErrMsgIdAndTxt("Spcies:laxMPC:nlhs:number",
+        mexErrMsgIdAndTxt("Spcies:MPCT_EADMM:nlhs:number",
                           "At least one output required");
     }
 
     // Check that x0 is of the correct dimension
     if( !mxIsDouble(prhs[0]) || mxGetNumberOfElements(prhs[0]) != nn ){
-        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:x0",
+        mexErrMsgIdAndTxt("Spcies:MPCT_EADMM:nrhs:x0",
                           "x0 must be of dimension nn");
     }
     // Check that xr is of the correct dimension
     if( !mxIsDouble(prhs[1]) || mxGetNumberOfElements(prhs[1]) != nn ){
-        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:xr",
+        mexErrMsgIdAndTxt("Spcies:MPCT_EADMM:nrhs:xr",
                           "xr must be of dimension nn");
     }
     // Check that ur is of the correct dimension
     if( !mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != mm ){
-        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:ur",
+        mexErrMsgIdAndTxt("Spcies:MPCT_EADMM:nrhs:ur",
                           "ur must be of dimension mm");
     }
 

@@ -1,7 +1,7 @@
 %% gen_mex - Generates the MEX file from the given .c file
 %
 % INPUTS:
-%   - c_file: String containing the name of the C file (whithout the extension)
+%   - c_file: String containing the name of the C file (without the extension)
 %   - directory: String containing the working directory
 %
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
@@ -27,3 +27,4 @@ function gen_mex(c_file, directory)
     eval(cmd);
     
 end
+

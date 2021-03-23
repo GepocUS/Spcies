@@ -1,14 +1,19 @@
 /**
  * Sparse ADMM solver for the MPC formulation subject to terminal ellipsoidal constraint
- * The current system state is given in "pointer_x0".
- * The state reference is given in "my_xr".
- * The input reference is given in "my_ur".
- * The optimal control action is returned in "u_opt".
- * The number of iterations is returned in "pointer_k".
- * The exit flag is returned in "e_flag".
+ *
+ * ARGUMENTS:
+ * The current system state is given in "pointer_x0". Pointer to array of size nn.
+ * The state reference is given in "pointer_xr". Pointer to array of size nn.
+ * The input reference is given in "pointer_ur". Pointer to array of size mm.
+ * The optimal control action is returned in "u_opt". Pointer to array of size mm.
+ * The number of iterations is returned in "pointer_k". Pointer to int.
+ * The exit flag is returned in "e_flag". Pointer to int.
  *       1: Algorithm converged successfully.
  *      -1: Algorithm did not converge within the maximum number of iterations. Returns current iterate.
- * The optimal decision variables are returned in "z_opt" (only if "debug" is #defined).
+ * The optimal decision variables and dual variables are returned in the solution structure sol.
+ *
+ * If CONF_MATLAB is defined, them the solver uses slightly different arguments for the mex file.
+ *
  */
 
 #include <stdio.h>
@@ -132,7 +137,7 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
         // Compute vector q_hat = q + lambda - rho*v
         // I store vector q_hat in z because I save memory and computation
         
-        // Compute the firt mm elements
+        // Compute the first mm elements
         for(unsigned int j = 0; j < mm; j++){
             #ifdef SCALAR_RHO
             z_0[j] = q[j+nn] + lambda_0[j] - rho*v_0[j];
@@ -167,7 +172,7 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
         // Compute r.h.s of the Wc system of equations, i.e., -G'*H_hat^(-1)*q_hat - b
         // I store it in mu to save a bit of memory
 
-        // Compute the firt nn elements
+        // Compute the first nn elements
         for(unsigned int j = 0; j < nn; j++){
             mu[0][j] = Hi[0][j]*z[0][j] - b[j];
             for(unsigned int i = 0; i < mm; i++){
@@ -481,7 +486,7 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
     }
     #endif
 
-    // Resutn solutions
+    // Return number of iterations
     #ifdef CONF_MATLAB
     pointer_k[0] = k; // Number of iterations
     #else
@@ -554,3 +559,4 @@ void ellipMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, d
     #endif
 
 }
+

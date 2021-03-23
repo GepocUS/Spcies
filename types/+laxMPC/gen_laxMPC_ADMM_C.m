@@ -1,18 +1,20 @@
 %% gen_laxMPC_ADMM_C
-% Generates the text in C for the ADMM-based solver for the lax MPC formulation
+%
+% Generates the C code of the ADMM-based solver for the lax MPC formulation
 % 
 % Information about this formulation and the solver can be found at:
-% 
+%
 % P. Krupa, D. Limon, T. Alamo, "Implementation of model predictive control in
 % programmable logic controllers", Transactions on Control Systems Technology, 2020.
 % 
+% Specifically, this formulation is given in equation (9) of the above reference.
+% 
 % INPUTS:
 %   - vars: Structure containing information needed to declare the variables.
-%   - options: Structure containing several options for the solver.
-%   - save_name: String containing the name of the file the controller is saved to.
-%   - override: Boolean that determines is the controller is overriden if the file already exists.
+%   - options: Structure containing options of the EADMM solver.
+%   - spcies_options: Structure containing the options of the toolbox.
 % 
-% OUTPUT: Saves the controller into a txt file in the current directory.
+% OUTPUT: Generates the C code and saves it into the appropriate files.
 % 
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
@@ -95,12 +97,12 @@ function gen_laxMPC_ADMM_C(vars, options, spcies_options)
         constCell = addLine(constCell, 'rho_i_N', vars.rho_i_N, 1, 'double', const_type);
     end
     
-    % Declare variales
+    % Declare variables
     defines_text = C_code.declareVariables(defCell);
     constants_text = C_code.declareVariables(constCell);
     variables_text = '';
     
-    %% Load the different text files needed to contruct the solver
+    %% Load the different text files needed to construct the solver
     full_path = mfilename('fullpath');
     this_path = fileparts(full_path);
     
@@ -136,3 +138,4 @@ function gen_laxMPC_ADMM_C(vars, options, spcies_options)
     fclose(header_file);
     
 end
+

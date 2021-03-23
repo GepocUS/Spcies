@@ -1,14 +1,19 @@
 /**
  * Sparse EADMM solver for the MPCT formulation
- * The current system state is given in "pointer_x0".
- * The state reference is given in "pointer_xr".
- * The input reference is given in "pointer_ur".
- * The optimal control action is returned in "u_opt".
- * The number of iterations is returned in "pointer_k".
- * The exit flag is returned in "e_flag".
+ *
+ * ARGUMENTS:
+ * The current system state is given in "pointer_x0". Pointer to array of size nn.
+ * The state reference is given in "pointer_xr". Pointer to array of size nn.
+ * The input reference is given in "pointer_ur". Pointer to array of size mm.
+ * The optimal control action is returned in "u_opt". Pointer to array of size mm.
+ * The number of iterations is returned in "pointer_k". Pointer to int.
+ * The exit flag is returned in "e_flag". Pointer to int.
  *       1: Algorithm converged successfully.
  *      -1: Algorithm did not converge within the maximum number of iterations. Returns current iterate.
- * The optimal decision variables are returned in "sol" (only if "DEGUB" is #defined).
+ * The optimal decision variables and dual variables are returned in the solution structure sol.
+ *
+ * If CONF_MATLAB is defined, them the solver uses slightly different arguments for the mex file.
+ *
  */
 
 #include <stdio.h>

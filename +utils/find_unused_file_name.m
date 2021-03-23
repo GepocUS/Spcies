@@ -9,7 +9,7 @@
 %
 % This function takes 'base_name.extension' and checks if it is a name that is currently used in the
 % working directory. If it is not used, then that name is returned. If it is used, then 
-% the function returns the firt available name of the form base_name_vX, where X is an integer.
+% the function returns the first available name of the form base_name_vX, where X is an integer.
 %
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
@@ -28,3 +28,4 @@ function name = find_unused_file_name(base_name, extension)
     end
     
 end
+

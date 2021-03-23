@@ -1,15 +1,16 @@
 %% gen_MPCT_extended_ss_ADMM_Matlab
-% Generates a MEX file for the MPCT solver using ADMM on an extended state space
+%
+% Generates the MEX file of the MPCT solver using ADMM on an extended state space
 % 
-% The solver extends the state and constol inputs by adding the artificial reference to them.
+% The solver extends the state and control inputs by adding the artificial reference to them.
 % Currently, there is no additional documentation available for the solver.
 % 
 % INPUTS:
 %   - vars: Structure containing information needed to declare the variables.
-%   - options: Structure containing several options for the solver.
-%   - spcies_options: Structure containing several options for the code generation.
+%   - options: Structure containing options of the EADMM solver.
+%   - spcies_options: Structure containing the options of the toolbox.
 % 
-% OUTPUT: Saves the controller in the current directory.
+% OUTPUT: Saves the mex and any additional files into the appropriate directory.
 % 
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
@@ -52,3 +53,4 @@ function gen_MPCT_extended_ss_ADMM_Matlab(vars, options, spcies_options)
     gen_mex(save_name, spcies_options.directory);
     
 end
+

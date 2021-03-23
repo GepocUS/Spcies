@@ -5,6 +5,8 @@
 % 
 % INPUTS:
 %   - M: Matrix to be converted
+%   - threshold: Any number smaller than this value is considered 0.
+%                This in an optional argument that defaults to 0.
 %
 % OUTPUS:
 %   - M_sparse: Structure containing the sparse representation of M
@@ -20,16 +22,16 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function M_sparse = full2CSC(M, threshhold)
+function M_sparse = full2CSC(M, threshold)
     if nargin == 1
-        threshhold = 0; % Any number smaller than threshhold is considered a 0
+        threshold = 0; % Any number smaller than threshold is considered a 0
     end
     
 	%% Compute dimensions of M
     [n, m] = size(M);
     
     %% Compute the CSR representation of the transposed
-    M_CSR = utils.full2CSR(M', threshhold);
+    M_CSR = utils.full2CSR(M', threshold);
     
     %% Fix the values of nrow and ncol
     M_sparse.val = M_CSR.val;
@@ -40,3 +42,4 @@ function M_sparse = full2CSC(M, threshhold)
     M_sparse.ncol = m;
     
 end
+
