@@ -106,7 +106,7 @@ function gen_laxMPC_ADMM_C(vars, options, spcies_options)
     full_path = mfilename('fullpath');
     this_path = fileparts(full_path);
     
-    controller_text = fileread([this_path '/struct_laxMPC_ADMM_C_plain.c']);
+    controller_text = C_code.get_generic_solver_struct;
     
     solver_text = fileread([this_path '/code_laxMPC_ADMM_C.c']);
     
