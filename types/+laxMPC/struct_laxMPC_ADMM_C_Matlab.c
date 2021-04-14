@@ -24,7 +24,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     // Check number of inputs
     if(nrhs != 3){
-        mexErrMsgIdAndTxt("Spcies:laxpMPC:nrhs:number",
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:number",
                           "Not enough inputs");
     }
 
