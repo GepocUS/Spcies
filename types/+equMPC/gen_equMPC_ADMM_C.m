@@ -68,7 +68,7 @@ function gen_equMPC_ADMM_C(vars, options, spcies_options)
     constCell = addLine(constCell, 'UB', vars.UB, 1, 'double', const_type);
     constCell = addLine(constCell, 'Hi', vars.Hi, 1, 'double', const_type);
     constCell = addLine(constCell, 'Hi_0', vars.Hi_0, 1, 'double', const_type);
-    constCell = addLine(constCell, 'Hi_N', vars.Hi_N, 1, 'double', const_type);
+    %constCell = addLine(constCell, 'Hi_N', vars.Hi_N, 1, 'double', const_type);
     constCell = addLine(constCell, 'AB', vars.AB, 1, 'double', const_type);
     constCell = addLine(constCell, 'Alpha', vars.Alpha, 1, 'double', const_type);
     constCell = addLine(constCell, 'Beta', vars.Beta, 1, 'double', const_type);
@@ -91,10 +91,10 @@ function gen_equMPC_ADMM_C(vars, options, spcies_options)
     else
         constCell = addLine(constCell, 'rho', vars.rho, 1, 'double', const_type);
         constCell = addLine(constCell, 'rho_0', vars.rho_0, 1, 'double', const_type);
-        constCell = addLine(constCell, 'rho_N', vars.rho_N, 1, 'double', const_type);
+        %constCell = addLine(constCell, 'rho_N', vars.rho_N, 1, 'double', const_type);
         constCell = addLine(constCell, 'rho_i', vars.rho_i, 1, 'double', const_type);
         constCell = addLine(constCell, 'rho_i_0', vars.rho_i_0, 1, 'double', const_type);
-        constCell = addLine(constCell, 'rho_i_N', vars.rho_i_N, 1, 'double', const_type);
+        %constCell = addLine(constCell, 'rho_i_N', vars.rho_i_N, 1, 'double', const_type);
     end
     
     % Declare variables

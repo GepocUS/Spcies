@@ -54,7 +54,7 @@ function vars = Spcies_compute_equMPC_ADMM_ingredients(controller, options, spci
     
     %% Turn rho into a vector
     if isscalar(options.rho) && spcies_options.force_vector_rho
-        rho = options.rho*ones(N*(n+m), 1);
+        rho = options.rho*ones(N*(n+m) - n, 1);
     else
         rho = options.rho;
     end
@@ -69,11 +69,11 @@ function vars = Spcies_compute_equMPC_ADMM_ingredients(controller, options, spci
     % Hessian and q for variable z
     H = blkdiag(R, kron(eye(N-1), blkdiag(Q, R)));
     if vars.rho_is_scalar
-        Hhat = H + rho*eye(N*(n+m));
+        Hhat = H + rho*eye(N*(n+m) - n);
     else
         Hhat = H + diag(rho);
     end
-    q = zeros(N*(n+m)-n,1);
+    q = zeros(N*(n+m) - n,1);
     
     %% Compute the matrix Aeq
     
@@ -85,7 +85,7 @@ function vars = Spcies_compute_equMPC_ADMM_ingredients(controller, options, spci
         Aeq(i:i+n-1,((j-1)*(n+m)+(m+n+1)):((j-1)*(n+m)+(n+m+1)+n-1)) = -eye(n);
     end
     Aeq = [B -eye(n) zeros(n, size(Aeq, 2) - n); zeros(size(Aeq, 1), m) Aeq]; % Initial condition
-    Aeq = Aeq(:,1:end-nx);
+    Aeq = Aeq(:,1:end-n);
     
     %% Compute matrix W
     Hinv = inv(Hhat);
@@ -107,7 +107,6 @@ function vars = Spcies_compute_equMPC_ADMM_ingredients(controller, options, spci
     vars.N = N;
     vars.Hi_0 = diag(Hinv(1:m, 1:m));
     vars.Hi = reshape(diag(Hinv(m+(1:(N-1)*(n+m)),m+(1:(N-1)*(n+m)))), n+m, N-1)';
-    %vars.Hi_N = Hinv(end-n+1:end, end-n+1:end);
     vars.AB = [A B];
     vars.UB = UB;
     vars.LB = LB;
@@ -122,10 +121,8 @@ function vars = Spcies_compute_equMPC_ADMM_ingredients(controller, options, spci
     else
         vars.rho_0 = rho(1:m);
         vars.rho = reshape(rho(m+1:end-n), n+m, N-1)';
-        %vars.rho_N = rho(end-n+1:end);
         vars.rho_i_0 = 1./rho(1:m);
         vars.rho_i = reshape(1./rho(m+1:end-n), n+m, N-1)';
-        %vars.rho_i_N = 1./rho(end-n+1:end);
     end
     
     % Scaling vectors and operating point

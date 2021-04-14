@@ -40,13 +40,10 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     double ur[mm]; // Control input reference
     double v[NN-1][nm] = {{0.0}}; // Decision variables v
     double v_0[mm] = {0.0};
-    //double v_N[nn] = {0.0};
     double lambda[NN-1][nm] = {{0.0}}; // Dual variables lambda
     double lambda_0[mm] = {0.0};
-    //double lambda_N[nn] = {0.0};
     double z[NN-1][nm] = {{0.0}}; // Decision variables z
     double z_0[mm] = {0.0};
-    //double z_N[nn] = {0.0};
     double z1[NN-1][nm] = {{0.0}}; // Value of the decision variables z at the last iteration
     double z1_0[mm] = {0.0};
     double z1_N[nn] = {0.0};
@@ -110,7 +107,6 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // Step 0: Save the value of z into variable z1
         memcpy(z1_0,z_0,sizeof(double)*mm);
         memcpy(z1,z,sizeof(double)*(NN-1)*nm);
-        //memcpy(z1_N,z_N,sizeof(double)*nn);
 
         // TODO: Add as optional (if memcpy is not available in all devices) or delete this code
         // Compute the first mm elements
@@ -118,16 +114,11 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
             // z1_0[j] = z_0[j];
         // }
 
-        // Compute all the other elements except the last nn
+        // Compute all the other elements
         // for(unsigned int l = 0; l < NN-1; l++){
             // for(unsigned int j = 0; j < nm; j++){
                 // z1[j][l] = z[j][l];
             // }
-        // }
-
-        // Compute the last nn elements
-        // for(unsigned int j = 0; j < nn; j++){
-            // z1_N[j] = z_N[j];
         // }
 
         // Step 1: Minimize w.r.t. z
@@ -154,15 +145,6 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
                 #endif
             }
         }
-
-        // Compute the last nn elements
-        // for(unsigned int j = 0; j < nn; j++){
-            // #ifdef SCALAR_RHO
-            // z_N[j] = qP[j] + lambda_N[j] - rho*v_N[j];
-            // #else
-            // z_N[j] = qP[j] + lambda_N[j] - rho_N[j]*v_N[j];
-            // #endif
-        // }
 
         // Compute r.h.s of the Wc system of equations, i.e., -G'*H_hat^(-1)*q_hat - b
         // I store it in mu to save a bit of memory
@@ -287,17 +269,6 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
             }
         }
 
-        // Compute the last nn elements
-        // for(unsigned int j = 0; j < nn; j++){
-            // aux_N[j] = z_N[j] - mu[NN-1][j];
-        // }
-        // for(unsigned int j = 0; j < nn; j++){
-            // z_N[j] = 0.0;
-            // for(unsigned int i = 0; i < nn; i++){
-                // z_N[j] = z_N[j] - Hi_N[j][i]*aux_N[i];
-            // }
-        // }
-
         // Step 2: Minimize w.r.t. v
 
         // Compute the first mm variables
@@ -324,17 +295,6 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
             }
         }
 
-        // Compute the last nn elements
-        // for(unsigned int j = 0; j < nn; j++){
-            // #ifdef SCALAR_RHO
-            // v_N[j] = z_N[j] + rho_i*lambda_N[j];
-            // #else
-            // v_N[j] = z_N[j] + rho_i_N[j]*lambda_N[j];
-            // #endif
-            // v_N[j] = (v_N[j] > LB[j]) ? v_N[j] : LB[j]; // maximum between v and the lower bound
-            // v_N[j] = (v_N[j] > UB[j]) ? UB[j] : v_N[j]; // minimum between v and the upper bound
-        // }
-
         // Step 3: Update lambda
 
         // Compute the first mm elements
@@ -357,15 +317,6 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
             }
         }
 
-        // Compute the last nn elements
-        // for(unsigned int j = 0; j < nn; j++){
-            // #ifdef SCALAR_RHO
-            // lambda_N[j] = lambda_N[j] + rho*( z_N[j] - v_N[j] );
-            // #else
-            // lambda_N[j] = lambda_N[j] + rho_N[j]*( z_N[j] - v_N[j] );
-            // #endif
-        // }
-
         // Step 4: Compute the residual
 
         res_flag = 0; // Reset the residual flag
@@ -382,21 +333,6 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
                 break;
             }
         }
-
-        // Compute the last NN elements
-        // if(res_flag == 0){
-            // for(unsigned int j = 0; j < nn; j++){
-                // res_fixed_point = z1_N[j] - z_N[j];
-                // res_primal_feas = z_N[j] - v_N[j];
-                // Obtain absolute values
-                // res_fixed_point = ( res_fixed_point > 0.0 ) ? res_fixed_point : -res_fixed_point;
-                // res_primal_feas = ( res_primal_feas > 0.0 ) ? res_primal_feas : -res_primal_feas;
-                // if( res_fixed_point > tol || res_primal_feas > tol){
-                    // res_flag = 1;
-                    // break;
-                // }
-            // }
-        // }
 
         // Compute all the other elements
         if(res_flag == 0){
@@ -482,14 +418,6 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         }
     }
 
-    // Last nn elements
-    // for(unsigned int j = 0; j < nn; j++){
-        // count++;
-        // z_opt[count] = z_N[j];
-        // v_opt[count] = v_N[j];
-        // lambda_opt[count] = lambda_N[j];
-    // }
-
     #else
 
     // First mm variables
@@ -510,14 +438,6 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
             sol->lambda[count] = lambda[l][j];
         }
     }
-
-    // Last nn elements
-    // for(unsigned int j = 0; j < nn; j++){
-        // count++;
-        // sol->z[count] = z_N[j];
-        // sol->v[count] = v_N[j];
-        // sol->lambda[count] = lambda_N[j];
-    // }
 
     #endif
 
