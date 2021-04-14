@@ -148,6 +148,9 @@ function vars = Spcies_gen_controller(varargin)
 
     elseif strcmp(type, 'laxMPC')
         vars = laxMPC.Spcies_gen_laxMPC_ADMM(controller, 'options', par.Results.options, 'spcies_option', spcies_options);
+        
+    elseif strcmp(type, 'equMPC')
+        vars = equMPC.Spcies_gen_equMPC_ADMM(controller, 'options', par.Results.options, 'spcies_option', spcies_options);
 
     else
         error('Spcies:gen_controller:input_error', 'Type not recognized or supported');
