@@ -26,15 +26,7 @@ function gen_laxMPC_ADMM_C(vars, options, spcies_options)
     def_save_name = 'laxMPC';
 
     % Determine the name of the file if it already exists
-    if isempty(spcies_options.save_name)
-        save_name = def_save_name;
-    else
-        save_name = spcies_options.save_name;
-    end
-    
-    if ~spcies_options.override
-        save_name = utils.find_unused_file_name(save_name, 'c');
-    end
+    save_name = utils.process_save_name(spcies_options.save_name, def_save_name, spcies_options.override, 'c');
     
     if options.const_are_static
         const_type = 'static constant';
