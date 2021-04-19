@@ -28,7 +28,7 @@ classdef Spcies_problem
             def_param = []; % Default value for the param argument
             def_controller = []; % Default value for the controller argument
             del_solver_options = [];% Default options of the solver
-            def_options = Spcies_default_options();  % Get the default options of the toolbox
+            def_options = spcies_default_options();  % Get the default options of the toolbox
 
             %% Parser
             par = inputParser;
