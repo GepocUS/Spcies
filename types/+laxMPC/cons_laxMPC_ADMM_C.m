@@ -21,7 +21,7 @@
 function constructor = cons_laxMPC_ADMM_C(recipe)
 
     %% Preliminaries
-    import utils.addLine
+    import utils.add_line
 
     % Get path to this directory
     full_path = mfilename('fullpath');
@@ -62,50 +62,50 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
     
     % Defines
     defCell = [];
-    defCell = addLine(defCell, 'nn', n, 1, 'uint', 'define');
-    defCell = addLine(defCell, 'mm', m, 1, 'uint', 'define');
-    defCell = addLine(defCell, 'nm', n+m, 1, 'uint', 'define');
-    defCell = addLine(defCell, 'NN', N, 1, 'uint', 'define');
-    defCell = addLine(defCell, 'k_max', solver_options.k_max, 1, 'uint', 'define');
-    defCell = addLine(defCell, 'tol', solver_options.tol, 1, 'float', 'define');
-    defCell = addLine(defCell, 'in_engineering', solver_options.in_engineering, 1, 'int', 'define');
+    defCell = add_line(defCell, 'nn', n, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'mm', m, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'nm', n+m, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'NN', N, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'k_max', solver_options.k_max, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'tol', solver_options.tol, 1, 'float', 'define');
+    defCell = add_line(defCell, 'in_engineering', solver_options.in_engineering, 1, 'int', 'define');
     if solver_options.debug
-        defCell = addLine(defCell, 'DEBUG', 1, 1, 'bool', 'define');
+        defCell = add_line(defCell, 'DEBUG', 1, 1, 'bool', 'define');
     end
     
     % Constants
     constCell = [];
-    constCell = addLine(constCell, 'LB', vars.LB, 1, 'double', const_type);
-    constCell = addLine(constCell, 'UB', vars.UB, 1, 'double', const_type);
-    constCell = addLine(constCell, 'Hi', vars.Hi, 1, 'double', const_type);
-    constCell = addLine(constCell, 'Hi_0', vars.Hi_0, 1, 'double', const_type);
-    constCell = addLine(constCell, 'Hi_N', vars.Hi_N, 1, 'double', const_type);
-    constCell = addLine(constCell, 'AB', vars.AB, 1, 'double', const_type);
-    constCell = addLine(constCell, 'Alpha', vars.Alpha, 1, 'double', const_type);
-    constCell = addLine(constCell, 'Beta', vars.Beta, 1, 'double', const_type);
-    constCell = addLine(constCell, 'Q', vars.Q, 1, 'double', const_type);
-    constCell = addLine(constCell, 'R', vars.R, 1, 'double', const_type);
-    constCell = addLine(constCell, 'P', vars.P, 1, 'double', const_type);
+    constCell = add_line(constCell, 'LB', vars.LB, 1, 'double', const_type);
+    constCell = add_line(constCell, 'UB', vars.UB, 1, 'double', const_type);
+    constCell = add_line(constCell, 'Hi', vars.Hi, 1, 'double', const_type);
+    constCell = add_line(constCell, 'Hi_0', vars.Hi_0, 1, 'double', const_type);
+    constCell = add_line(constCell, 'Hi_N', vars.Hi_N, 1, 'double', const_type);
+    constCell = add_line(constCell, 'AB', vars.AB, 1, 'double', const_type);
+    constCell = add_line(constCell, 'Alpha', vars.Alpha, 1, 'double', const_type);
+    constCell = add_line(constCell, 'Beta', vars.Beta, 1, 'double', const_type);
+    constCell = add_line(constCell, 'Q', vars.Q, 1, 'double', const_type);
+    constCell = add_line(constCell, 'R', vars.R, 1, 'double', const_type);
+    constCell = add_line(constCell, 'P', vars.P, 1, 'double', const_type);
     if solver_options.in_engineering
-        constCell = addLine(constCell, 'scaling_x', vars.scaling_x, 1, 'double', const_type);
-        constCell = addLine(constCell, 'scaling_u', vars.scaling_u, 1, 'double', const_type);
-        constCell = addLine(constCell, 'scaling_i_u', vars.scaling_i_u, 1, 'double', const_type);
-        constCell = addLine(constCell, 'OpPoint_x', vars.OpPoint_x, 1, 'double', const_type);
-        constCell = addLine(constCell, 'OpPoint_u', vars.OpPoint_u, 1, 'double', const_type);
+        constCell = add_line(constCell, 'scaling_x', vars.scaling_x, 1, 'double', const_type);
+        constCell = add_line(constCell, 'scaling_u', vars.scaling_u, 1, 'double', const_type);
+        constCell = add_line(constCell, 'scaling_i_u', vars.scaling_i_u, 1, 'double', const_type);
+        constCell = add_line(constCell, 'OpPoint_x', vars.OpPoint_x, 1, 'double', const_type);
+        constCell = add_line(constCell, 'OpPoint_u', vars.OpPoint_u, 1, 'double', const_type);
     end
     
     % rho
     if vars.rho_is_scalar
-        defCell = addLine(defCell, 'SCALAR_RHO', 1, 0, 'bool', 'define');
-        defCell = addLine(defCell, 'rho', vars.rho, 1, 'double', 'define');
-        defCell = addLine(defCell, 'rho_i', vars.rho_i, 1, 'double', 'define');
+        defCell = add_line(defCell, 'SCALAR_RHO', 1, 0, 'bool', 'define');
+        defCell = add_line(defCell, 'rho', vars.rho, 1, 'double', 'define');
+        defCell = add_line(defCell, 'rho_i', vars.rho_i, 1, 'double', 'define');
     else
-        constCell = addLine(constCell, 'rho', vars.rho, 1, 'double', const_type);
-        constCell = addLine(constCell, 'rho_0', vars.rho_0, 1, 'double', const_type);
-        constCell = addLine(constCell, 'rho_N', vars.rho_N, 1, 'double', const_type);
-        constCell = addLine(constCell, 'rho_i', vars.rho_i, 1, 'double', const_type);
-        constCell = addLine(constCell, 'rho_i_0', vars.rho_i_0, 1, 'double', const_type);
-        constCell = addLine(constCell, 'rho_i_N', vars.rho_i_N, 1, 'double', const_type);
+        constCell = add_line(constCell, 'rho', vars.rho, 1, 'double', const_type);
+        constCell = add_line(constCell, 'rho_0', vars.rho_0, 1, 'double', const_type);
+        constCell = add_line(constCell, 'rho_N', vars.rho_N, 1, 'double', const_type);
+        constCell = add_line(constCell, 'rho_i', vars.rho_i, 1, 'double', const_type);
+        constCell = add_line(constCell, 'rho_i_0', vars.rho_i_0, 1, 'double', const_type);
+        constCell = add_line(constCell, 'rho_i_N', vars.rho_i_N, 1, 'double', const_type);
     end
     
     %% Declare an empty constructor object
