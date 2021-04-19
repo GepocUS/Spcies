@@ -1,4 +1,19 @@
 %% add_default_options_to_struct
+%
+% original = add_default_options_to_struct(original, default)
+%
+% Adds the missing fields from the structure provided in the
+% argument 'default' to the structure provided in the 
+% argument 'original'.
+% 
+% It returns the 'original' structure with the new fields added.
+% 
+% This function is used to fill in the defaults of a structure
+% whose fields have not all been provided by the user.
+% It does not require knowledge of the fields of the structure.
+%
+% This function is part of Spcies: https://github.com/GepocUS/Spcies
+%
 
 function original = add_default_options_to_struct(original, default)
 
@@ -19,3 +34,4 @@ function original = add_default_options_to_struct(original, default)
     end
     
 end
+
