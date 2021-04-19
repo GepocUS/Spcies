@@ -1,18 +1,79 @@
-%% 
+%% Spcies_constructor - Spcies class that defines the construction of files
+% 
+% This class contains the information required to generate the files and
+% performs the file generation.
+%
+% Its constructor is empty, i.e., it generates an instance with empty properties.
+%
+% PROPERTIES:
+%   - files: Structure that contains a field for each file that is generated.
+%       This structure contains the following fields:
+%         - .dir: Structure. Contains the complete path of the file.
+%                 Its fields are: .name, .path and .extension. All strings.
+%         - .save: Boolean. Determine if the files should be saved (unused).
+%         - .override: Boolean. Determines if previous files are overwritten.
+%         - .blocks: Cell of an undetermined number of rows and two columns.
+%                    Each row is one of the main parts of the file.
+%                    Column 1 is the identifies of the file and column 2 the
+%                    path to the file containing the text to be introduced
+%                    wherever the identifier is found.
+%                    Row 1 is the initial file. Its identifier must be $START$.
+%                    The contents of successive files are appended in succession
+%                    in the places marked by their respective identifiers.
+%         - .data: Cell of an undetermined number of rows and two columns.
+%                  Each row is a type of data to be appended in its identifier.
+%                  The first column is the identifier and the second is the data.
+%                  The data is saved into column 2 as a cell array in the format
+%                  required by the declare_variables function of the platform.
+%         - .flags: Cell of an undetermined number of rows and two columns.
+%                   Each row is a string that must be added in place of its
+%                   identifier. Columns 1 is the identifier and 2 is the text.
+%         - .append: Cell of an undetermined number of rows and one column.
+%                    Each column contains the path to a file whose contents
+%                    must be added at the end of the rest of the text.
+%                    Similar to the blocks, but without the identifiers.
+%         - .exec_me: String that is executed after the file has been saved.
+%         - .args_exec: Cell of an undetermined number of rows and two columns.
+%                       Arguments added to the exec_me string before it is
+%                       executed. The first column is the identifier where the
+%                       string of the second column should be added.
+%   - data: Same as the files.data field but applied to all the files.
+%   - flags: Same as the files.flags field but applied to all the files.
+%   - exec_me: Same as the files.exec_me field but executed after the individual
+%              exec_me of each file.
+%   - args_exec: Same as the files.args_exec, but applied to the property exec_me.
+% 
+% The identifiers are strings that follow the format '$IDENTIFIER_NAME$'.
+% 
+% PROPERTIES:
+%   - new_empty_file(self, name, options, extension): creates a new field in
+%       the field property named 'name'. It also receives the structure
+%       Spcies_problem.options of the current problem in 'options'. Finally
+%       it receives the extension of the file, to be saved in file.dir.extension.
+%
+%   - construct(self, options): Creates the files. It receives the structure
+%       Spcies_problem.options of the current problem in 'options'.
+%       The result of calling this method is the generation of the files.
+%
+% This class is part of Spcies: https://github.com/GepocUS/Spcies
+% 
 
 classdef Spcies_constructor
     
     properties
-        files
-        data
-        flags
-        exec_me
-        args_exec
+        files % Files to be generated
+        data % Data to be added to the files
+        flags % Flags to be substituted by text
+        exec_me % Command to be executed after the file is saved
+        args_exec % Flags to be added to the exec_me command
     end
     
     methods
-        
-        % Function that creates a new file field
+      
+        %% PROPERTIES 
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % new_empty_file: Function that creates a new file field
         function self = new_empty_file(self, name, options, extension)
             
             self.files.(name).dir.name = options.save_name;
@@ -29,12 +90,13 @@ classdef Spcies_constructor
             
         end
         
-        % Function that constructs a program
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % construct: Function that constructs the files
         function self = construct(self, options)
+
+            fn = fieldnames(self.files); % Get the names of the fields of 'files´
             
-            % Create each one of the files
-            fn = fieldnames(self.files);
-            
+            % Create the text of each one of the files
             for i = 1:numel(fn)
                 name = fn{i}; % Save name of the field, for convenience
                 
@@ -64,10 +126,10 @@ classdef Spcies_constructor
                 if ~strcmp(self.files.(name).blocks{1, 1}, '$START$')
                     error('Spcies:constructor:on_start', 'The first entry of Spcies_constructor.files.(name).blocks must be the $START$ file');
                 end
-                file_text.(name) = fileread(self.files.(name).blocks{1, 2});
-                num_blocks = size(self.files.(name).blocks, 1);
-                
-                % Add the other blocks in the specified order
+                file_text.(name) = fileread(self.files.(name).blocks{1, 2}); % Read the file containing the initial text
+
+                % Add the other blocks in the order in which they appear
+                num_blocks = size(self.files.(name).blocks, 1); % Get the number of blocks
                 for j = 2:num_blocks
                     
                     % Get the text of the block
@@ -78,20 +140,20 @@ classdef Spcies_constructor
                     
                 end
                 
-                % Add appends
-                num_appends = size(self.files.(name).appends, 1);
+                % Add appends at the end of the file
+                num_appends = size(self.files.(name).appends, 1); % Get the number of appends
                 for j = 1:num_appends
                     
                     % Get the text of the append
-                    text_append = fileread(self.files.(name).appends{j, 2});
+                    text_append = fileread(self.files.(name).appends{j, 1});
                     
                     % Add to the main text
                     file_text.(name) = strcat(file_text.(name),  text_append);
                     
                 end
                 
-                % Add data
-                num_data = size(self.files.(name).data, 1);
+                % Add data to the places marked by their identifiers
+                num_data = size(self.files.(name).data, 1); % Get the number of data types
                 for j = 1:num_data
                     
                     % Process the data into a string
@@ -102,8 +164,8 @@ classdef Spcies_constructor
 
                 end
                 
-                % Add flags
-                num_flags = size(self.files.(name).flags, 1);
+                % Add flags to the places marked by their identifiers
+                num_flags = size(self.files.(name).flags, 1); % Get the number of flags
                 for j = 1:num_flags
                     
                     % Add flag to the main text
@@ -111,15 +173,15 @@ classdef Spcies_constructor
                     
                 end
                 
-                % Add the name and notice
-                file_text.(name) = strrep(file_text.(name), '$INSERT_NAME$', self.files.(name).dir.name);
-                file_text.(name) = strrep(file_text.(name), '$INSERT_PATH$', self.files.(name).dir.path);
-                file_text.(name) = utils.add_notice(file_text.(name), options);
+                % Add the default flags and appends
+                file_text.(name) = strrep(file_text.(name), '$INSERT_NAME$', self.files.(name).dir.name); % Name of the file
+                file_text.(name) = strrep(file_text.(name), '$INSERT_PATH$', self.files.(name).dir.path); % Path of the file
+                file_text.(name) = utils.add_notice(file_text.(name), options); % Notice saying that is was generated by Spcies
                 
             end
             
             % Add the shared data blocks to the files
-            num_data = size(self.data, 1);
+            num_data = size(self.data, 1); % Get the number of shared data types
             for j = 1:num_data
 
                 % Process the data into a string
@@ -133,7 +195,7 @@ classdef Spcies_constructor
             end
             
             % Add the shared flags to the files
-            num_flags = size(self.flags, 1);
+            num_flags = size(self.flags, 1); % Get the number of flags shared by all files
             for j = 1:num_flags
 
                 % Add data to each file_text
@@ -146,7 +208,7 @@ classdef Spcies_constructor
             % Save the files
             for i = 1:numel(fn)
                 
-                % Open a file
+                % Open file
                 file_pointers.(fn{i}) = fopen(utils.get_full_path(self.files.(fn{i}).dir), 'wt');
                 
                 % Write to file
@@ -162,29 +224,37 @@ classdef Spcies_constructor
                 
                 if ~isempty(self.files.(fn{i}).exec_me)
                     
+                    % Get the initial text to be executed
                     exec_text = self.files.(fn{i}).exec_me;
                     
+                    % Add the args in place of the identifiers
                     for j = 1:size(self.files.(fn{i}).args_exec, 1)
                         exec_text = strrep(exec_text, self.files.(fn{i}).args_exec{j, 1}, self.files.(fn{i}).args_exec{j, 2});
                     end
                     
-                    exec_text = strrep(exec_text, '$INSERT_NAME$', self.files.(name).dir.name);
-                    exec_text = strrep(exec_text, '$INSERT_PATH$', self.files.(name).dir.path);
+                    % Add the default flags
+                    exec_text = strrep(exec_text, '$INSERT_NAME$', self.files.(name).dir.name); % Name of file
+                    exec_text = strrep(exec_text, '$INSERT_PATH$', self.files.(name).dir.path); % Path to file
                     
+                    % Execute command
                     eval(exec_text);
+
                 end
                 
             end
             
-            % Perform general exec
+            % Execute general command
             if ~isempty(self.exec_me)
                 
+                % Get the initial text to be executed
                 exec_text = self.exec_me;
                     
-                for j = 1:size(self.files.(fn{i}).args_exec, 1)
+                % Add the args in place of the identifiers
+                for j = 1:size(self.args_exec, 1)
                     exec_text = strrep(exec_text, self.args_exec{j, 1}, self.args_exec{j, 1});
                 end
                 
+                % Execute command
                 eval(exec_text);
                 
             end
@@ -194,3 +264,4 @@ classdef Spcies_constructor
     end
     
 end
+

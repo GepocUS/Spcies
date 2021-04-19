@@ -1,4 +1,14 @@
-%% Spcies class for defining an instance of a problem, i.e., the information required to define the desired solver.
+%% Spcies_problem - Spcies class for defining the code generation problem
+% 
+% This class contains the information required to define the desired controller
+% to be generated. It is generated when calling the spcies_gen_controller
+% function and is passed to most of the functions in Spcies during code generation.
+% 
+% Its constructor receives the exact same arguments as spcies_gen_controller, so
+% we refer the user to the documentation of that function.
+% 
+% This class is part of Spcies: https://github.com/GepocUS/Spcies
+% 
 
 classdef Spcies_problem
     
@@ -11,6 +21,7 @@ classdef Spcies_problem
     
     methods
         
+        %% CONSTRUCTOR
         function self = Spcies_problem(varargin)
             %% Default values
             def_sys = []; % Default value for the sys argument
