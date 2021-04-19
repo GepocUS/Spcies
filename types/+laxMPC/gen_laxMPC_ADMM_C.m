@@ -22,11 +22,22 @@
 function gen_laxMPC_ADMM_C(vars, options, spcies_options)
     import utils.addLine
     
-    %% Evaluate function inputs
+    %% Defaults
     def_save_name = 'laxMPC';
-
+    def_directory = './';
+    
+    %% Work with the path and save_name
+    
+    if isempty(spcies_options.save_name); spcies_options.save_name = default_save_name; end
+    
+    % Evaluate directory
+    if strcmp(spcies_options.directory, '$SPCIES$'); spcies_options.directory = def_directory; end
+    if ~strcmp(spcies_options.directory, '/'); spcies_options.directory = [spcies_options.directory '/']; end
+    
+    spcies_options.complete_path = [spcies_options.directory spcies_options.save_name];
+    
     % Determine the name of the file if it already exists
-    save_name = utils.process_save_name(spcies_options.save_name, def_save_name, spcies_options.override, 'c');
+    save_name = utils.process_save_name(spcies_options.complete_path, def_save_name, spcies_options.override, 'c');
     
     if options.const_are_static
         const_type = 'static constant';
@@ -130,4 +141,3 @@ function gen_laxMPC_ADMM_C(vars, options, spcies_options)
     fclose(header_file);
     
 end
-

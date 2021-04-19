@@ -72,7 +72,6 @@
 % 
 
 function vars = Spcies_gen_controller(varargin)
-    import utils.determine_type;
 
     %% Default values
     def_sys = []; % Default value for the sys argument
@@ -135,26 +134,35 @@ function vars = Spcies_gen_controller(varargin)
     else
         type = par.Results.type;
     end
-
+    
     %% Generate the controller
-    if strcmp(type, 'MPCT')
-        vars = MPCT.Spcies_gen_MPCT_EADMM(controller, 'options', par.Results.options, 'spcies_option', spcies_options);
-
-    elseif strcmp(type, 'MPCT_ess')
-        vars = MPCT.Spcies_gen_MPCT_extended_ss_ADMM(controller, 'options', par.Results.options, 'spcies_option', spcies_options);
-
-    elseif strcmp(type, 'ellipMPC')
-        vars = ellipMPC.Spcies_gen_ellipMPC_ADMM(controller, 'options', par.Results.options, 'spcies_option', spcies_options);
-
-    elseif strcmp(type, 'laxMPC')
-        vars = laxMPC.Spcies_gen_laxMPC_ADMM(controller, 'options', par.Results.options, 'spcies_option', spcies_options);
-        
-    elseif strcmp(type, 'equMPC')
-        vars = equMPC.Spcies_gen_equMPC_ADMM(controller, 'options', par.Results.options, 'spcies_option', spcies_options);
-
+    if strcmp(spcies_options.target, 'Matlab')
+        Matlab.gen_controller_Matlab(controller, type, 'options', par.Results.options, 'spcies_option', spcies_options);
+    elseif strcmp(spcies_options.target, 'Matlab')
+        C.gen_controller_C(controller, type, 'options', par.Results.options, 'spcies_option', spcies_options);
     else
-        error('Spcies:gen_controller:input_error', 'Type not recognized or supported');
-    end
+        error('Spcies:gen_controller:input_error', 'Target not recognized or supported');
+     end
+        
+    %% Generate the controller
+%     if strcmp(type, 'MPCT')
+%         vars = MPCT.Spcies_gen_MPCT_EADMM(controller, 'options', par.Results.options, 'spcies_option', spcies_options);
+% 
+%     elseif strcmp(type, 'MPCT_ess')
+%         vars = MPCT.Spcies_gen_MPCT_extended_ss_ADMM(controller, 'options', par.Results.options, 'spcies_option', spcies_options);
+% 
+%     elseif strcmp(type, 'ellipMPC')
+%         vars = ellipMPC.Spcies_gen_ellipMPC_ADMM(controller, 'options', par.Results.options, 'spcies_option', spcies_options);
+% 
+%     elseif strcmp(type, 'laxMPC')
+%         vars = laxMPC.Spcies_gen_laxMPC_ADMM(controller, 'options', par.Results.options, 'spcies_option', spcies_options);
+%         
+%     elseif strcmp(type, 'equMPC')
+%         vars = equMPC.Spcies_gen_equMPC_ADMM(controller, 'options', par.Results.options, 'spcies_option', spcies_options);
+% 
+%     else
+%         error('Spcies:gen_controller:input_error', 'Type not recognized or supported');
+%     end
     
 end
 

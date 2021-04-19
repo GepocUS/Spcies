@@ -14,18 +14,33 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function name = find_unused_file_name(base_name, extension)
+function name = find_unused_file_name(dir)
+
+    name = dir.name;
     
-    name = base_name;
-    if isfile([base_name '.' extension])
+    if isfile([dir.path name '.' dir.extension])
         number = 1;
-        new_save_name = [base_name '_v' num2str(number)];
-        while isfile([new_save_name '.' extension])
+        new_save_name = [dir.path name '_v' num2str(number)];
+        while isfile([new_save_name '.' dir.extension])
             number = number + 1;
-            new_save_name = [base_name '_v' num2str(number)];
+            new_save_name = [dir.path name '_v' num2str(number)];
         end
         name = new_save_name;
     end
     
 end
 
+% function name = find_unused_file_name(base_name, extension)
+%     
+%     name = base_name;
+%     if isfile([base_name '.' extension])
+%         number = 1;
+%         new_save_name = [base_name '_v' num2str(number)];
+%         while isfile([new_save_name '.' extension])
+%             number = number + 1;
+%             new_save_name = [base_name '_v' num2str(number)];
+%         end
+%         name = new_save_name;
+%     end
+%     
+% end

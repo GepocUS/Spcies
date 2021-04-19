@@ -20,19 +20,31 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function def_spcies_opt = Spcies_default_options()
+function [def_opt, def_method, def_subclass] = Spcies_default_options()
     
-    % Default options
-    def_target = 'Matlab'; % Default target
-    def_save_name = ''; % Default value of the save_name argument
-    def_directory = './'; % Default directory where to save files
-    def_override = true; % Determined if files are overwritten if one with the same name already exists
-    def_force_vector_rho = false; % If true, forces the penalty parameter rho to be defined as a vector
-
-    % Structure containing the default options
-    def_spcies_opt = struct('target', def_target, 'save_name', def_save_name,...
-                            'directory', def_directory, 'override', def_override,....
-                            'force_vector_rho', def_force_vector_rho);
-
+    % Default options of the toolbox
+    def_opt.method = ''; % Default method
+    def_opt.subclass = ''; % Defult subclass
+    def_opt.type = ''; % Default type
+    def_opt.platform = 'Matlab'; % Default platform
+    def_opt.save_name = ''; % Default value of the save_name argument
+    def_opt.directory = '$SPCIES$'; % Default directory where to save files
+    def_opt.override = true; % Determined if files are overwritten if one with the same name already exists
+    def_opt.force_vector_rho = false; % If true, forces the penalty parameter rho to be defined as a vector
+    def_opt.save = 1; % Determines if the file is saved
+    
+    % Default metods for each type
+    def_method.laxMPC = 'ADMM';
+    def_method.equMPC = 'ADMM';
+    def_method.ellipMPC = 'ADMM';
+    def_method.MPCT = 'EADMM';
+    def_method.Other = '';
+    
+    % Default subclasses for each type
+    def_subclass.laxMPC = '';
+    def_subclass.equMPC = '';
+    def_subclass.ellipMPC = '';
+    def_subclass.MPCT = 'mf';
+    def_subclass.Other = '';
+        
 end
-
