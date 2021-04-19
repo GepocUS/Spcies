@@ -1,4 +1,22 @@
-
+%% cons_laxMPC_ADMM_Matlab
+%
+% Generates the onstructor for C of the ADMM-based solver for the lax MPC formulation
+% 
+% Information about this formulation and the solver can be found at:
+%
+% P. Krupa, D. Limon, T. Alamo, "Implementation of model predictive control in
+% programmable logic controllers", Transactions on Control Systems Technology, 2020.
+% 
+% Specifically, this formulation is given in equation (9) of the above reference.
+% 
+% INPUTS:
+%   - recipe: An instance of the Spcies_problem class.
+% 
+% OUTPUTS:
+%   - constructor: An instance of the Spcies_constructor class ready for file generation.
+%                  
+% This function is part of Spcies: https://github.com/GepocUS/Spcies
+% 
 
 function constructor = cons_laxMPC_ADMM_Matlab(recipe)
 
@@ -25,14 +43,15 @@ function constructor = cons_laxMPC_ADMM_Matlab(recipe)
     % Declare empty constructor
     constructor = Spcies_constructor;
     
-    % Add mex code
+    % Add mex file code
     constructor = constructor.new_empty_file('mex_code', recipe.options, 'c');
     constructor.files.mex_code.blocks = {'$START$', [this_path '/struct_laxMPC_ADMM_C_Matlab.c']};
     constructor.files.mex_code.flags = {'$C_CODE_NAME$', constructor_C.files.code.dir.name};
     
-    % Add the mex file code
+    % Add the execution command for compiling the mex file
     constructor.files.mex_code.exec_me = utils.get_generic_mex_exec(recipe.options);
     constructor.files.mex_code.args_exec = {'$C_CODE_PATH$', constructor_C.files.code.dir.path;...
                                             '$C_CODE_NAME$', constructor_C.files.code.dir.name};
     
 end
+

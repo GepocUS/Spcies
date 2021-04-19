@@ -1,7 +1,31 @@
-
+%% cons_laxMPC_ADMM_C
+%
+% Generates the constructor for C of the ADMM-based solver for the lax MPC formulation
+%
+% Information about this formulation and the solver can be found at:
+%
+% P. Krupa, D. Limon, T. Alamo, "Implementation of model predictive control in
+% programmable logic controllers", Transactions on Control Systems Technology, 2020.
+% 
+% Specifically, this formulation is given in equation (9) of the above reference.
+% 
+% INPUTS:
+%   - recipe: An instance of the Spcies_problem class.
+% 
+% OUTPUTS:
+%   - constructor: An instance of the Spcies_constructor class ready for file generation.
+%                  
+% This function is part of Spcies: https://github.com/GepocUS/Spcies
+% 
 
 function constructor = cons_laxMPC_ADMM_C(recipe)
+
+    %% Preliminaries
     import utils.addLine
+
+    % Get path to this directory
+    full_path = mfilename('fullpath');
+    this_path = fileparts(full_path);
     
     %% Default solver options
     def_solver_options.rho = 1e-2;
@@ -16,7 +40,7 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
     recipe.solver_options = solver_options;
     
     %% Compute the ingredients of the controller
-    vars = laxMPC.Spcies_compute_laxMPC_ADMM_ingredients(recipe.controller, solver_options, recipe.options);
+    vars = laxMPC.compute_laxMPC_ADMM_ingredients(recipe.controller, solver_options, recipe.options);
     
     %% Set save_name to type if none is provided
     if isempty(recipe.options.save_name)
@@ -89,17 +113,7 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
     
     %% Fill in the files
     
-    % Get path to this directory
-    full_path = mfilename('fullpath');
-    this_path = fileparts(full_path);
-    
     % .c file
-%     constructor.files.code.dir.name = recipe.options.save_name;
-%     constructor.files.code.dir.path = recipe.options.directory;
-%     constructor.files.code.dir.extension = 'c';
-%     constructor.files.code.save = recipe.options.save;
-%     constructor.files.code.override = recipe.options.override;
-
     constructor = constructor.new_empty_file('code', recipe.options, 'c');
     constructor.files.code.blocks = {'$START$', C_code.get_generic_solver_struct;...
                                      '$INSERT_SOLVER$', [this_path '/code_laxMPC_ADMM_C.c']};
@@ -113,3 +127,4 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
                               '$INSERT_CONSTANTS$', constCell};
 
 end
+
