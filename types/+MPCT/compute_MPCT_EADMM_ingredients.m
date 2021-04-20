@@ -1,4 +1,4 @@
-%% Spcies_compute_MPCT_EADMM_ingredients
+%% compute_MPCT_EADMM_ingredients
 %
 % Computes the ingredients for the MPCT controller solved using the EADMM algorithm
 %
@@ -20,7 +20,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function [vars, vars_nonsparse] = Spcies_compute_MPCT_EADMM_ingredients(controller, options, spcies_options)
+function [vars, vars_nonsparse] = compute_MPCT_EADMM_ingredients(controller, options, spcies_options)
 
     %% Extract from controller
     if isa(controller, 'TrackingMPC')
