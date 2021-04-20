@@ -1,5 +1,5 @@
 #include "mex.h"
-#include "$INSERT_NAME$_C.h"
+#include "$C_CODE_NAME$.h"
 #include <math.h>
 #include <string.h>
 

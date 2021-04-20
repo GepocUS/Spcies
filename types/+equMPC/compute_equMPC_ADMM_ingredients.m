@@ -1,4 +1,4 @@
-%% Spcies_compute_equMPC_EADMM_ingredients
+%% compute_equMPC_EADMM_ingredients
 %
 % Computes the ingredients for the ADMM-based solver for the equality MPC formulation
 %
@@ -20,7 +20,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 %
 
-function vars = Spcies_compute_equMPC_ADMM_ingredients(controller, options, spcies_options)
+function vars = compute_equMPC_ADMM_ingredients(controller, options, spcies_options)
 
     %% Extract from controller
     if isa(controller, 'EqualityMPC')
