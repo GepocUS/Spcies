@@ -1,6 +1,6 @@
 %% cons_laxMPC_ADMM_Matlab
 %
-% Generates the onstructor for C of the ADMM-based solver for the lax MPC formulation
+% Generates the constructor for C of the ADMM-based solver for the lax MPC formulation
 % 
 % Information about this formulation and the solver can be found at:
 %
@@ -11,6 +11,7 @@
 % 
 % INPUTS:
 %   - recipe: An instance of the Spcies_problem class.
+%             The specifics of the fields of this recipe can be found in cons_laxMPC_ADMM_C.m
 % 
 % OUTPUTS:
 %   - constructor: An instance of the Spcies_constructor class ready for file generation.

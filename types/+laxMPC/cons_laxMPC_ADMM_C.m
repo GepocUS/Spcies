@@ -10,7 +10,26 @@
 % Specifically, this formulation is given in equation (9) of the above reference.
 % 
 % INPUTS:
-%   - recipe: An instance of the Spcies_problem class.
+%   - recipe: An instance of the Spcies_problem class. Its properties must contain:
+%       - controller: Structure containing the information of the controller.
+%                 It must contain the fields .sys and .param.
+%                 - .sys: Structure containing the state space model (see Spcies_gen_controller).
+%                 - .param: Structure containing the ingredients of the controller:
+%                           - .Q: Cost function matrix Q.
+%                           - .R: Cost function matrix R.
+%                           - .T: Cost function matrix T.
+%                           - .N: Prediction horizon.
+%       - solver_options: Structure containing options of the ADMM solver.
+%              - .rho: Penalty parameter. Scalar of vector. Defaults to the scalar 1e-2.
+%                      If a vector is provided, it must have the same dimensions as the decision variables.
+%              - .tol: Exit tolerance of the solver. Defaults to 1e-4.
+%              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
+%              - .in_engineering: Boolean that determines if the arguments of the solver are given in
+%                                 engineering units (true) or incremental ones (false - default).
+%              - .debug: Boolean that determines if debugging options are enables in the solver.
+%                        Defaults to false.
+%              - .const_are_static: Boolean that determines if constants are defined as static variables.
+%                                   Defaults to true.
 % 
 % OUTPUTS:
 %   - constructor: An instance of the Spcies_constructor class ready for file generation.
