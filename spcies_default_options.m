@@ -50,10 +50,12 @@ function [def_opt, def_method, def_subclass] = spcies_default_options()
     def_method.Other = '';
     
     % Default subclasses for each type of controller
-    def_subclass.laxMPC = '';
-    def_subclass.equMPC = '';
-    def_subclass.ellipMPC = '';
-    def_subclass.MPCT = 'mf';
+    def_subclass.laxMPC.ADMM = '';
+    def_subclass.equMPC.ADMM = '';
+    def_subclass.ellipMPC.ADMM = '';
+    def_subclass.MPCT.EADMM = '';
+    def_subclass.MPCT.ADMM = '';
     def_subclass.Other = '';
-        
+     
 end
+

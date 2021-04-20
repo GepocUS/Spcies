@@ -87,35 +87,37 @@ function spcies_gen_controller(varargin)
         error('Spcies:input_error:no_type', 'The type field of options is empty. I do not know what to create.');
     end
     
+    %% Determine type, method and subclass fields
+    
+        % Type
+    if ~any(strcmp(type_names, recipe.options.type))
+        warning('Spcies:type_not_recognized', 'The type was not recognized. Setting type to "Other".');
+        recipe.options.type = 'Other';
+    end
+    
+        % Method
+    if isempty(recipe.options.method)
+        recipe.options.method = def_method.(recipe.options.type);
+    end
+    
+        % Subclass
+    if isempty(recipe.options.subclass) && ~isempty(recipe.options.method)
+        recipe.options.subclass = def_subclass.(recipe.options.type).(recipe.options.method);
+    end
+    
     %% Determine name of constructor function
     
     % Add the type
     cons_name = ['cons_' recipe.options.type];
     
     % Add the method
-    if ~any(strcmp(type_names, recipe.options.type))
-        warning('Spcies:type_not_recognized', 'The type was not recognized. Using defaul values of Other');
-        [~, def_index] = find(strcmp(type_names, 'Other'));
-    else
-        [~, def_index] = find(strcmp(type_names, recipe.options.type));
-    end
-    name_for_def = type_names{def_index};
-    
     if ~isempty(recipe.options.method)
         cons_name = strcat(cons_name, ['_' recipe.options.method]);
-    else
-        if ~isempty(def_method.(name_for_def))
-            cons_name = strcat(cons_name, ['_' def_method.(name_for_def)]);
-        end
     end
     
     % Add the subclass
     if ~isempty(recipe.options.subclass)
         cons_name = strcat(cons_name, ['_' recipe.options.subclass]);
-    else
-        if ~isempty(def_subclass.(name_for_def))
-            cons_name = strcat(cons_name, ['_' def_subclass.(name_for_def)]);
-        end
     end
     
     % Add the platform
