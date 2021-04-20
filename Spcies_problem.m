@@ -72,7 +72,7 @@ classdef Spcies_problem
             
             if isempty(par.Results.options)
                 % It no options argument was provided, get the individual ones (some may be defaults)
-                for i = 1:numel(def_options)    
+                for i = 1:numel(fn_options)    
                     self.options.(fn_options{i}) = par.Results.(fn_options{i});
                 end
                 
@@ -90,7 +90,7 @@ classdef Spcies_problem
             end
             
             if isempty(self.options.type)
-                self.options.type = determine_type(controller);
+                self.options.type = utils.determine_type(self.controller);
             end
             
         end         
