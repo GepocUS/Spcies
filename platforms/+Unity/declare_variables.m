@@ -1,13 +1,12 @@
-%% declareVariables - Unity version
+%% declare_variables - Unity version
 %
 % Function that declares the variables for Unity Pro XL
 % 
 % INPUTS:
-%   - vars: cell containing the information of each variable in each row.
-%           Each row contains the following information:
-%           vars = (name, value, initialize, type, class)
-%           For a description of each field see the function +Unity/decVar.m
-%           Unity distinguishes various classes of variables: inputs, outputs, public and private.
+%   - vars: Cell array containing the variables to be declared.
+%           Each row contains the information to declare each variable.
+%           The information provided in each column can be found in the
+%           documentation of +Unity/dec_var.m
 %
 % OUTPUTS:
 %   - s: String containing the text for the variable declaration in the Unity Pro XL.
@@ -15,8 +14,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function s = declareVariables(vars)
-    import Unity.decVar;
+function s = declare_variables(vars)
     
     %% Preliminaries
     s = ['']; % Initialize s to an empty string
@@ -28,7 +26,7 @@ function s = declareVariables(vars)
     position = 1;
     for i = 1:numVars
         if strcmp(vars{i, 5}, 'input')
-            s = [s decVar(vars(i,:), position)];
+            s = [s Unity.dec_var(vars(i,:), position)];
             position = position + 1;
         end
     end
@@ -41,7 +39,7 @@ function s = declareVariables(vars)
     position = 1;
     for i = 1:numVars
         if strcmp(vars{i, 5}, 'output')
-            s = [s decVar(vars(i,:), position)];
+            s = [s Unity.dec_var(vars(i,:), position)];
             position = position + 1;
         end
     end
@@ -53,7 +51,7 @@ function s = declareVariables(vars)
     
     for i = 1:numVars
         if strcmp(vars{i, 5}, 'public') 
-            s = [s decVar(vars(i,:))];
+            s = [s Unity.dec_var(vars(i,:))];
         end
     end
     
@@ -64,7 +62,7 @@ function s = declareVariables(vars)
     
     for i = 1:numVars
         if strcmp(vars{i, 5}, 'private') 
-            s = [s decVar(vars(i,:))];
+            s = [s Unity.dec_var(vars(i,:))];
         end
     end
     

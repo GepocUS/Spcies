@@ -2,19 +2,21 @@
 %
 % Writes the code for declaring a variable in Arduino
 %
-% INPUTS: 
-%   - var: variable to be declared. Single-rowed cell with 5 columns.
+% INPUTS:
+%   - var: variable to be declared. Single-rowed cell array with 6 columns.
 %          Each column contains the following information:
-%          1: name. String containing the name of the variable.
-%          2: value. Variable to be declared.
-%          3: initialize. Boolean that indicates if the variable is
-%             initialized to the variable given in the field "value".
-%          4: type. String defining the type of variable. Can be any of the following:
-%                   - float, double, bool, int, uint, udint, dint, usint
-%          5: class. String defining the class of variable. Can be any of the following:
-%                   - define: a C #define
-%                   - constant: sets the variable as a C constant
-%                   - variable: a normal C variable
+%           - name: The name with which to declare the variable.
+%           - value: A Matlab variable containing its value.
+%           - initialize: Boolean that determines if it is initialized.
+%           - type: This determines the type of variable. We consider:
+%                   float, double, bool, int, uint, dint, udint, sint, usint
+%           - options: Cell array containing additional options:
+%               - define: The variable is declared as a #define.
+%               - constant: The variable is declared as a constant.
+%               - static: The variable is declared as static.
+%               - array: Forces the variable to be an array, even if its
+%                        dimension is 1.
+%               - pointer: Defines the variable as a pointer.
 % 
 % OUTPUTS:
 %   - s: String containing the text for the variable declaration.
@@ -22,7 +24,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function s = decVar(var)
+function s = dec_var(var)
 
     %% Initialize and rename the fields of "var"
     s = [''];
@@ -30,7 +32,9 @@ function s = decVar(var)
     value = var{2};
     initialize = var{3};
     type = var{4};
-    class = var{5};
+    if length(var) > 4
+        options = var{5};
+    end
     
     % Detect order of the variable: it can be a scalar, a vector, a matrix or a 3D matrix
     dim = size(value);
@@ -83,12 +87,12 @@ function s = decVar(var)
     %% Create string for variable declaration
     
     % Add the #define tag if the class is set to 'define'
-    if strcmp(class, 'define')
+    if strcmp(options, 'define')
         s = [s sprintf('#define %s ', name) writeValue(value, type) '\n'];
     else
     
     % Add the const tag if the class is set to 'constant'
-    if strcmp(class, 'constant')
+    if strcmp(options, 'constant')
         s = [s sprintf('const ')];
     end
     

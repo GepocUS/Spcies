@@ -10,13 +10,13 @@
 %           - initialize: Boolean that determines if it is initialized.
 %           - type: This determines the type of variable. We consider:
 %                   float, double, bool, int, uint, dint, udint, sint, usint
-%           The following columns are optional and can be provided in any order.j
-%            - define: The variable is declared as a #define.
-%            - constant: The variable is declared as a constant.
-%            - static: The variable is declared as static.
-%            - array: Forces the variable to be an array, even if its
+%           - options: Cell array containing additional options:
+%               - define: The variable is declared as a #define.
+%               - constant: The variable is declared as a constant.
+%               - static: The variable is declared as static.
+%               - array: Forces the variable to be an array, even if its
 %                        dimension is 1.
-%            - pointer: Defines the variable as a pointer.
+%               - pointer: Defines the variable as a pointer.
 % 
 % OUTPUTS:
 %   - s: String containing the text for the variable declaration.
