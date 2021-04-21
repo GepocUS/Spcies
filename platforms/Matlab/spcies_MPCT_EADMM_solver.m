@@ -1,4 +1,4 @@
-%% Spcies_MPCT_EADMM_solver - Solver for the MPCT formulation using the EADMM algorithm
+%% spcies_MPCT_EADMM_solver - Solver for the MPCT formulation using the EADMM algorithm
 %
 % This is a non-sparse solver of the MPC for Tracking formulation from the Spcies toolbox.
 %
@@ -66,8 +66,8 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function [u, k, e_flag, sol] = Spcies_MPCT_EADMM_solver(x0, xr, ur, varargin)
-    import MPCT.Spcies_compute_MPCT_EADMM_ingredients;
+function [u, k, e_flag, sol] = spcies_MPCT_EADMM_solver(x0, xr, ur, varargin)
+    import MPCT.compute_MPCT_EADMM_ingredients
     
     %% Default values
     def_sys = []; % Default value for the sys argument
@@ -126,7 +126,7 @@ function [u, k, e_flag, sol] = Spcies_MPCT_EADMM_solver(x0, xr, ur, varargin)
     end
     
     %% Generate ingredients of the solver
-    [~, var] = Spcies_compute_MPCT_EADMM_ingredients(controller, options, []);
+    [~, var] = compute_MPCT_EADMM_ingredients(controller, options, []);
     N = var.N;
     n = var.n;
     m = var.m;
@@ -139,6 +139,8 @@ function [u, k, e_flag, sol] = Spcies_MPCT_EADMM_solver(x0, xr, ur, varargin)
     z1 = zeros((N+1)*(n+m), 1);
     z2 = zeros(m+n, 1);
     z3 = zeros((N+1)*(n+m), 1);
+    z2_prev = z2;
+    z3_prec = z3;
     lambda = zeros((N+2)*(n+m) + n, 1);
     
     % Obtain x0, xr and ur
@@ -189,13 +191,16 @@ function [u, k, e_flag, sol] = Spcies_MPCT_EADMM_solver(x0, xr, ur, varargin)
         lambda = lambda + var.rho.*res;
         
         %% Exit condition
-        if norm(res, Inf) <= options.tol
+        if norm(res, Inf) <= options.tol && norm(z2 - z2_prev, Inf) <= options.tol && norm(z3 - z3_prev, Inf) <= options.tol
             done = true;
             e_flag = 1;
         elseif k >= options.k_max
             done = true;
             e_flag = -1;
         end
+        
+        z2_prev = z2;
+        z3_prev = z3;
         
     end
     
