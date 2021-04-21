@@ -107,9 +107,9 @@ classdef Spcies_constructor
                     self.files.(name).dir.path = [spcies_get_root_directory '/generated_solvers/'];
                 end
                 
-                    % Working directory if empty directory was given
+                    % Default spcies directory if empty directory was given
                 if isempty(self.files.(name).dir.path)
-                    self.files.(name).dir.path = './';
+                    self.files.(name).dir.path = [spcies_get_root_directory '/generated_solvers/'];
                 end
                 
                     % Add / at the end if there is none
