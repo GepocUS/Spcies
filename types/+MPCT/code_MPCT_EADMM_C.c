@@ -345,7 +345,7 @@ while(done == 0){
 
     if(res_flag == 0){
         for(unsigned int l = 0; l < NN+1; l++){
-            for(unsigned int j = 0; j < mm; j++){
+            for(unsigned int j = 0; j < nm; j++){
                 res_z3 = z3_prev[l][j] - z3[l][j];
                 res_z3 = (res_z3 > 0.0) ? res_z3 : -res_z3;
                 if(res_z3 > tol){
