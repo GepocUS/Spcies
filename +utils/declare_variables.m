@@ -5,7 +5,24 @@
 % 
 % INPUTS:
 %   - data: Cell array containing the information of the
-%           data to be declared.
+%           variables to be declared.
+%           Each row contains a variable. Each of the columns
+%           contain information required to declare it.
+%           Each platform may have different columns, but the 
+%           first four are always the following:
+%           - name: The name with which to declare the variable.
+%           - value: A Matlab variable containing its value.
+%           - initialize: Boolean that determines if it is initialized.
+%           - type: This determines the type of variable. We consider:
+%              - float: floating point number.
+%              - double: double precision floating point number.
+%              - bool: Boolean.
+%              - int: Integer number.
+%              - uint: Unsigned integer number.
+%              - dint: Long integer number.
+%              - udint: Unsigned long integer number.
+%              - sint: Short integer number.
+%              - usint: Unsigned short integer number.
 %   - options: Instance of the structure Spcies_problem.options.
 %
 % OUTPUTS:
@@ -17,13 +34,13 @@
 function text = declare_variables(data, options)
 
     if strcmp(options.platform, 'C')
-        text = C_code.declareVariables(data);
+        text = C_code.declare_variables(data);
 
     elseif strcmp(options.platform, 'Arduino')
-        text = Arduino.declareVariables(data);
+        text = Arduino.declare_variables(data);
 
     elseif strcmp(options.platform, 'Unity')
-        text = Unity.declareVariables(data);
+        text = Unity.declare_variables(data);
 
     end
     

@@ -72,11 +72,11 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
     n = vars.n;
     m = vars.m;
     N = vars.N;
-    
+   
     if solver_options.const_are_static
-        const_type = 'static constant';
+        var_options = {'static', 'constant', 'array'};
     else
-        const_type = 'constant';
+        var_options = {'constant', 'array'};
     end
     
     %% Create vars cell matrix: Name, value, initialize, type(int, float, etc), class(variable, constant, define, etc)
@@ -96,28 +96,28 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
     
     % Constants
     constCell = [];
-    constCell = add_line(constCell, 'LBu0', vars.LBu0, 1, 'double', const_type);
-    constCell = add_line(constCell, 'UBu0', vars.UBu0, 1, 'double', const_type);
-    constCell = add_line(constCell, 'LBz', vars.LBz, 1, 'double', const_type);
-    constCell = add_line(constCell, 'UBz', vars.UBz, 1, 'double', const_type);
-    constCell = add_line(constCell, 'Hi', vars.Hi, 1, 'double', const_type);
-    constCell = add_line(constCell, 'Hi_0', vars.Hi_0, 1, 'double', const_type);
-    constCell = add_line(constCell, 'Hi_N', vars.Hi_N, 1, 'double', const_type);
-    constCell = add_line(constCell, 'AB', vars.AB, 1, 'double', const_type);
-    constCell = add_line(constCell, 'P', vars.P, 1, 'double', const_type);
-    constCell = add_line(constCell, 'P_half', vars.P_half, 1, 'double', const_type);
-    constCell = add_line(constCell, 'Pinv_half', vars.Pinv_half, 1, 'double', const_type);
-    constCell = add_line(constCell, 'Alpha', vars.Alpha, 1, 'double', const_type);
-    constCell = add_line(constCell, 'Beta', vars.Beta, 1, 'double', const_type);
-    constCell= add_line(constCell, 'Q', vars.Q, 1, 'double', const_type);
-    constCell = add_line(constCell, 'R', vars.R, 1, 'double', const_type);
-    constCell = add_line(constCell, 'T', vars.T, 1, 'double', const_type);
+    constCell = add_line(constCell, 'LBu0', vars.LBu0, 1, 'double', var_options);
+    constCell = add_line(constCell, 'UBu0', vars.UBu0, 1, 'double', var_options);
+    constCell = add_line(constCell, 'LBz', vars.LBz, 1, 'double', var_options);
+    constCell = add_line(constCell, 'UBz', vars.UBz, 1, 'double', var_options);
+    constCell = add_line(constCell, 'Hi', vars.Hi, 1, 'double', var_options);
+    constCell = add_line(constCell, 'Hi_0', vars.Hi_0, 1, 'double', var_options);
+    constCell = add_line(constCell, 'Hi_N', vars.Hi_N, 1, 'double', var_options);
+    constCell = add_line(constCell, 'AB', vars.AB, 1, 'double', var_options);
+    constCell = add_line(constCell, 'P', vars.P, 1, 'double', var_options);
+    constCell = add_line(constCell, 'P_half', vars.P_half, 1, 'double', var_options);
+    constCell = add_line(constCell, 'Pinv_half', vars.Pinv_half, 1, 'double', var_options);
+    constCell = add_line(constCell, 'Alpha', vars.Alpha, 1, 'double', var_options);
+    constCell = add_line(constCell, 'Beta', vars.Beta, 1, 'double', var_options);
+    constCell= add_line(constCell, 'Q', vars.Q, 1, 'double', var_options);
+    constCell = add_line(constCell, 'R', vars.R, 1, 'double', var_options);
+    constCell = add_line(constCell, 'T', vars.T, 1, 'double', var_options);
     if solver_options.in_engineering
-        constCell = add_line(constCell, idx, 'scaling_x', vars.scaling_x, 1, 'double', const_type);
-        constCell = add_line(constCell, idx, 'scaling_u', vars.scaling_u, 1, 'double', const_type);
-        constCell = add_line(constCell, idx, 'scaling_i_u', vars.scaling_i_u, 1, 'double', const_type);
-        constCell = add_line(constCell, idx, 'OpPoint_x', vars.OpPoint_x, 1, 'double', const_type);
-        constCell = add_line(constCell, idx, 'OpPoint_u', vars.OpPoint_u, 1, 'double', const_type);
+        constCell = add_line(constCell, idx, 'scaling_x', vars.scaling_x, 1, 'double', var_options);
+        constCell = add_line(constCell, idx, 'scaling_u', vars.scaling_u, 1, 'double', var_options);
+        constCell = add_line(constCell, idx, 'scaling_i_u', vars.scaling_i_u, 1, 'double', var_options);
+        constCell = add_line(constCell, idx, 'OpPoint_x', vars.OpPoint_x, 1, 'double', var_options);
+        constCell = add_line(constCell, idx, 'OpPoint_u', vars.OpPoint_u, 1, 'double', var_options);
     end
     
     % Variables
@@ -131,12 +131,12 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
         defCell = add_line(defCell, 'rho', vars.rho, 1, 'double', 'define');
         defCell = add_line(defCell, 'rho_i', vars.rho_i, 1, 'double', 'define');
     else
-        constCell = add_line(constCell, 'rho', vars.rho, 1, 'double', const_type);
-        constCell = add_line(constCell, 'rho_0', vars.rho_0, 1, 'double', const_type);
-        constCell = add_line(constCell, 'rho_N', vars.rho_N, 1, 'double', const_type);
-        constCell = add_line(constCell, 'rho_i', vars.rho_i, 1, 'double', const_type);
-        constCell = add_line(constCell, 'rho_i_0', vars.rho_i_0, 1, 'double', const_type);
-        constCell = add_line(constCell, 'rho_i_N', vars.rho_i_N, 1, 'double', const_type);
+        constCell = add_line(constCell, 'rho', vars.rho, 1, 'double', var_options);
+        constCell = add_line(constCell, 'rho_0', vars.rho_0, 1, 'double', var_options);
+        constCell = add_line(constCell, 'rho_N', vars.rho_N, 1, 'double', var_options);
+        constCell = add_line(constCell, 'rho_i', vars.rho_i, 1, 'double', var_options);
+        constCell = add_line(constCell, 'rho_i_0', vars.rho_i_0, 1, 'double', var_options);
+        constCell = add_line(constCell, 'rho_i_N', vars.rho_i_N, 1, 'double', var_options);
     end
 
     %% Declare an empty constructor object

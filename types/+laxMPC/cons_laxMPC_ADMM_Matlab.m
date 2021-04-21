@@ -1,6 +1,6 @@
 %% cons_laxMPC_ADMM_Matlab
 %
-% Generates the constructor for C of the ADMM-based solver for the lax MPC formulation
+% Generates the constructor for Matlab of the ADMM-based solver for the lax MPC formulation.
 % 
 % Information about this formulation and the solver can be found at:
 %

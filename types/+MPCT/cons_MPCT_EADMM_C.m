@@ -33,7 +33,7 @@
 %                        Defaults to false.
 %              - .const_are_static: Boolean that determines if constants are defined as static variables.
 %                                   Defaults to true.
-%   - spcies_options: Structure containing the options of the toolbox. See Spcies_default_options.
+%   - options: Structure containing the options of the toolbox. See Spcies_default_options.
 % 
 % OUTPUTS:
 %   - constructor: An instance of the Spcies_constructor class ready for file generation.
@@ -80,9 +80,9 @@ function constructor = cons_MPCT_EADMM_C(recipe)
     N = vars.N;
     
     if solver_options.const_are_static
-        const_type = 'static constant';
+        var_options = {'static', 'constant', 'array'};
     else
-        const_type = 'constant';
+        var_options = {'constant', 'array'};
     end
     
     %% Create vars cell matrix: Name, value, initialize, type(int, float, etc), class(variable, constant, define, etc)
@@ -102,29 +102,29 @@ function constructor = cons_MPCT_EADMM_C(recipe)
     
     % Constants
     constCell = [];
-    constCell = add_line(constCell, 'rho', vars.rho, 1, 'float', const_type);
-    constCell = add_line(constCell, 'rho_0', vars.rho_0, 1, 'float', const_type);
-    constCell = add_line(constCell, 'rho_s', vars.rho_s, 1, 'float', const_type);
-    constCell = add_line(constCell, 'LB', vars.LB, 1, 'float', const_type);
-    constCell = add_line(constCell, 'UB', vars.UB, 1, 'float', const_type);
-    constCell = add_line(constCell, 'LB_0', vars.LB0, 1, 'float', const_type);
-    constCell = add_line(constCell, 'UB_0', vars.UB0, 1, 'float', const_type);
-    constCell = add_line(constCell, 'LB_s', vars.LBs, 1, 'float', const_type);
-    constCell = add_line(constCell, 'UB_s', vars.UBs, 1, 'float', const_type);
-    constCell = add_line(constCell, 'AB', vars.AB, 1, 'float', const_type);
-    constCell = add_line(constCell, 'T', vars.T, 1, 'float', const_type);
-    constCell = add_line(constCell, 'S', vars.S, 1, 'float', const_type);
-    constCell = add_line(constCell, 'Alpha', vars.Alpha, 1, 'float', const_type);
-    constCell = add_line(constCell, 'Beta', vars.Beta, 1, 'float', const_type);
-    constCell = add_line(constCell, 'H1i', vars.H1i, 1, 'float', const_type);
-    constCell = add_line(constCell, 'W2', vars.W2, 1, 'float', const_type);
-    constCell = add_line(constCell, 'H3i', vars.H3i, 1, 'float', const_type);
+    constCell = add_line(constCell, 'rho', vars.rho, 1, 'float', var_options);
+    constCell = add_line(constCell, 'rho_0', vars.rho_0, 1, 'float', var_options);
+    constCell = add_line(constCell, 'rho_s', vars.rho_s, 1, 'float', var_options);
+    constCell = add_line(constCell, 'LB', vars.LB, 1, 'float', var_options);
+    constCell = add_line(constCell, 'UB', vars.UB, 1, 'float', var_options);
+    constCell = add_line(constCell, 'LB_0', vars.LB0, 1, 'float', var_options);
+    constCell = add_line(constCell, 'UB_0', vars.UB0, 1, 'float', var_options);
+    constCell = add_line(constCell, 'LB_s', vars.LBs, 1, 'float', var_options);
+    constCell = add_line(constCell, 'UB_s', vars.UBs, 1, 'float', var_options);
+    constCell = add_line(constCell, 'AB', vars.AB, 1, 'float', var_options);
+    constCell = add_line(constCell, 'T', vars.T, 1, 'float', var_options);
+    constCell = add_line(constCell, 'S', vars.S, 1, 'float', var_options);
+    constCell = add_line(constCell, 'Alpha', vars.Alpha, 1, 'float', var_options);
+    constCell = add_line(constCell, 'Beta', vars.Beta, 1, 'float', var_options);
+    constCell = add_line(constCell, 'H1i', vars.H1i, 1, 'float', var_options);
+    constCell = add_line(constCell, 'W2', vars.W2, 1, 'float', var_options);
+    constCell = add_line(constCell, 'H3i', vars.H3i, 1, 'float', var_options);
     if solver_options.in_engineering
-        constCell = add_line(constCell, 'scaling_x', vars.scaling_x, 1, 'double', const_type);
-        constCell = add_line(constCell, 'scaling_u', vars.scaling_u, 1, 'double', const_type);
-        constCell = add_line(constCell, 'scaling_i_u', vars.scaling_i_u, 1, 'double', const_type);
-        constCell = add_line(constCell, 'OpPoint_x', vars.OpPoint_x, 1, 'double', const_type);
-        constCell = add_line(constCell, 'OpPoint_u', vars.OpPoint_u, 1, 'double', const_type);
+        constCell = add_line(constCell, 'scaling_x', vars.scaling_x, 1, 'double', var_options);
+        constCell = add_line(constCell, 'scaling_u', vars.scaling_u, 1, 'double', var_options);
+        constCell = add_line(constCell, 'scaling_i_u', vars.scaling_i_u, 1, 'double', var_options);
+        constCell = add_line(constCell, 'OpPoint_x', vars.OpPoint_x, 1, 'double', var_options);
+        constCell = add_line(constCell, 'OpPoint_u', vars.OpPoint_u, 1, 'double', var_options);
     end
 
     %% Declare an empty constructor object
