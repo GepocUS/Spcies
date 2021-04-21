@@ -70,7 +70,7 @@ function vars = compute_MPCT_ADMM_cs_ingredients(controller, options, spcies_opt
     end
     
     %% Turn rho into a vector
-    if isscalar(options.rho) && spcies_options.force_vector_rho
+    if isscalar(options.rho) && options.force_vector_rho
         rho = options.rho*ones(N*(n+m), 1);
     else
         rho = options.rho;

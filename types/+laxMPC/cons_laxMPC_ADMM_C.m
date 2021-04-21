@@ -53,6 +53,7 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
     def_solver_options.in_engineering = false;
     def_solver_options.debug = false;
     def_solver_options.const_are_static = true;
+    def_solver_options.force_vector_rho = false; % If true, forces the penalty parameter rho to be defined as a vector
     
     % Fill recipe.solver_options with the defaults
     solver_options = utils.add_default_options_to_struct(recipe.solver_options, def_solver_options);

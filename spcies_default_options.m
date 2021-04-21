@@ -39,7 +39,6 @@ function [def_opt, def_method, def_subclass] = spcies_default_options()
     def_opt.save_name = ''; % Default value of the save_name argument
     def_opt.directory = '$SPCIES$'; % Default directory where to save files
     def_opt.override = true; % Determined if files are overwritten if one with the same name already exists
-    def_opt.force_vector_rho = false; % If true, forces the penalty parameter rho to be defined as a vector
     def_opt.save = 1; % Determines if the file is saved (currently unused)
     
     % Default metods for each type of controller

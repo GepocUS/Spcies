@@ -48,7 +48,6 @@ classdef Spcies_problem
                 addParameter(par, 'save_name', def_options.save_name, @(x) ischar(x));
                 addParameter(par, 'directory', def_options.directory, @(x) ischar(x));
                 addParameter(par, 'override', def_options.override, @(x) islogical(x) || x==1 || x==0);
-                addParameter(par, 'force_vector_rho', def_options.force_vector_rho, @(x) islogical(x) || x==1 || x==0);
                 addParameter(par, 'save', def_options.save);
                 
             % Parse
