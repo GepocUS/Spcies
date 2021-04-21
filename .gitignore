@@ -6,3 +6,5 @@
 /development/*
 dev_*
 /tests/*
+/platforms/+Arduino/*
+/platforms/+Unity/*
