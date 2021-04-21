@@ -48,7 +48,8 @@ classdef Spcies_problem
                 addParameter(par, 'save_name', def_options.save_name, @(x) ischar(x));
                 addParameter(par, 'directory', def_options.directory, @(x) ischar(x));
                 addParameter(par, 'override', def_options.override, @(x) islogical(x) || x==1 || x==0);
-                addParameter(par, 'const_are_static', def_options.override, @(x) islogical(x) || x==1 || x==0);
+                addParameter(par, 'const_are_static', def_options.const_are_static, @(x) islogical(x) || x==1 || x==0);
+                addParameter(par, 'precision', def_options.precision, @(x) ischar(x));
                 addParameter(par, 'save', def_options.save);
                 
             % Parse

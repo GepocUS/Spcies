@@ -17,6 +17,10 @@
 %   - override: Boolean that determines if files can be overwritten.  
 %               If they cannot, then they are saved with a number appended
 %               to the end of the file.
+%   - const_are_static: Boolean that determines is constant variables are
+%                       declared as static (is the language allowes it)
+%   - precision: String that determines the precision with which variables
+%                are strored. Either 'float' or 'double'.
 %   - force_vector_rho: Some solvers use a penalty parameter named rho.
 %               This penalty is usually a scalar, but this boolean
 %               option forces the use of an array if set to true.
@@ -40,6 +44,7 @@ function [def_opt, def_method, def_subclass] = spcies_default_options()
     def_opt.directory = '$SPCIES$'; % Default directory where to save files
     def_opt.override = true; % Determines if files are overwritten if one with the same name already exists
     def_opt.const_are_static = true; % Determines if constant variables are defined as static
+    def_opt.precision = 'double'; % Determines the precision of real numbers ('float' or 'double')
     def_opt.save = 1; % Determines if the file is saved (currently unused)
     
     % Default metods for each type of controller

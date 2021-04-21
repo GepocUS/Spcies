@@ -268,7 +268,7 @@ function s = write_value(value, type)
         end
 
     else
-        s = sprintf('%1.15f', value);
+        s = sprintf('%1.20f', value);
     end
     
 end
