@@ -39,7 +39,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function constructor = cons_laxMPC_ADMM_C(recipe)
+function constructor = cons_ellipMPC_ADMM_C(recipe)
 
     %% Preliminaries
     import utils.add_line

@@ -38,7 +38,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function constructor = cons_MPCT_EADMM_C(recipe)
+function constructor = cons_MPCT_ADMM_cs_C(recipe)
 
     %% Preliminaries
     import utils.add_line
