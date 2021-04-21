@@ -1,5 +1,5 @@
 #include "mex.h"
-#include "$INSERT_NAME$_C.h"
+#include "$C_CODE_NAME$.h"
 #include <math.h>
 #include <string.h>
 
@@ -123,7 +123,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     mxSetField(plhs[3], 0, "lambda", lambda);
 
     // Call solver
-    MPCT_ess_ADMM(x0, xr, ur, u_opt, k, e_flag, z_opt, v_opt, lambda_opt);
+    MPCT_ADMM_cs(x0, xr, ur, u_opt, k, e_flag, z_opt, v_opt, lambda_opt);
 
 }
 

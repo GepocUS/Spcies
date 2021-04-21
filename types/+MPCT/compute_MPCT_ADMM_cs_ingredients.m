@@ -1,4 +1,4 @@
-%% Spcies_compute_MPCT_EADMM_ingredients
+%% compute_MPCT_ADMM_cs_ingredients
 %
 % Computes the ingredients for the MPCT controller solved using ADMM on an extended state space
 %
@@ -16,7 +16,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function vars = Spcies_compute_MPCT_extended_ss_ADMM_ingredients(controller, options, spcies_options)
+function vars = compute_MPCT_ADMM_cs_ingredients(controller, options, spcies_options)
 
     %% Extract from controller
     if isa(controller, 'TrackingMPC')

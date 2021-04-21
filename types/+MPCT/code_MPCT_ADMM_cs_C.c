@@ -20,11 +20,11 @@
 
 #ifdef CONF_MATLAB
 
-void MPCT_ess_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt){
+void MPCT_ADMM_cs(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt){
 
 #else
 
-void MPCT_ess_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, int *pointer_k, int *e_flag, solution_MPCT_ess *sol){
+void MPCT_ADMM_cs(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, int *pointer_k, int *e_flag, solution_MPCT_ess *sol){
 
 #endif
 
@@ -100,9 +100,9 @@ while(done == 0){
     // Compute q_hat = q + lambda - rho*v
     for(unsigned int j = 0; j < NN*dnm; j++){
         #ifdef SCALAR_RHO
-        q_hat[j] = q[j % dnm] + lambda[j] - rho*v[j];
+        q_hat[j] = q[j %% dnm] + lambda[j] - rho*v[j];
         #else
-        q_hat[j] = q[j % dnm] + lambda[j] - rho[j]*v[j];
+        q_hat[j] = q[j %% dnm] + lambda[j] - rho[j]*v[j];
         #endif
     }
 

@@ -54,7 +54,7 @@ function [def_opt, def_method, def_subclass] = spcies_default_options()
     def_subclass.equMPC.ADMM = '';
     def_subclass.ellipMPC.ADMM = '';
     def_subclass.MPCT.EADMM = '';
-    def_subclass.MPCT.ADMM = '';
+    def_subclass.MPCT.ADMM = 'cs';
     def_subclass.Other = '';
      
 end
