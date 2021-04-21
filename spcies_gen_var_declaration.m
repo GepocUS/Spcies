@@ -1,4 +1,4 @@
-%% Spcies_gen_var_declaration - Generation of variable declaration code
+%% spcies_gen_var_declaration - Generation of variable declaration code
 %
 % This is a standalone function used to generate the code needed to 
 % declare variables in the programming languages supported by Spcies.
@@ -15,8 +15,8 @@
 %           - Column 3: Boolean that determines is the variable is
 %                       initialized (true) or not (false).
 %           - Column 4: Type of variable in the target language (String).
-%           - Column 5: Additional type of the variable, such as
-%                       'constant', 'define', etc.
+%           - Column 5: Additional information needed to declare the 
+%                       variable. it will depend on the language.
 %   - language: String that determines the target language in which to
 %               write the variable declaration. Currently, the supported
 %               languages are:
@@ -34,7 +34,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function Spcies_gen_var_declaration(vars, language, varargin)
+function spcies_gen_var_declaration(vars, language, varargin)
 
     %% Default values
     def_save_name = 'var_dec';  % Default value of the save_name argument
@@ -44,7 +44,7 @@ function Spcies_gen_var_declaration(vars, language, varargin)
     %% Parser
     par = inputParser;
     par.CaseSensitive = false;
-    par.FunctionName = 'Spcies_gen_var_declaration';
+    par.FunctionName = 'spcies_gen_var_declaration';
     
     % Required
     addRequired(par, 'vars', @(x) iscell(x));
@@ -66,23 +66,27 @@ function Spcies_gen_var_declaration(vars, language, varargin)
     
     %% Generate text containing the variables
     if strcmp(language, 'C')
-        var_text = C_code.declareVariables(vars);
+        var_text = C_code.declare_variables(vars);
         extension = 'c';
     elseif strcmp(language, 'Arduino')
-        var_text = Arduino.declareVariables(vars);
+        var_text = Arduino.declare_variables(vars);
         extension = 'ino';
     elseif  strcmp(language, 'Unity')
-        var_text = C_code.declareVariables(vars);
+        var_text = Unity.declare_variables(vars);
         extension = 'XDB';
     else
         error('Spcies:gen_var_declaration:language:unrecognized', 'The language was not recognized as one of the supported languages');
     end
     
     %% Generate txt file
+    the_dir.name = par.Results.save_name;
+    the_dir.path = directory;
+    the_dir.extension = 'txt';
+    
     if ~par.Results.override
-        par.Results.save_name = utils.find_unused_file_name(par.Results.save_name, extension);
+        the_dir.save_name = utils.find_unused_file_name(the_dir);
     end
-    my_file = fopen([directory par.Results.save_name '.' extension], 'wt');
+    my_file = fopen(utils.get_full_path(the_dir), 'wt');
     fprintf(my_file, var_text);
     fclose(my_file);
     
