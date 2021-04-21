@@ -29,7 +29,7 @@ classdef Spcies_problem
             def_controller = []; % Default value for the controller argument
             del_solver_options = [];% Default options of the solver
             def_options = spcies_default_options();  % Get the default options of the toolbox
-
+            
             %% Parser
             par = inputParser;
             par.CaseSensitive = false;
@@ -48,6 +48,7 @@ classdef Spcies_problem
                 addParameter(par, 'save_name', def_options.save_name, @(x) ischar(x));
                 addParameter(par, 'directory', def_options.directory, @(x) ischar(x));
                 addParameter(par, 'override', def_options.override, @(x) islogical(x) || x==1 || x==0);
+                addParameter(par, 'const_are_static', def_options.override, @(x) islogical(x) || x==1 || x==0);
                 addParameter(par, 'save', def_options.save);
                 
             % Parse

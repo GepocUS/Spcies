@@ -56,7 +56,6 @@ function constructor = cons_MPCT_EADMM_C(recipe)
     def_solver_options.k_max = 1000;
     def_solver_options.in_engineering = false;
     def_solver_options.debug = false;
-    def_solver_options.const_are_static = true;
     def_solver_options.force_vector_rho = false; % If true, forces the penalty parameter rho to be defined as a vector
     
     % Fill recipe.solver_options with the defaults
@@ -76,7 +75,7 @@ function constructor = cons_MPCT_EADMM_C(recipe)
     m = vars.m;
     N = vars.N;
 
-    if solver_options.const_are_static
+    if recipe.options.const_are_static
         var_options = {'static', 'constant', 'array'};
     else
         var_options = {'constant', 'array'};

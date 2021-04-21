@@ -82,7 +82,7 @@ param = struct('Q', Q, 'R', R, 'P', P, 'N', N);
 % necessary, since default values are provided, but it is recommended. Especially
 % for the penalty parameter 'rho' of ADMM, since its performance is highly
 % dependant on its value.
-% The set the options we must create a structure with the apropriate fields.
+% The set the options we must create a structure with the appropriate fields.
 % We will set some options. For a full list of the available options, please
 % consult the laxMPC documentation.
 
@@ -96,7 +96,7 @@ options.save_name = 'lax_solver';
 options.directory = '';
 
 % If an empty field is provided (as in options.directory = ''), then
-% it is given its defaullt value.
+% it is given its default value.
 % The default directory where the solver is saved is in the folder
 % $SPCIES$/generated_solvers, where $SPCIES$ is the root directory of the
 % toolbox (the function spcies_get_root_directory.m returns this directory)
