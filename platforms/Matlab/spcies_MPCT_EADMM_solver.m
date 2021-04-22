@@ -88,7 +88,7 @@ function [u, k, e_flag, sol] = spcies_MPCT_EADMM_solver(x0, xr, ur, varargin)
     %% Parser
     par = inputParser;
     par.CaseSensitive = false;
-    par.FunctionName = 'Spcies_gen_controller';
+    par.FunctionName = 'spcies_MPCT_EADMM_solver';
     
     % Name-value parameters
     addParameter(par, 'sys', def_sys, @(x) isa(x, 'ss') || isa(x, 'ssModel') || isstruct(x));
