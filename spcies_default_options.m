@@ -56,6 +56,7 @@ function [def_opt, def_method, def_subclass] = spcies_default_options()
     
     % Default subclasses for each type of controller
     def_subclass.laxMPC.ADMM = '';
+    def_subclass.laxMPC.FISTA = '';
     def_subclass.equMPC.ADMM = '';
     def_subclass.ellipMPC.ADMM = '';
     def_subclass.MPCT.EADMM = '';
@@ -63,4 +64,3 @@ function [def_opt, def_method, def_subclass] = spcies_default_options()
     def_subclass.Other = '';
      
 end
-
