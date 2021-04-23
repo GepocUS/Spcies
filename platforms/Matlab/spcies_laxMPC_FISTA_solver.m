@@ -1,6 +1,6 @@
-%% spcies_laxMPC_ADMM_solver - Solver for the lax MPC formulation using ADMM
+%% spcies_laxMPC_FISTA_solver - Solver for the lax MPC formulation using FISTA
 %
-% This is a non-sparse solver of the ADMM-based lax MPC solver from the Spcies toolbox.
+% This is a non-sparse solver of the FISTA-based lax MPC solver from the Spcies toolbox.
 %
 % Information about this formulation and the solver can be found at:
 % 
@@ -9,7 +9,7 @@
 % 
 % Specifically, this formulation is given in equation (9) of the above reference.
 %
-% [u, k, e_flag, sol] = Spcies_MPCT_EADMM_solver(x0, xr, ur, 'name', value, 'name', ...) 
+% [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, 'name', value, 'name', ...) 
 %
 % INPUTS:
 %   - x0: Current system state
@@ -39,12 +39,7 @@
 %   - controller: Alternatively, the sys and param arguments can be omitted 
 %                 and instead substituted by an instance of the TrackingMPC
 %                 class of the GepocToolbox (https://github.com/GepocUS/GepocToolbox).
-%   - options: Structure containing options of the EADMM solver.
-%              - .rho_base: Scalar. Base value of the penalty parameter.
-%              - .rho_mult: Scalar. Multiplication factor of the base value.
-%              - .epsilon_x: Vector by which the bound for x_s are reduced.
-%              - .epsilon_u: Vector by which the bound for u_s are reduced.
-%              - .inf_bound: Scalar. Determines the value given to components without bound.
+%   - options: Structure containing options of the FISTA solver.
 %              - .tol: Exit tolerance of the solver. Defaults to 1e-4.
 %              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
 %              - .in_engineering: Boolean that determines if the arguments of the solver are given in
@@ -216,6 +211,7 @@ function [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, va
     
     % Initialize
     done = false;
+    e_flag = 0; 
     k = 0;
     z_k = zeros(N*(n+m), 1);
     y_k = zeros(N*n, 1);
@@ -259,8 +255,12 @@ function [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, va
     while~done
         k = k + 1;
         
+        % Update values of the previous iteration
+        t_km1 = t_k;
+        lambda_km1 = lambda_k;
+
         % Uptade q_k
-        q_k = q - Aeq'*lambda_k;
+        q_k = q - Aeq'*y_k;
         
         % Update z_k
         z_k = solve_boxQP(q_k, Hinv_diag, LB, UB);
@@ -268,20 +268,8 @@ function [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, va
         % Compute r_K
         r_k = -Aeq*z_k + b;
         
-        % Compute delta_lambda_K
-        d_lambda_k = W\r_k; 
-        
-        % Update lambda_k
-        lambda_k = d_lambda_k + y_k;
-        
-        % Update t_k
-        t_k = 0.5*( 1 + sqrt( 1 + 4*t_km1^2));
-        
-        % Update y_k
-        y_k = lambda_k + ((t_km1 - 1)/t_k)*(lambda_k - lambda_km1);
-        
         % Check exit condition
-        if r_k <= options.tol
+        if norm(r_k, Inf) <= options.tol
             done = true;
             e_flag = 1;
         elseif k >= options.k_max
@@ -289,10 +277,22 @@ function [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, va
             e_flag = -1;
         end
         
-        % Update values fornext iteration
-        t_km1 = t_k;
-        lambda_km1 = lambda_k;
-    
+        if done == 0
+        
+            % Compute delta_lambda_K
+            d_lambda_k = W\r_k; 
+
+            % Update lambda_k
+            lambda_k = d_lambda_k + y_k;
+
+            % Update t_k
+            t_k = 0.5*( 1 + sqrt( 1 + 4*t_km1^2));
+
+            % Update y_k
+            y_k = lambda_k + ((t_km1 - 1)/t_k)*(lambda_k - lambda_km1);
+        
+        end
+        
     end
     
     %% Return results
@@ -307,7 +307,7 @@ function [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, va
     % Optimal decision variables
     sol.z = z_k;
     sol.lambda = y_k;
-    sol.res = r_k;  
+    sol.res = r_k;
 
 end
 

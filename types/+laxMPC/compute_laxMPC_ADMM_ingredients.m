@@ -1,4 +1,4 @@
-%% compute_laxMPC_EADMM_ingredients
+%% compute_laxMPC_ADMM_ingredients
 %
 % Computes the ingredients for the ADMM-based solver for the lax MPC formulation
 %

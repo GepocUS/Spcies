@@ -17,7 +17,7 @@
 %                 - .param: Structure containing the ingredients of the controller:
 %                           - .Q: Cost function matrix Q.
 %                           - .R: Cost function matrix R.
-%                           - .T: Cost function matrix T.
+%                           - .P: Cost function matrix P.
 %                           - .N: Prediction horizon.
 %       - solver_options: Structure containing options of the ADMM solver.
 %              - .rho: Penalty parameter. Scalar of vector. Defaults to the scalar 1e-2.
@@ -147,7 +147,7 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
     
     % Data
     constructor.data = {'$INSERT_DEFINES$', defCell;...
-                              '$INSERT_CONSTANTS$', constCell};
+                        '$INSERT_CONSTANTS$', constCell};
 
 end
 

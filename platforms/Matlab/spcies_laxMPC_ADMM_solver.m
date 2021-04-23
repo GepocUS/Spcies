@@ -9,7 +9,7 @@
 % 
 % Specifically, this formulation is given in equation (9) of the above reference.
 %
-% [u, k, e_flag, sol] = Spcies_MPCT_EADMM_solver(x0, xr, ur, 'name', value, 'name', ...) 
+% [u, k, e_flag, sol] = spcies_laxMPC_ADMM_solver(x0, xr, ur, 'name', value, 'name', ...) 
 %
 % INPUTS:
 %   - x0: Current system state
@@ -39,7 +39,7 @@
 %   - controller: Alternatively, the sys and param arguments can be omitted 
 %                 and instead substituted by an instance of the TrackingMPC
 %                 class of the GepocToolbox (https://github.com/GepocUS/GepocToolbox).
-%   - options: Structure containing options of the EADMM solver.
+%   - options: Structure containing options of the ADMM solver.
 %              - .rho: Scalar or vector. Base value of the penalty parameter.
 %              - .tol: Exit tolerance of the solver. Defaults to 1e-4.
 %              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
