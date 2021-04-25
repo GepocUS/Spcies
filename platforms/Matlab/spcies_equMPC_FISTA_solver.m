@@ -1,15 +1,15 @@
-%% spcies_laxMPC_FISTA_solver - Solver for the lax MPC formulation using FISTA
+%% spcies_equMPC_FISTA_solver - Solver for the equaluty MPC formulation using FISTA
 %
-% This is a non-sparse solver of the FISTA-based lax MPC solver from the Spcies toolbox.
+% This is a non-sparse solver of the FISTA-based equality MPC solver from the Spcies toolbox.
 %
 % Information about this formulation and the solver can be found at:
 % 
 % P. Krupa, D. Limon, T. Alamo, "Implementation of model predictive control in
 % programmable logic controllers", Transactions on Control Systems Technology, 2020.
 % 
-% Specifically, this formulation is given in equation (9) of the above reference.
+% Specifically, this formulation is given in equation (8) of the above reference.
 %
-% [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, 'name', value, 'name', ...) 
+% [u, k, e_flag, sol] = spcies_equMPC_FISTA_solver(x0, xr, ur, 'name', value, 'name', ...) 
 %
 % INPUTS:
 %   - x0: Current system state.
@@ -35,10 +35,9 @@
 %   - param: Structure containing the ingredients of the MPC controller.
 %          - .Q: Cost function matrix Q.
 %          - .R: Cost function matrix R.
-%          - .P: Cost function matrix P.
 %          - .N: Prediction horizon.
 %   - controller: Alternatively, the sys and param arguments can be omitted 
-%                 and instead substituted by an instance of the LaxMPC
+%                 and instead substituted by an instance of the EqualityMPC
 %                 class of the GepocToolbox (https://github.com/GepocUS/GepocToolbox).
 %   - options: Structure containing options of the FISTA solver.
 %              - .tol: Exit tolerance of the solver. Defaults to 1e-4.
@@ -60,7 +59,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, varargin)
+function [u, k, e_flag, sol] = spcies_equMPC_FISTA_solver(x0, xr, ur, lambda, varargin)
 
     %% Default options
     def_sys = []; % Default value for the sys argument
@@ -75,7 +74,7 @@ function [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, va
     %% Parser
     par = inputParser;
     par.CaseSensitive = false;
-    par.FunctionName = 'spcies_laxMPC_FISTA_solver';
+    par.FunctionName = 'spcies_equMPC_FISTA_solver';
     
     % Name-value parameters
     addOptional(par, 'lambda', [], @(x) (isnumeric(x) && (min(size(x))==1)) || isempty(x));
@@ -103,15 +102,15 @@ function [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, va
         controller.param = par.Results.param;
     else
         controller = par.Results.controller;
-        if ~isa(controller, 'LaxMPC')
-            error('Controller object must be of the LaxMPC class');
+        if ~isa(controller, 'EqualityMPC')
+            error('Controller object must be of the EqualityMPC class');
         end
     end
     
     %% Generate ingredients of the solver
     
     % Extract from controller
-    if isa(controller, 'LaxMPC')
+    if isa(controller, 'EqualityMPC')
         A = controller.model.A;
         B = controller.model.Bu;
         n = controller.model.n_x;
@@ -119,7 +118,6 @@ function [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, va
         N = controller.N;
         Q = controller.Q;
         R = controller.R;
-        P = controller.P;
         LBx = controller.model.LBx;
         UBx = controller.model.UBx;
         LBu = controller.model.LBu;
@@ -136,13 +134,12 @@ function [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, va
         N = controller.param.N;
         Q = controller.param.Q;
         R = controller.param.R;
-        P = controller.param.P;
         LBx = controller.sys.LBx;
         UBx = controller.sys.UBx;
         LBu = controller.sys.LBu;
         UBu = controller.sys.UBu;
     end
-        
+    
     % Get lambda
     lambda = par.Results.lambda;
     if isempty(lambda)
@@ -150,9 +147,7 @@ function [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, va
     end
     
     % Compute Hessian
-    H = blkdiag(R, kron(eye(N-1), blkdiag(Q, R)), P);
-    
-    % Compute the matrix Aeq (equality constraints)
+    H = blkdiag(R, kron(eye(N-1), blkdiag(Q, R)));
     
     % Compute the top part of matrix Az, which corresponds to the prediction model constraints
     Aeq = kron(eye(N-1), [A B]); % Diagonal of the matrix
@@ -162,15 +157,16 @@ function [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, va
         Aeq(i:i+n-1,((j-1)*(n+m)+(m+n+1)):((j-1)*(n+m)+(n+m+1)+n-1)) = -eye(n);
     end
     Aeq = [B -eye(n) zeros(n, size(Aeq, 2) - n); zeros(size(Aeq, 1), m) Aeq]; % Initial condition
+    Aeq = Aeq(:,1:end-n);
     
     % Compute matrix W
     Hinv = inv(H);
     W = Aeq*Hinv*Aeq';
     
     % Compute the constraints
-    LB = [LBu; kron(ones(N-1,1), [LBx; LBu]); LBx]; 
-    UB = [UBu; kron(ones(N-1,1), [UBx; UBu]); UBx];
-   
+    LB = [LBu; kron(ones(N-1,1), [LBx; LBu])]; 
+    UB = [UBu; kron(ones(N-1,1), [UBx; UBu])];
+    
     % Scaling and operation point
     if isa(controller, 'LaxMPC')
         scaling_x = controller.model.Nx;
@@ -212,7 +208,7 @@ function [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, va
     done = false;
     e_flag = 0; 
     k = 0;
-    z_k = zeros(N*(n+m), 1);
+    z_k = zeros((N-1)*(n+m)+m, 1);
     y_k = zeros(N*n, 1);
     lambda_k = zeros(N*n, 1);
     lambda_km1 = lambda_k;
@@ -229,9 +225,10 @@ function [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, va
     % Update b
     b = zeros(N*n, 1);
     b(1:n) = -A*x0;
+    b(end-n+1:end) = xr;
     
     % Update q
-    q = -[R*ur; kron(ones(N-1, 1), [Q*xr; R*ur]); P*xr];
+    q = -[R*ur; kron(ones(N-1, 1), [Q*xr; R*ur])];
     
     % Compute q_0
     q_k = q - Aeq'*lambda;
