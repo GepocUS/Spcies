@@ -1,6 +1,6 @@
 %% compute_laxMPC_FISTA_ingredients
 %
-% Computes the ingredients for the fISTA-based solver for the lax MPC formulation
+% Computes the ingredients for the FISTA-based solver for the lax MPC formulation
 %
 % Information about this formulation and the solver  can be found at:
 %
@@ -11,7 +11,7 @@
 %
 % INPUTS:
 %   - controller: Contains the information of the controller.
-%   - options: Structure containing options of the EADMM solver.
+%   - options: Structure containing options of the FISTA solver.
 %   - spcies_options: Structure containing the options of the toolbox.
 % 
 % OUTPUTS:
