@@ -1,4 +1,4 @@
-%% spcies_laxMPC_ADMM_solver - Solver for the lax MPC formulation using ADMM
+%% spcies_equMPC_ADMM_solver - Solver for the equality MPC formulation using ADMM
 %
 % This is a non-sparse solver of the ADMM-based lax MPC solver from the Spcies toolbox.
 %
@@ -7,9 +7,9 @@
 % P. Krupa, D. Limon, T. Alamo, "Implementation of model predictive control in
 % programmable logic controllers", Transactions on Control Systems Technology, 2020.
 % 
-% Specifically, this formulation is given in equation (9) of the above reference.
+% Specifically, this formulation is given in equation (8) of the above reference.
 %
-% [u, k, e_flag, sol] = spcies_laxMPC_ADMM_solver(x0, xr, ur, 'name', value, 'name', ...) 
+% [u, k, e_flag, sol] = spcies_equMPC_ADMM_solver(x0, xr, ur, 'name', value, 'name', ...) 
 %
 % INPUTS:
 %   - x0: Current system state
@@ -34,10 +34,9 @@
 %   - param: Structure containing the ingredients of the MPCT controller.
 %          - .Q: Cost function matrix Q.
 %          - .R: Cost function matrix R.
-%          - .P: Cost function matrix P.
 %          - .N: Prediction horizon.
 %   - controller: Alternatively, the sys and param arguments can be omitted 
-%                 and instead substituted by an instance of the LaxMPC
+%                 and instead substituted by an instance of the EqualityMPC
 %                 class of the GepocToolbox (https://github.com/GepocUS/GepocToolbox).
 %   - options: Structure containing options of the ADMM solver.
 %              - .rho: Scalar or vector. Base value of the penalty parameter.
@@ -45,7 +44,6 @@
 %              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
 %              - .in_engineering: Boolean that determines if the arguments of the solver are given in
 %                                 engineering units (true) or incremental ones (false - default).
-%              - .force_vector_rho: Boolean that forces rho to be a vector even if a scalar is given.
 % 
 % OUTPUTS:
 %   - u: Control action to be applied to the system.
@@ -63,7 +61,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function [u, k, e_flag, sol] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
+function [u, k, e_flag, sol] = spcies_equMPC_ADMM_solver(x0, xr, ur, varargin)
     
     %% Default options
     def_sys = []; % Default value for the sys argument
@@ -80,7 +78,7 @@ function [u, k, e_flag, sol] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
     %% Parser
     par = inputParser;
     par.CaseSensitive = false;
-    par.FunctionName = 'spcies_laxMPC_ADMM_solver';
+    par.FunctionName = 'spcies_equMPC_ADMM_solver';
     
     % Name-value parameters
     addParameter(par, 'sys', def_sys, @(x) isa(x, 'ss') || isa(x, 'ssModel') || isstruct(x));
@@ -107,15 +105,15 @@ function [u, k, e_flag, sol] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
         controller.param = par.Results.param;
     else
         controller = par.Results.controller;
-        if ~isa(controller, 'LaxMPC')
-            error('Controller object must be of the LaxMPC class');
+        if ~isa(controller, 'EqualityMPC')
+            error('Controller object must be of the EqualityMPC class');
         end
     end
     
     %% Generate ingredients of the solver
     
-    % Extract from controller
-    if isa(controller, 'LaxMPC')
+    % Extract from controller 
+    if isa(controller, 'EqualityMPC')
         A = controller.model.A;
         B = controller.model.Bu;
         n = controller.model.n_x;
@@ -123,7 +121,6 @@ function [u, k, e_flag, sol] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
         N = controller.N;
         Q = controller.Q;
         R = controller.R;
-        P = controller.P;
         LBx = controller.model.LBx;
         UBx = controller.model.UBx;
         LBu = controller.model.LBu;
@@ -140,7 +137,6 @@ function [u, k, e_flag, sol] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
         N = controller.param.N;
         Q = controller.param.Q;
         R = controller.param.R;
-        P = controller.param.P;
         LBx = controller.sys.LBx;
         UBx = controller.sys.UBx;
         LBu = controller.sys.LBu;
@@ -149,7 +145,7 @@ function [u, k, e_flag, sol] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
     
     % Turn rho into a vector
     if isscalar(options.rho) && options.force_vector_rho
-        rho = options.rho*ones(N*(n+m), 1);
+        rho = options.rho*ones(N*(n+m) - n, 1);
     else
         rho = options.rho;
     end
@@ -157,11 +153,11 @@ function [u, k, e_flag, sol] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
     % Compute the Hessian H and the vector q
     
     % Hessian and q for variable z
-    H = blkdiag(R, kron(eye(N-1), blkdiag(Q, R)), P);
+    H = blkdiag(R, kron(eye(N-1), blkdiag(Q, R)));
     if isscalar(rho)
-        H_rho = H + rho*eye(N*(n+m));
+        Hhat = H + rho*eye(N*(n+m) - n);
     else
-        H_rho = H + diag(rho);
+        Hhat = H + diag(rho);
     end
     
     % Compute the matrix Aeq (equality constraints)
@@ -174,14 +170,15 @@ function [u, k, e_flag, sol] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
         Aeq(i:i+n-1,((j-1)*(n+m)+(m+n+1)):((j-1)*(n+m)+(n+m+1)+n-1)) = -eye(n);
     end
     Aeq = [B -eye(n) zeros(n, size(Aeq, 2) - n); zeros(size(Aeq, 1), m) Aeq]; % Initial condition
+    Aeq = Aeq(:,1:end-n);
     
     % Compute matrix W
-    Hinv = inv(H_rho);
+    Hinv = inv(Hhat);
     W = Aeq*Hinv*Aeq';
     
     % Compute the constraints
-    LB = [LBu; kron(ones(N-1,1), [LBx; LBu]); LBx]; 
-    UB = [UBu; kron(ones(N-1,1), [UBx; UBu]); UBx];
+    LB = [LBu; kron(ones(N-1,1), [LBx; LBu])]; 
+    UB = [UBu; kron(ones(N-1,1), [UBx; UBu])];
     
     % Scaling and operation point
     if isa(controller, 'LaxMPC')
@@ -223,10 +220,10 @@ function [u, k, e_flag, sol] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
     % Initialize
     done = false;
     k = 0;
-    z = zeros(N*(n+m), 1);
-    v = zeros(N*(n+m), 1);
+    z = zeros((N-1)*(n+m)+m, 1);
+    v = zeros((N-1)*(n+m)+m, 1);
     v1 = v;
-    lambda = zeros(N*(n+m), 1);
+    lambda = zeros((N-1)*(n+m)+m, 1);
     
     % Obtain x0, xr and ur
     if options.in_engineering
@@ -238,9 +235,10 @@ function [u, k, e_flag, sol] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
     % Update b
     b = zeros(N*n, 1);
     b(1:n) = -A*x0;
+    b(end-n+1:end) = xr;
     
     % Update q
-    q = -[R*ur; kron(ones(N-1, 1), [Q*xr; R*ur]); P*xr];
+    q = -[R*ur; kron(ones(N-1, 1), [Q*xr; R*ur])];
     
     while~done
         k = k + 1;
