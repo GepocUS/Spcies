@@ -58,6 +58,7 @@ function [def_opt, def_method, def_subclass] = spcies_default_options()
     def_subclass.laxMPC.ADMM = '';
     def_subclass.laxMPC.FISTA = '';
     def_subclass.equMPC.ADMM = '';
+    def_subclass.equMPC.FISTA = '';
     def_subclass.ellipMPC.ADMM = '';
     def_subclass.MPCT.EADMM = '';
     def_subclass.MPCT.ADMM = 'cs';
