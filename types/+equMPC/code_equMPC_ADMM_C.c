@@ -46,7 +46,6 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     double z_0[mm] = {0.0};
     double z1[NN-1][nm] = {{0.0}}; // Value of the decision variables z at the last iteration
     double z1_0[mm] = {0.0};
-    double z1_N[nn] = {0.0};
     double aux_N[nn] = {0.0}; // Auxiliary array used for multiple purposes
     double mu[NN][nn] = {{0.0}}; // Used to solve the system of equations
     unsigned int res_flag = 0; // Flag used to determine if the exit condition is satisfied
@@ -54,7 +53,6 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     double res_primal_feas; // Variable used to determine if primal feasibility is satisfied
     double b[nn] = {0.0}; // First nn components of vector b (the rest are known to be zero)
     double q[nm] = {0.0};
-    double qP[nn] = {0.0};
     
     // Constant variables
     $INSERT_CONSTANTS$
@@ -90,10 +88,6 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     // Update the reference
     for(unsigned int j = 0; j < nn; j++){
         q[j] = Q[j]*xr[j];
-        qP[j] = 0.0;
-        for(unsigned int i = 0; i < nn; i++){
-            qP[j] = qP[j] + P[j][i]*xr[i];
-        }
     }
     for(unsigned int j = 0; j < mm; j++){
         q[j+nn] = R[j]*ur[j];

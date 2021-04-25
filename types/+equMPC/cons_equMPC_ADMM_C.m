@@ -17,7 +17,6 @@
 %                 - .param: Structure containing the ingredients of the controller:
 %                           - .Q: Cost function matrix Q.
 %                           - .R: Cost function matrix R.
-%                           - .T: Cost function matrix T.
 %                           - .N: Prediction horizon.
 %       - solver_options: Structure containing options of the ADMM solver.
 %              - .rho: Penalty parameter. Scalar of vector. Defaults to the scalar 1e-2.
@@ -107,7 +106,6 @@ function constructor = cons_equMPC_ADMM_C(recipe)
     constCell = add_line(constCell, 'Beta', vars.Beta, 1, precision, var_options);
     constCell = add_line(constCell, 'Q', vars.Q, 1, precision, var_options);
     constCell = add_line(constCell, 'R', vars.R, 1, precision, var_options);
-    constCell = add_line(constCell, 'P', vars.P, 1, precision, var_options);
     if solver_options.in_engineering
         constCell = add_line(constCell, 'scaling_x', vars.scaling_x, 1, precision, var_options);
         constCell = add_line(constCell, 'scaling_u', vars.scaling_u, 1, precision, var_options);

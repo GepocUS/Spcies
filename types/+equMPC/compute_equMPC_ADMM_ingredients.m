@@ -11,7 +11,7 @@
 %
 % INPUTS:
 %   - controller: Contains the information of the controller.
-%   - options: Structure containing options of the EADMM solver.
+%   - options: Structure containing options of the ADMM solver.
 %   - spcies_options: Structure containing the options of the toolbox.
 % 
 % OUTPUTS:
@@ -31,7 +31,6 @@ function vars = compute_equMPC_ADMM_ingredients(controller, options, spcies_opti
         N = controller.N;
         Q = controller.Q;
         R = controller.R;
-        P = controller.P;
     else
         A = controller.sys.A;
         if isa(controller.sys, 'ssModel')
@@ -44,13 +43,12 @@ function vars = compute_equMPC_ADMM_ingredients(controller, options, spcies_opti
         N = controller.param.N;
         Q = controller.param.Q;
         R = controller.param.R;
-        P = controller.param.P;
     end
     
     % Check ingredients
-    if ~isdiag(blkdiag(Q, R))
-        error('Spcies:equMPC:non_diagonal_matrices', 'Matrices Q and R must be diagonal');
-    end
+    % if ~isdiag(blkdiag(Q, R))
+    %    error('Spcies:equMPC:non_diagonal_matrices', 'Matrices Q and R must be diagonal');
+    % end
     
     %% Turn rho into a vector
     if isscalar(options.rho) && options.force_vector_rho
@@ -112,7 +110,6 @@ function vars = compute_equMPC_ADMM_ingredients(controller, options, spcies_opti
     vars.LB = LB;
     vars.Q = -diag(Q);
     vars.R = -diag(R);
-    vars.P = -P;
     
     % rho
     if (vars.rho_is_scalar)

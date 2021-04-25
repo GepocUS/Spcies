@@ -96,9 +96,9 @@ void mexFunction(int nlhs, mxArray *plhs[],
     #endif
 
     mxArray *z, *v, *lambda;
-    z = mxCreateDoubleMatrix(NN*nm, 1, mxREAL);
-    v = mxCreateDoubleMatrix(NN*nm, 1, mxREAL);
-    lambda = mxCreateDoubleMatrix(NN*nm, 1, mxREAL);
+    z = mxCreateDoubleMatrix((NN-1)*nm+mm, 1, mxREAL);
+    v = mxCreateDoubleMatrix((NN-1)*nm+mm, 1, mxREAL);
+    lambda = mxCreateDoubleMatrix((NN-1)*nm+mm, 1, mxREAL);
 
     #if MX_HAS_INTERLEAVED_COMPLEX
     z_opt = mxGetDoubles(z);
