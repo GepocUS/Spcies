@@ -31,7 +31,7 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, options, spcies_opti
         N = controller.N;
         Q = controller.Q;
         R = controller.R;
-        P = controller.P;
+        T = controller.P;
     else
         A = controller.sys.A;
         if isa(controller.sys, 'ssModel')
@@ -44,7 +44,7 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, options, spcies_opti
         N = controller.param.N;
         Q = controller.param.Q;
         R = controller.param.R;
-        P = controller.param.P;
+        T = controller.param.T;
     end
     
     % Check ingredients
@@ -67,7 +67,7 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, options, spcies_opti
     %% Compute the Hessian H and the vector q
     
     % Hessian and q for variable z
-    H = blkdiag(R, kron(eye(N-1), blkdiag(Q, R)), P);
+    H = blkdiag(R, kron(eye(N-1), blkdiag(Q, R)), T);
     if vars.rho_is_scalar
         Hhat = H + rho*eye(N*(n+m));
     else
@@ -112,7 +112,7 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, options, spcies_opti
     vars.LB = LB;
     vars.Q = -diag(Q);
     vars.R = -diag(R);
-    vars.P = -P;
+    vars.T = -T;
     
     % rho
     if (vars.rho_is_scalar)

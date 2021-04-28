@@ -57,7 +57,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     double res_primal_feas; // Variable used to determine if primal feasibility is satisfied
     double b[nn] = {0.0}; // First nn components of vector b (the rest are known to be zero)
     double q[nm] = {0.0};
-    double qP[nn] = {0.0};
+    double qT[nn] = {0.0};
     
     // Constant variables
     $INSERT_CONSTANTS$
@@ -93,9 +93,9 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     // Update the reference
     for(unsigned int j = 0; j < nn; j++){
         q[j] = Q[j]*xr[j];
-        qP[j] = 0.0;
+        qT[j] = 0.0;
         for(unsigned int i = 0; i < nn; i++){
-            qP[j] = qP[j] + P[j][i]*xr[i];
+            qT[j] = qT[j] + T[j][i]*xr[i];
         }
     }
     for(unsigned int j = 0; j < mm; j++){
@@ -158,9 +158,9 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // Compute the last nn elements
         for(unsigned int j = 0; j < nn; j++){
             #ifdef SCALAR_RHO
-            z_N[j] = qP[j] + lambda_N[j] - rho*v_N[j];
+            z_N[j] = qT[j] + lambda_N[j] - rho*v_N[j];
             #else
-            z_N[j] = qP[j] + lambda_N[j] - rho_N[j]*v_N[j];
+            z_N[j] = qT[j] + lambda_N[j] - rho_N[j]*v_N[j];
             #endif
         }
 

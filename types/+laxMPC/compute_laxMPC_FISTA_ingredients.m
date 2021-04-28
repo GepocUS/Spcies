@@ -31,7 +31,7 @@ function vars = compute_laxMPC_FISTA_ingredients(controller, options, spcies_opt
         N = controller.N;
         Q = controller.Q;
         R = controller.R;
-        P = controller.P;
+        T = controller.P;
     else
         A = controller.sys.A;
         if isa(controller.sys, 'ssModel')
@@ -44,18 +44,18 @@ function vars = compute_laxMPC_FISTA_ingredients(controller, options, spcies_opt
         N = controller.param.N;
         Q = controller.param.Q;
         R = controller.param.R;
-        P = controller.param.P;
+        T = controller.param.T;
     end
     
     % Check ingredients
-    if ~isdiag(blkdiag(Q, R, P))
+    if ~isdiag(blkdiag(Q, R, T))
         error('Spcies:laxMPC:non_diagonal_matrices', 'Matrices Q, R and P must be diagonal in the FISTA-based solver for laxMPC');
     end
      
     %% Compute the Hessian H and the vector q
     
     % Hessian and q for variable z
-    H = blkdiag(R, kron(eye(N-1), blkdiag(Q, R)), P);
+    H = blkdiag(R, kron(eye(N-1), blkdiag(Q, R)), T);
     
     %% Compute the matrix Aeq
     
@@ -91,9 +91,9 @@ function vars = compute_laxMPC_FISTA_ingredients(controller, options, spcies_opt
     vars.LB = LB;
     vars.Q = -diag(Q);
     vars.R = -diag(R);
-    vars.P = -diag(P);
+    vars.T = -diag(T);
     vars.QRi = -[1./diag(Q); 1./diag(R)];
-    vars.Pi = -1./diag(P);
+    vars.Ti = -1./diag(T);
     
     % Scaling vectors and operating point
     if isa(controller, 'LaxMPC')

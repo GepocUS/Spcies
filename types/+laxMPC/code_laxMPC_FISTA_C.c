@@ -53,7 +53,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
     double t1 = 1.0; // Step of the previous iteration
     double b[nn] = {0.0}; // First nn components of vector b (the rest are known to be zero)
     double q[nm] = {0.0}; // For storing the components of q related to Q and R
-    double qP[nn] = {0.0}; // For storing the components of q related to P
+    double qT[nn] = {0.0}; // For storing the components of q related to T
     double res = 0.0; // For storing the absolute value of each element of the residual vector
     unsigned int res_flag = 0; // Flag used to determine if the exit condition is satisfied
 
@@ -88,7 +88,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
     // Update the reference
     for(unsigned int j = 0; j < nn; j++){
         q[j] = Q[j]*xr[j];
-        qP[j] = P[j]*xr[j];
+        qT[j] = T[j]*xr[j];
     }
     for(unsigned int j = 0; j < mm; j++){
         q[j+nn] = R[j]*ur[j];
@@ -97,7 +97,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
     // Initial steps 
 
     // Compute z_lambda_0
-    compute_z_lambda_laxMPC_FISTA(z_0, z, z_N, lambda, q, qP);
+    compute_z_lambda_laxMPC_FISTA(z_0, z, z_N, lambda, q, qT);
 
     // Compute the residual: We save it into d_lambda to save memory and future computations
     compute_residual_vector_laxMPC_FISTA(d_lambda, z_0, z, z_N, b);
@@ -129,7 +129,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
         t1 = t;
 
         // Compute z_lambda_k
-        compute_z_lambda_laxMPC_FISTA(z_0, z, z_N, y, q, qP);
+        compute_z_lambda_laxMPC_FISTA(z_0, z, z_N, y, q, qT);
 
         // Compute the residual: We save it into d_lambda to save memory and future computations
         compute_residual_vector_laxMPC_FISTA(d_lambda, z_0, z, z_N, b);
@@ -295,7 +295,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
 *
 */
 
-void compute_z_lambda_laxMPC_FISTA(double *z_0, double z[][nm], double *z_N, double lambda[][nn], double *q, double *qP){
+void compute_z_lambda_laxMPC_FISTA(double *z_0, double z[][nm], double *z_N, double lambda[][nn], double *q, double *qT){
 
     // Compute first mm elements
     for(unsigned int j = 0; j < mm; j++){
@@ -340,10 +340,10 @@ void compute_z_lambda_laxMPC_FISTA(double *z_0, double z[][nm], double *z_N, dou
     for(unsigned int j = 0; j < nn; j++){
 
         // Compute the q - G'*lambda part
-        z_N[j] = qP[j] + lambda[NN-1][j];
+        z_N[j] = qT[j] + lambda[NN-1][j];
 
         // Compute the solution of the QP
-        z_N[j] = z_N[j]*Pi[j]; // Multiply by the inverse of the Hessian
+        z_N[j] = z_N[j]*Ti[j]; // Multiply by the inverse of the Hessian
         z_N[j] = (z_N[j] > LB[j]) ? z_N[j] : LB[j]; // maximum between v and the lower bound
         z_N[j] = (z_N[j] > UB[j]) ? UB[j] : z_N[j]; // minimum between v and the upper bound
 
