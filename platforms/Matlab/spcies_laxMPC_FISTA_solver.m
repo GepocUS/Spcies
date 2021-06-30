@@ -119,7 +119,7 @@ function [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, va
         N = controller.N;
         Q = controller.Q;
         R = controller.R;
-        P = controller.P;
+        T = controller.P;
         LBx = controller.model.LBx;
         UBx = controller.model.UBx;
         LBu = controller.model.LBu;
@@ -136,7 +136,7 @@ function [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, va
         N = controller.param.N;
         Q = controller.param.Q;
         R = controller.param.R;
-        P = controller.param.P;
+        T = controller.param.T;
         LBx = controller.sys.LBx;
         UBx = controller.sys.UBx;
         LBu = controller.sys.LBu;
@@ -150,7 +150,7 @@ function [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, va
     end
     
     % Compute Hessian
-    H = blkdiag(R, kron(eye(N-1), blkdiag(Q, R)), P);
+    H = blkdiag(R, kron(eye(N-1), blkdiag(Q, R)), T);
     
     % Compute the matrix Aeq (equality constraints)
     
@@ -231,7 +231,7 @@ function [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, va
     b(1:n) = -A*x0;
     
     % Update q
-    q = -[R*ur; kron(ones(N-1, 1), [Q*xr; R*ur]); P*xr];
+    q = -[R*ur; kron(ones(N-1, 1), [Q*xr; R*ur]); T*xr];
     
     % Compute q_0
     q_k = q - Aeq'*lambda;
