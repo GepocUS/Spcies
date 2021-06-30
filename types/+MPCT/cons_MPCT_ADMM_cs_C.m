@@ -78,8 +78,14 @@ function constructor = cons_MPCT_ADMM_cs_C(recipe)
     % Determine if constant variables are defined as static
     if recipe.options.const_are_static
         var_options = {'static', 'constant', 'array'};
+        if vars.rho_is_scalar
+            var_options_rho = {'static', 'constant'};
+        end
     else
         var_options = {'constant', 'array'};
+        if vars.rho_is_scalar
+            var_options_rho = {'constant'};
+        end
     end
     
     % Determine if float or double variables are used
@@ -108,8 +114,8 @@ function constructor = cons_MPCT_ADMM_cs_C(recipe)
     
     % Constants
     constCell = [];
-    constCell = add_line(constCell, 'rho', vars.rho, 1, precision, var_options);
-    constCell = add_line(constCell, 'rho_i', vars.rho_i, 1, precision, var_options);
+    constCell = add_line(constCell, 'rho', vars.rho, 1, precision, var_options_rho);
+    constCell = add_line(constCell, 'rho_i', vars.rho_i, 1, precision, var_options_rho);
     constCell = add_line(constCell, 'Tz', vars.Tz, 1, precision, var_options);
     constCell = add_line(constCell, 'Sz', vars.Sz, 1, precision, var_options);
     constCell = add_line(constCell, 'LB', vars.LB, 1, precision, var_options);
