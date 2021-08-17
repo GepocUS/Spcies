@@ -60,13 +60,12 @@
 %   - e_flag: Exit flag of the algorithm.
 %       - 1: Optimal solution found.
 %       - -1: Maximum iterations reaches. Returns last iterate.
-%   - Hist: Structure containing information of the iterations and final outcome of the solver
+%   - Hist: Structure containing information of the iterations and final outcome of the solver.
 %       - sol: Structure containing the returned solution of the primal and dual variables.
 %           - .z1: Returned decision variables z1.
 %           - .z2: Returned decision variables z2.
 %           - .z3: Returned decision variables z3.
 %           - .lambda: Returned dual variables.
-%           - .res: Value of the residual.
 %       - res: Structure containing information of the values of the residuals of the returned solution.
 %       - hNRes_pf: Historic of the infinity norm of the residual of primal feasibility (only saved in genHist > 0).
 %       - hNRes_z2: Historic of the infinity norm of the residual of fixed point for z2 (only saved in genHist > 0).
@@ -112,6 +111,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_EADMM_solver(x0, xr, ur, varargin)
     else
         options = par.Results.options;
     end
+    % Add default values
     options = utils.add_default_options_to_struct(options, def_options);
 
     % Create the controller structure
@@ -254,7 +254,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_EADMM_solver(x0, xr, ur, varargin)
     end
     
     % Hist
-        % Optimal decision variables
+        % Solution
     Hist.sol.z1 = z1;
     Hist.sol.z2 = z2;
     Hist.sol.z3 = z3;
