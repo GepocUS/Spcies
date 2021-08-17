@@ -51,15 +51,7 @@ function constructor = cons_MPCT_EADMM_C(recipe)
     this_path = fileparts(full_path);
     
     %% Default solver options
-    def_solver_options.rho_base = 3;
-    def_solver_options.rho_mult = 20;
-    def_solver_options.epsilon_x = 1e-6;
-    def_solver_options.epsilon_u = 1e-6;
-    def_solver_options.inf_bound = 1e6;
-    def_solver_options.tol = 1e-4;
-    def_solver_options.k_max = 1000;
-    def_solver_options.in_engineering = false;
-    def_solver_options.debug = false;
+    def_solver_options = MPCT.def_options_MPCT_EADMM();
     
     % Fill recipe.solver_options with the defaults
     solver_options = utils.add_default_options_to_struct(recipe.solver_options, def_solver_options);
