@@ -34,7 +34,7 @@
 %   - param: Structure containing the ingredients of the MPCT controller.
 %          - .Q: Cost function matrix Q.
 %          - .R: Cost function matrix R.
-%          - .P: Cost function matrix P.
+%          - .T: Cost function matrix T.
 %          - .N: Prediction horizon.
 %   - controller: Alternatively, the sys and param arguments can be omitted 
 %                 and instead substituted by an instance of the LaxMPC
@@ -123,7 +123,7 @@ function [u, k, e_flag, sol] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
         N = controller.N;
         Q = controller.Q;
         R = controller.R;
-        P = controller.P;
+        T = controller.P;
         LBx = controller.model.LBx;
         UBx = controller.model.UBx;
         LBu = controller.model.LBu;
@@ -140,7 +140,7 @@ function [u, k, e_flag, sol] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
         N = controller.param.N;
         Q = controller.param.Q;
         R = controller.param.R;
-        P = controller.param.P;
+        T = controller.param.T;
         LBx = controller.sys.LBx;
         UBx = controller.sys.UBx;
         LBu = controller.sys.LBu;
@@ -157,7 +157,7 @@ function [u, k, e_flag, sol] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
     % Compute the Hessian H and the vector q
     
     % Hessian and q for variable z
-    H = blkdiag(R, kron(eye(N-1), blkdiag(Q, R)), P);
+    H = blkdiag(R, kron(eye(N-1), blkdiag(Q, R)), T);
     if isscalar(rho)
         H_rho = H + rho*eye(N*(n+m));
     else
@@ -240,7 +240,7 @@ function [u, k, e_flag, sol] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
     b(1:n) = -A*x0;
     
     % Update q
-    q = -[R*ur; kron(ones(N-1, 1), [Q*xr; R*ur]); P*xr];
+    q = -[R*ur; kron(ones(N-1, 1), [Q*xr; R*ur]); T*xr];
     
     while~done
         k = k + 1;

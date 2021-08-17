@@ -8,7 +8,7 @@
 % using a sparse extended ADMM algorithm", by P. Krupa, I. Alvarado, D. Limon
 % and T. Alamo, arXiv preprint: 2008:09071v2, 2020.
 %
-% [u, k, e_flag, sol] = Spcies_MPCT_EADMM_solver(x0, xr, ur, 'name', value, 'name', ...) 
+% [u, k, e_flag, sol] = spcies_MPCT_EADMM_solver(x0, xr, ur, 'name', value, 'name', ...) 
 %
 % INPUTS:
 %   - x0: Current system state
