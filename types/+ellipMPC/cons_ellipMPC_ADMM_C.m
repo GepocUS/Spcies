@@ -3,8 +3,9 @@
 % Generates the constructor for C of the ADMM-based solver for MPC with ellipsoidal terminal constraint
 %
 % Information about this formulation and the solver can be found at:
-%
-% t.b.d. (it will be available shortly in an arXic preprint)
+% 
+% P. Krupa, R. Jaouani, D. Limon, and T. Alamo, “A sparse ADMM-based solver for linear MPC subject
+% to terminal quadratic constraint,” arXiv:2105.08419, 2021.
 %
 % INPUTS:
 %   - recipe: An instance of the Spcies_problem class. Its properties must contain:
@@ -49,12 +50,7 @@ function constructor = cons_ellipMPC_ADMM_C(recipe)
     this_path = fileparts(full_path);
     
     %% Default solver options
-    def_solver_options.rho = 1e-2;
-    def_solver_options.tol = 1e-4;
-    def_solver_options.k_max = 1000;
-    def_solver_options.in_engineering = false;
-    def_solver_options.debug = false;
-    def_solver_options.force_vector_rho = false; % If true, forces the penalty parameter rho to be defined as a vector
+    def_solver_options = def_options_ellipMPC_ADMM();
     
     % Fill recipe.solver_options with the defaults
     solver_options = utils.add_default_options_to_struct(recipe.solver_options, def_solver_options);
@@ -163,4 +159,3 @@ function constructor = cons_ellipMPC_ADMM_C(recipe)
                         '$INSERT_VARIABLES$', varsCell};
 
 end
-

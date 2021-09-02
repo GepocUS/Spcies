@@ -5,7 +5,8 @@
 % 
 % Information about this formulation and the solver can be found at:
 %
-% t.b.d. (it will be available shortly in an arXic preprint)
+% P. Krupa, R. Jaouani, D. Limon, and T. Alamo, “A sparse ADMM-based solver for linear MPC subject
+% to terminal quadratic constraint,” arXiv:2105.08419, 2021.
 % 
 % INPUTS:
 %   - recipe: An instance of the Spcies_problem class.
