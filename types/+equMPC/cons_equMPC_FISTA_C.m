@@ -44,11 +44,7 @@ function constructor = cons_equMPC_FISTA_C(recipe)
     this_path = fileparts(full_path);
     
     %% Default solver options
-    def_solver_options.rho = 1e-2;
-    def_solver_options.tol = 1e-4;
-    def_solver_options.k_max = 1000;
-    def_solver_options.in_engineering = false;
-    def_solver_options.debug = false;
+    def_solver_options = def_options_equMPC_FISTA();
     
     % Fill recipe.solver_options with the defaults
     solver_options = utils.add_default_options_to_struct(recipe.solver_options, def_solver_options);

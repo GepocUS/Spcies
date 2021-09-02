@@ -69,11 +69,7 @@ function [u, k, e_flag, sol] = spcies_equMPC_ADMM_solver(x0, xr, ur, varargin)
     def_controller = []; % Default value for the controller argument
     
     % Default options
-    def_options.rho = 1e-2;
-    def_options.tol = 1e-4;
-    def_options.k_max = 1000;
-    def_options.in_engineering = false;
-    def_options.force_vector_rho = false;
+    def_options = def_options_equMPC_ADMM();
     
     %% Parser
     par = inputParser;
