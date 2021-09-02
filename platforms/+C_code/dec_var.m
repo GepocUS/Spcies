@@ -232,12 +232,12 @@ function s = dec_var(var)
     
      % Add the const tag
     if any(strcmp(options, 'constant'))
-        s = ['const ', s];
+        s = strcat('const ', s);
     end
     
     % Add the static tag 
     if any(strcmp(options, 'static'))
-        s = ['static ', s];
+        s = strcat('static ', s);
     end
 
     end

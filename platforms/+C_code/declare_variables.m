@@ -22,7 +22,7 @@ function s = declare_variables(vars)
 
     % Generate string s
     for i = 1:numVars
-        s = [s C_code.dec_var(vars(i,:))];
+        s = strcat(s, C_code.dec_var(vars(i,:)));
     end
 
 end
