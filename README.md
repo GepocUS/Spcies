@@ -18,13 +18,17 @@ Spcies is designed and developed by Pablo Krupa, Daniel Limon and Teodoro Alamo,
 
 ## Installation
 
-Clone or download the repository into a directory $SPCIES$. Then, add the following folders to the Matlab path:
+Clone or download the repository into a directory $SPCIES$. Then move Matlab's current folder to $SPCIES$ and execute `spcies('install')` in the command window.
+
+Alternatively, you can manually add the following folders to Malab's path.
 
 > * $SPCIES$
 > * $SPCIES$/types
 > * $SPCIES$/platforms
 > * $SPCIES$/platforms/Matlab
 > * $SPCIES$/generated_solvers
+
+To uninstall simply execute `spcies('uninstall')` in the command window. You can also manually remove the above folders from Matlab's path.
 
 ## Basic usage
 
