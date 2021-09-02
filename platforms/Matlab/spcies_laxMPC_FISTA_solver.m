@@ -68,9 +68,7 @@ function [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, va
     def_controller = []; % Default value for the controller argument
     
     % Default options
-    def_options.tol = 1e-4;
-    def_options.k_max = 1000;
-    def_options.in_engineering = false;
+    def_options = def_options_laxMPC_FISTA();
     
     %% Parser
     par = inputParser;

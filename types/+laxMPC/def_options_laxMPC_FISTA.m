@@ -1,6 +1,6 @@
-%% def_options_laxMPC_ADMM
+%% def_options_laxMPC_FISTA
 % 
-% Returns the default options for the ADMM-based solver for the lax MPC formulation.
+% Returns the default options for the FISTA-based solver for the lax MPC formulation.
 % 
 % Information about this formulation and the solver can be found at:
 % 
@@ -13,13 +13,11 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function def_options = def_options_laxMPC_ADMM()
+function def_options = def_options_laxMPC_FISTA()
 
-    def_options.rho = 1e-2;
     def_options.tol = 1e-4;
     def_options.k_max = 1000;
     def_options.in_engineering = false;
     def_options.debug = false;
-    def_options.force_vector_rho = false; % If true, forces the penalty parameter rho to be defined as a vector
     
 end
