@@ -79,7 +79,7 @@ function [u, k, e_flag, Hist] = spcies_equMPC_ADMM_solver(x0, xr, ur, varargin)
     def_controller = []; % Default value for the controller argument
     def_genHist = 0; % Default amount of data generated for Hist
     def_verbose = 1; % Default amount of information displayed
-    def_options = def_options_equMPC_ADMM(); % Default values of the options of the solver
+    def_options = equMPC.def_options_equMPC_ADMM(); % Default values of the options of the solver
     
     %% Parser
     par = inputParser;

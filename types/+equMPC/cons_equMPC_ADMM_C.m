@@ -46,7 +46,7 @@ function constructor = cons_equMPC_ADMM_C(recipe)
     this_path = fileparts(full_path);
     
     %% Default solver options
-    def_solver_options = def_options_equMPC_ADMM();
+    def_solver_options = equMPC.def_options_equMPC_ADMM();
     
     % Fill recipe.solver_options with the defaults
     solver_options = utils.add_default_options_to_struct(recipe.solver_options, def_solver_options);

@@ -76,7 +76,7 @@ function [u, k, e_flag, Hist] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, v
     def_controller = []; % Default value for the controller argument
     def_genHist = 0; % Default amount of data generated for Hist
     def_verbose = 1; % Default amount of information displayed
-    def_options = def_options_laxMPC_FISTA(); % Default values of the options of the solver
+    def_options = laxMPC.def_options_laxMPC_FISTA(); % Default values of the options of the solver
     
     %% Parser
     par = inputParser;

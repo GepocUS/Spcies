@@ -50,7 +50,7 @@ function constructor = cons_ellipMPC_ADMM_C(recipe)
     this_path = fileparts(full_path);
     
     %% Default solver options
-    def_solver_options = def_options_ellipMPC_ADMM();
+    def_solver_options = ellipMPC.def_options_ellipMPC_ADMM();
     
     % Fill recipe.solver_options with the defaults
     solver_options = utils.add_default_options_to_struct(recipe.solver_options, def_solver_options);

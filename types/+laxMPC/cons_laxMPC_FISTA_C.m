@@ -45,7 +45,7 @@ function constructor = cons_laxMPC_FISTA_C(recipe)
     this_path = fileparts(full_path);
     
     %% Default solver options
-    def_solver_options = def_options_laxMPC_FISTA();
+    def_solver_options = laxMPC.def_options_laxMPC_FISTA();
     
     % Fill recipe.solver_options with the defaults
     solver_options = utils.add_default_options_to_struct(recipe.solver_options, def_solver_options);
