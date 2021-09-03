@@ -1,23 +1,23 @@
-%% Welcome to Spcies: Suite of Predictive Controllers for Industrial Embedded systems.
+%% Welcome to SPCIES: Suite of Predictive Controllers for Industrial Embedded systems.
 %
-% This is a basic introductory tutorial to the main use of Spcies: the generation
+% This is a basic introductory tutorial to the main use of SPCIES: the generation
 % of tailored solvers for different MPC formulations.
 %
-% The toolbox can create solvers in  various programming languages.
-% This tutorial will guide you through the creation of a mex function for Matlab
+% The toolbox can create solvers in various programming languages.
+% This tutorial will guide you through the creation of a MEX function for Matlab
 % for a standard MPC formulation that we label 'laxMPC', which is given by:
 %
-% min_{x, u} sum_{i = 0}^{N-1} \| x_i - xr \|^2_Q + \| u_i - ur \|^2_R + \| x_N - xr \|^2_P
+% min_{x, u} sum_{i = 0}^{N-1} \| x_i - xr \|^2_Q + \| u_i - ur \|^2_R + \| x_N - xr \|^2_T
 %
 %   s.t. x_0 = x(k)
 %        x_{i+1} = A x_i + B u_i, i = 0...N-1
-%        x_lb <= x_i <= x_ub, i = 1...N-1
-%        u_lb <= u_i <= u_ub, i = 0...N-1
+%        LBx <= x_i <= UBx, i = 1...N-1
+%        LBu <= u_i <= UBx, i = 0...N-1
 %
 % where x_i and u_i are the predicted states and control actions, respectively;
-% x_r and u_r are the state and input reference, respectively; Q, R and P are
-% the positive definite cost function matrices; x_lb, u_lb are the lower bounds
-% for the state and input, respectively; x_ub, u_ub the upper bounds; and
+% x_r and u_r are the state and input reference, respectively; Q, R and T are
+% the positive definite cost function matrices; LBx, LBu are the lower bounds
+% for the state and input, respectively; UBx, UBu the upper bounds; and
 % N is the prediction horizon.
 % 
 % For additional information about the formulation, we refer the user to:
@@ -66,32 +66,32 @@ sys = struct('A', sysD.A, 'B', sysD.B, 'LBx', LBx, 'UBx', UBx, 'LBu', LBu, 'UBu'
 
 Q = blkdiag(15*eye(p), 1*eye(p)); % Remember that Q and R must be positive definite
 R = 0.1*eye(m);
-[~, P] = dlqr(sys.A, sys.B, Q, R); % This is the typical choice of P in MPC
+[~, T] = dlqr(sys.A, sys.B, Q, R); % This is the typical choice of T in MPC
 N = 10;
 
 % The ingredients of the controller have to be saved into a structure.
 % Once again, the name of the fields must be as shown.
-param = struct('Q', Q, 'R', R, 'P', P, 'N', N);
+param = struct('Q', Q, 'R', R, 'T', T, 'N', N);
 
 %% STEP 3: Generate the solver
-% In this step, we will call the main function of Spcies to generate a 
-% mex file containing the sparse solver, which for the laxMPC formulation
-% is based on the ADMM algorithm.
+% In this step, we will call the main function of SPCIES to generate a 
+% MEX file containing the sparse solver.
+% In this tutorial we will create an ADMM-based solver for the laxMPC formulation.
 
 % Before we generate the solver, we must sets its options. This is not strictly
 % necessary, since default values are provided, but it is recommended. Especially
-% for the penalty parameter 'rho' of ADMM, since its performance is highly
-% dependant on its value.
-% The set the options we must create a structure with the appropriate fields.
+% for the penalty parameter 'rho' of ADMM, since performance is highly dependant
+% on its value.
+% To set the options we must create a structure with the appropriate fields.
 % We will set some options. For a full list of the available options, please
 % consult the laxMPC documentation.
 
 solver_options.rho = 15; % Value of the penalty parameter of the ADMM algorithm
 solver_options.k_max = 5000; % Maximum number of iterations of the solver
-solver_options.tol = 0.001; % Exit tolerance of the solver
+solver_options.tol = 1e-3; % Exit tolerance of the solver
 
 % Next, we can set some of the options of the toolbox, such as the name of the
-% mex file that will be generated, or the directory where the solver is saved.
+% MEX file that will be generated, or the directory where the solver is saved.
 options.save_name = 'lax_solver';
 options.directory = '';
 
@@ -102,26 +102,36 @@ options.directory = '';
 % toolbox (the function spcies_get_root_directory.m returns this directory)
 % To save the files into the current working directory use options.directory = './';
 
+% Since we are saving the solver into the default directory $SPCIES$/generated_solvers,
+% we recomment that you clear the directory of all previous controllers.
+% Controllers are overwritten by default, but it is best to be safe that sorry.
+% You can clear $SPCIES$/generated_solvers by running:
+spcies_clear;
+
 % We now generate the mex file by calling the following function:
 spcies_gen_controller('sys', sys, 'param', param, 'solver_options', solver_options,...
-    'options', options, 'platform', 'Matlab');
+    'options', options, 'platform', 'Matlab', 'type', 'laxMPC');
 
 % Notice that we are indicating the 'platform' as 'Matlab', which is telling
 % the function to generate a mex file. This was not strictly needed, since
 % the default value for the 'platform' is set to Matlab.
 % For plain C code, set the 'platform' argument to 'C'.
-
 % Another way of passing the target to the function would have been to include
 % it in the options structure in the field 'platform'.
 
-% A mex file should have been saved into $SPCIES$/generated_solvers if a Matlab
+% Notice also that we are telling the function that the 'type' of controller 
+% I want it to generate a solver for is the laxMPC formulation.
+% For a full list of supported MPC formulations and solvers for them please
+% refer to the documentation of the toolbox and the other examples.
+
+% A MEX file should have been saved into $SPCIES$/generated_solvers if a Matlab
 % compatible compiler is correctly installed and interfaced with Matlab.
 % If not, an error should have occurred at this point.
-% If using the Linux version of Matlab, Spcies currently assumes that the
+% If using the Linux version of Matlab, SPCIES currently assumes that the
 % gcc compiler is being used.
 
-%% STEP 4: Use the mex file
-% To show how to use the generated mex file, we will perform a closed-loop test.
+%% STEP 4: Use the MEX file
+% To show how to use the generated MEX file, we will perform a closed-loop test.
 
 % First, we set the conditions of the test
 num_iter = 50; % Number of sample times
@@ -146,7 +156,7 @@ for i = 1:num_iter
     % The solver requires the current state 'x', and the reference
     % 'xr' and 'ur'. It returns the control action to be applied
     % to the system 'u', the number of iterations and an exit
-    % flag indicating (1: solution found, -1: maximum iterations).
+    % flag (1: solution found, -1: maximum iterations).
     % The name of the function must match the string in 'save_name'.
     tic;
     [u, hK(i), hE(i)] = lax_solver(x, xr, ur);
@@ -197,4 +207,3 @@ bar(0:num_iter-1, hK);
 xlabel('Sample time');
 ylabel('Number of iterations');
 grid on;
-
