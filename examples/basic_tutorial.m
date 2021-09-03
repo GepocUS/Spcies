@@ -1,19 +1,19 @@
 %% Welcome to SPCIES: Suite of Predictive Controllers for Industrial Embedded systems.
-%
+% 
 % This is a basic introductory tutorial to the main use of SPCIES: the generation
 % of tailored solvers for different MPC formulations.
-%
+% 
 % The toolbox can create solvers in various programming languages.
 % This tutorial will guide you through the creation of a MEX function for Matlab
 % for a standard MPC formulation that we label 'laxMPC', which is given by:
-%
+% 
 % min_{x, u} sum_{i = 0}^{N-1} \| x_i - xr \|^2_Q + \| u_i - ur \|^2_R + \| x_N - xr \|^2_T
 %
 %   s.t. x_0 = x(k)
 %        x_{i+1} = A x_i + B u_i, i = 0...N-1
 %        LBx <= x_i <= UBx, i = 1...N-1
-%        LBu <= u_i <= UBx, i = 0...N-1
-%
+%        LBu <= u_i <= UBu, i = 0...N-1
+% 
 % where x_i and u_i are the predicted states and control actions, respectively;
 % x_r and u_r are the state and input reference, respectively; Q, R and T are
 % the positive definite cost function matrices; LBx, LBu are the lower bounds
@@ -21,12 +21,12 @@
 % N is the prediction horizon.
 % 
 % For additional information about the formulation, we refer the user to:
-%
+% 
 % P. Krupa, D. Limon, T. Alamo, "Implementation of model predictive control in
 % programmable logic controllers", Transactions on Control Systems Technology, 2020.
 % 
 % Specifically, this formulation is given in equation (9) of the above reference.
-%
+% 
 clear; clc;
 
 %% STEP 1: Problem definition.
@@ -73,14 +73,14 @@ N = 10;
 % Once again, the name of the fields must be as shown.
 param = struct('Q', Q, 'R', R, 'T', T, 'N', N);
 
-%% STEP 3: Generate the solver
+%% STEP 3: Generate the solver.
 % In this step, we will call the main function of SPCIES to generate a 
 % MEX file containing the sparse solver.
 % In this tutorial we will create an ADMM-based solver for the laxMPC formulation.
 
 % Before we generate the solver, we must sets its options. This is not strictly
 % necessary, since default values are provided, but it is recommended. Especially
-% for the penalty parameter 'rho' of ADMM, since performance is highly dependant
+% for the penalty parameter 'rho' of ADMM, since performance is highly dependent
 % on its value.
 % To set the options we must create a structure with the appropriate fields.
 % We will set some options. For a full list of the available options, please
@@ -103,7 +103,7 @@ options.directory = '';
 % To save the files into the current working directory use options.directory = './';
 
 % Since we are saving the solver into the default directory $SPCIES$/generated_solvers,
-% we recomment that you clear the directory of all previous controllers.
+% we recommend that you clear the directory of all previous controllers.
 % Controllers are overwritten by default, but it is best to be safe that sorry.
 % You can clear $SPCIES$/generated_solvers by running:
 spcies_clear;
@@ -130,7 +130,7 @@ spcies_gen_controller('sys', sys, 'param', param, 'solver_options', solver_optio
 % If using the Linux version of Matlab, SPCIES currently assumes that the
 % gcc compiler is being used.
 
-%% STEP 4: Use the MEX file
+%% STEP 4: Use the MEX file.
 % To show how to use the generated MEX file, we will perform a closed-loop test.
 
 % First, we set the conditions of the test
@@ -207,3 +207,4 @@ bar(0:num_iter-1, hK);
 xlabel('Sample time');
 ylabel('Number of iterations');
 grid on;
+
