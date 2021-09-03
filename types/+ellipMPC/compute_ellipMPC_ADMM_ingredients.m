@@ -13,12 +13,13 @@
 %   - spcies_options: Structure containing the options of the toolbox.
 % 
 % OUTPUTS:
-%   - vars: Structure containing the ingredients required by the solver.
+%   - vars: Structure containing the ingredients required by the solver
+%   - vars_nonsparse: Structure containing the ingredients for the non-sparse solver..
 % 
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 %
 
-function vars = compute_ellipMPC_ADMM_ingredients(controller, options, spcies_options)
+function [vars, vars_nonsparse] = compute_ellipMPC_ADMM_ingredients(controller, options, spcies_options)
 
     %% Extract from controller
     if isa(controller, 'ellipMPC')
@@ -214,5 +215,27 @@ function vars = compute_ellipMPC_ADMM_ingredients(controller, options, spcies_op
         vars.Alpha(:,:,i) = Wc((i-1)*n+(1:n),i*n+(1:n));
     end
     
+    %% Compute non-sparse variables (used by the non-sparse solver)
+    vars_nonsparse.N = N;
+    vars_nonsparse.n = n;
+    vars_nonsparse.m = m;
+    vars_nonsparse.A = A;
+    vars_nonsparse.Q = Q;
+    vars_nonsparse.R = R;
+    vars_nonsparse.T = T;
+    vars_nonsparse.rho = rho;
+    vars_nonsparse.rho_i =1./rho;
+    vars_nonsparse.W = sparse(W);
+    vars_nonsparse.Hinv = sparse(Hinv);
+    vars_nonsparse.Aeq = sparse(Aeq);
+    vars_nonsparse.P = P;
+    vars_nonsparse.P_half = P_half;
+    vars_nonsparse.Pinv_half = vars.Pinv_half;
+    vars_nonsparse.c = c;
+    vars_nonsparse.r = r;
+    vars_nonsparse.scaling_x = vars.scaling_x;
+    vars_nonsparse.scaling_u = vars.scaling_U;
+    vars_nonsparse.OpPoint_x = vars.OpPoint_x;
+    vars_nonsparse.OpPoint_u = vars.OpPointU;
+    
 end
-
