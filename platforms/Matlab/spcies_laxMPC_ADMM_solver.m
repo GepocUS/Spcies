@@ -30,7 +30,7 @@
 %          - .LBu: Upper bound for the system input.
 %          - .UBu: Upper bound for the system input.
 %          - .Nx: Vector defining the scaling of the system state.
-%          - .nU: Vector defining the scaling of the system input.
+%          - .Nu: Vector defining the scaling of the system input.
 %   - param: Structure containing the ingredients of the MPCT controller.
 %          - .Q: Cost function matrix Q.
 %          - .R: Cost function matrix R.
@@ -58,10 +58,10 @@
 %       - 1: Optimal solution found.
 %       - -1: Maximum iterations reaches. Returns last iterate.
 %   - Hist: Structure containing information of the iterations and final outcome of the solver.
-%       - sol: Structure containing the optimal solution of the decision variables and dual variables.
-%           - .z Optimal decision variables z.
-%           - .v: Optimal decision variables v.
-%           - .lambda: Optimal dual variables.
+%       - sol: Structure containing the attained solution.
+%           - .z Primal decision variables z.
+%           - .v: Primal decision variables v.
+%           - .lambda: Dual variables.
 %           - .r_p: Value of the infinity norm of the primal residual.
 %           - .r_d: Value of the infinity norm of the dual residual.
 %       - hRp: Historic of the infinity norm of the primal residual (only saved in genHist > 0).
