@@ -9,7 +9,7 @@
 % 
 % Specifically, this formulation is given in equation (9) of the above reference.
 %
-% [u, k, e_flag, sol] = spcies_laxMPC_ADMM_solver(x0, xr, ur, 'name', value, 'name', ...) 
+% [u, k, e_flag, Hist] = spcies_laxMPC_ADMM_solver(x0, xr, ur, 'name', value, 'name', ...) 
 %
 % INPUTS:
 %   - x0: Current system state
@@ -45,7 +45,6 @@
 %              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
 %              - .in_engineering: Boolean that determines if the arguments of the solver are given in
 %                                 engineering units (true) or incremental ones (false - default).
-%              - .force_vector_rho: Boolean that forces rho to be a vector even if a scalar is given.
 %   - verbose: Controlls the amount of information printed in the console.
 %              Integer from 0 (no information printed) to 3 (print all information).
 %   - genHist: Controlls the amount of information saved and returned in the output Hist.

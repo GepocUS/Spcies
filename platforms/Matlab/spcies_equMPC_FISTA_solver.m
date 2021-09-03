@@ -1,4 +1,4 @@
-%% spcies_equMPC_FISTA_solver - Solver for the equaluty MPC formulation using FISTA
+%% spcies_equMPC_FISTA_solver - Solver for the equality MPC formulation using FISTA
 %
 % This is a non-sparse solver of the FISTA-based equality MPC solver from the Spcies toolbox.
 %
@@ -9,7 +9,7 @@
 % 
 % Specifically, this formulation is given in equation (8) of the above reference.
 %
-% [u, k, e_flag, sol] = spcies_equMPC_FISTA_solver(x0, xr, ur, 'name', value, 'name', ...) 
+% [u, k, e_flag, Hist] = spcies_equMPC_FISTA_solver(x0, xr, ur, 'name', value, 'name', ...) 
 %
 % INPUTS:
 %   - x0: Current system state.
@@ -44,6 +44,10 @@
 %              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
 %              - .in_engineering: Boolean that determines if the arguments of the solver are given in
 %                                 engineering units (true) or incremental ones (false - default).
+%   - verbose: Controlls the amount of information printed in the console.
+%              Integer from 0 (no information printed) to 3 (print all information).
+%   - genHist: Controlls the amount of information saved and returned in the output Hist.
+%              Integer from 0 (save minimum amount of data) to 2 (save all data).
 % 
 % OUTPUTS:
 %   - u: Control action to be applied to the system.
@@ -51,23 +55,27 @@
 %   - e_flag: Exit flag of the algorithm.
 %       - 1: Optimal solution found.
 %       - -1: Maximum iterations reaches. Returns last iterate.
-%   - sol: Structure containing the optimal solution of the decision variables and dual variables.
-%       - .z: Optimal decision variables z1.
-%       - .lambda: Optimal dual variables.
-%       - .res: Value of the residual.
+%   - Hist: Structure containing information of the iterations and final outcome of the solver.
+%       - sol: Structure containing the attained solution.
+%           - .z: Primal variables
+%           - .lambda: Dual variables.
+%           - .res: Value of the infinity norm of the residual.
+%       - hZ: Historic of z (only saved in genHist > 1).
+%       - hLambda: Historic of lambda (only saved in genHist > 1).
+%       - hRes: Historic of the infinity norm of the esidual (only saved in genHist > 0).
 %
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function [u, k, e_flag, sol] = spcies_equMPC_FISTA_solver(x0, xr, ur, lambda, varargin)
+function [u, k, e_flag, Hist] = spcies_equMPC_FISTA_solver(x0, xr, ur, lambda, varargin)
 
     %% Default options
     def_sys = []; % Default value for the sys argument
     def_param = []; % Default value for the param argument
     def_controller = []; % Default value for the controller argument
-    
-    % Default options
-    def_options = def_options_equMPC_FISTA();
+    def_genHist = 0; % Default amount of data generated for Hist
+    def_verbose = 1; % Default amount of information displayed
+    def_options = def_options_equMPC_FISTA(); % Default values of the options of the solver
     
     %% Parser
     par = inputParser;
@@ -80,6 +88,8 @@ function [u, k, e_flag, sol] = spcies_equMPC_FISTA_solver(x0, xr, ur, lambda, va
     addParameter(par, 'param', def_param, @(x) isstruct(x));
     addParameter(par, 'controller', def_controller, @(x) isa(x, 'ssMPC'));
     addParameter(par, 'options', def_options, @(x) isstruct(x));
+    addParameter(par, 'genHist', def_genHist, @(x) isnumeric(x) && (x>=0));
+    addParameter(par, 'verbose', def_verbose, @(x) isnumeric(x) && (x>=0));
     
     % Parse
     parse(par, lambda, varargin{:})
@@ -104,6 +114,14 @@ function [u, k, e_flag, sol] = spcies_equMPC_FISTA_solver(x0, xr, ur, lambda, va
             error('Controller object must be of the EqualityMPC class');
         end
     end
+    
+    % Rename and check other arguments
+    genHist = par.Results.genHist;
+    if genHist > 2; genHist = 2; end
+    if genHist < 0; genHist = 0; end
+    verbose = par.Results.verbose;
+    if verbose > 3; verbose = 3; end
+    if verbose < 0; verbose = 0; end
     
     %% Generate ingredients of the solver
     
@@ -213,6 +231,15 @@ function [u, k, e_flag, sol] = spcies_equMPC_FISTA_solver(x0, xr, ur, lambda, va
     t_k = 1;
     t_km1 = 1;
     
+    % Historics
+    if genHist > 0
+        hRes = zeros(1, options.k_max+1);
+    end
+    if genHist > 1
+        hZ = zeros(N*(n+m), options.k_max+1);
+        hLambda = zeros(N*n, options.k_max+1);
+    end
+    
     % Obtain x0, xr and ur
     if options.in_engineering
         x0 = scaling_x*(x0 - OpPoint_x);
@@ -236,6 +263,7 @@ function [u, k, e_flag, sol] = spcies_equMPC_FISTA_solver(x0, xr, ur, lambda, va
     
     % Compute r_0
     r_k = -Aeq*z_k + b;
+    res_k = norm(r_k, Inf);
     
     % Compute delta_lambda_0
     d_lambda_k = W\r_k; 
@@ -245,6 +273,15 @@ function [u, k, e_flag, sol] = spcies_equMPC_FISTA_solver(x0, xr, ur, lambda, va
     
     % Compute lambda_0
     lambda_k = y_k;
+    
+    % Save historics
+    if genHist > 0
+        hRes(k+1) = res_k;
+    end
+    if genHist > 1
+        hZ(:, k+1) = z_k;
+        hLambda(:, k+1) = lambda_k;
+    end
     
     while~done
         k = k + 1;
@@ -261,9 +298,10 @@ function [u, k, e_flag, sol] = spcies_equMPC_FISTA_solver(x0, xr, ur, lambda, va
         
         % Compute r_K
         r_k = -Aeq*z_k + b;
+        res_k = norm(r_k, Inf);
         
         % Check exit condition
-        if norm(r_k, Inf) <= options.tol
+        if res_k <= options.tol
             done = true;
             e_flag = 1;
         elseif k >= options.k_max
@@ -287,6 +325,15 @@ function [u, k, e_flag, sol] = spcies_equMPC_FISTA_solver(x0, xr, ur, lambda, va
         
         end
         
+        % Save Historics
+        if genHist > 0
+            hRes(k+1) = res_k;
+        end
+        if genHist > 1
+            hZ(:, k+1) = z_k;
+            hLambda(:, k+1) = lambda_k;
+        end
+        
     end
     
     %% Return results
@@ -298,10 +345,19 @@ function [u, k, e_flag, sol] = spcies_equMPC_FISTA_solver(x0, xr, ur, lambda, va
         u = z_k(1:m);
     end
     
-    % Optimal decision variables
-    sol.z = z_k;
-    sol.lambda = y_k;
-    sol.res = r_k;
+    % Hist
+        % Solution
+    Hist.sol.z = z_k;
+    Hist.sol.lambda = y_k;
+    Hist.sol.res = res_k;
+    Hist.k = k;
+        % Historics
+    if genHist > 0
+        Hist.hRes = hRes(1:k+1);
+    end
+    if genHist > 1
+        Hist.hZ = hZ(:, 1:k+1);
+        Hist.hLambda = hLambda(:, 1:k+1);
+    end
 
 end
-

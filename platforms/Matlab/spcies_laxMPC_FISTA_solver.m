@@ -9,7 +9,7 @@
 % 
 % Specifically, this formulation is given in equation (9) of the above reference.
 %
-% [u, k, e_flag, sol] = spcies_laxMPC_FISTA_solver(x0, xr, ur, 'name', value, 'name', ...) 
+% [u, k, e_flag, Hist] = spcies_laxMPC_FISTA_solver(x0, xr, ur, 'name', value, 'name', ...) 
 %
 % INPUTS:
 %   - x0: Current system state.
@@ -277,7 +277,7 @@ function [u, k, e_flag, Hist] = spcies_laxMPC_FISTA_solver(x0, xr, ur, lambda, v
     % Compute lambda_0
     lambda_k = y_k;
     
-    % Save Historics
+    % Save historics
     if genHist > 0
         hRes(k+1) = res_k;
     end

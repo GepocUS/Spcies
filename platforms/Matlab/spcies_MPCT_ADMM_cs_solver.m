@@ -3,7 +3,8 @@
 % This is a non-sparse solver of the MPC for Tracking formulation from the Spcies toolbox.
 % The solver extends the state and control inputs by adding the artificial reference to them.
 % Currently, there is no additional documentation available for the solver.
-% [u, k, e_flag, sol] = spcies_MPCT_EADMM_solver(x0, xr, ur, 'name', value, 'name', ...) 
+% 
+% [u, k, e_flag, Hist] = spcies_MPCT_EADMM_solver(x0, xr, ur, 'name', value, 'name', ...) 
 % 
 % INPUTS:
 %   - x0: Current system state
