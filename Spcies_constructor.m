@@ -237,7 +237,9 @@ classdef Spcies_constructor
                     exec_text = strrep(exec_text, '$INSERT_PATH$', self.files.(name).dir.path); % Path to file
                     
                     % Execute command
+                    warning('off','MATLAB:mex:GccVersion_link') % Dissable warning of unsupported gcc compiler.
                     eval(exec_text);
+                    warning('on','MATLAB:mex:GccVersion_link') % Enable the warning
 
                 end
                 
