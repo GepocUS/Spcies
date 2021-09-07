@@ -223,6 +223,8 @@ function [vars, vars_nonsparse] = compute_ellipMPC_ADMM_ingredients(controller, 
     vars_nonsparse.Q = Q;
     vars_nonsparse.R = R;
     vars_nonsparse.T = T;
+    vars_nonsparse.LBz = LBz;
+    vars_nonsparse.UBz = UBz;
     vars_nonsparse.rho = rho;
     vars_nonsparse.rho_i =1./rho;
     vars_nonsparse.W = sparse(W);
@@ -234,8 +236,8 @@ function [vars, vars_nonsparse] = compute_ellipMPC_ADMM_ingredients(controller, 
     vars_nonsparse.c = c;
     vars_nonsparse.r = r;
     vars_nonsparse.scaling_x = vars.scaling_x;
-    vars_nonsparse.scaling_u = vars.scaling_U;
+    vars_nonsparse.scaling_u = vars.scaling_u;
     vars_nonsparse.OpPoint_x = vars.OpPoint_x;
-    vars_nonsparse.OpPoint_u = vars.OpPointU;
+    vars_nonsparse.OpPoint_u = vars.OpPoint_u;
     
 end
