@@ -90,15 +90,37 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
     if solver_options.debug
         defCell = add_line(defCell, 'DEBUG', 1, 1, 'bool', 'define');
     end
+%     if isdiag(vars.Q)
+%         defCell = add_line(defCell, 'Q_IS_DIAG', 1, 1, 'bool', 'define');
+%         vars.Q = diag(vars.Q);
+%     end
+%     if isdiag(vars.R)
+%         defCell = add_line(defCell, 'R_IS_DIAG', 1, 1, 'bool', 'define');
+%         vars.R = diag(vars.R);
+%     end
+%     if isdiag(vars.T)
+%         defCell = add_line(defCell, 'T_IS_DIAG', 1, 1, 'bool', 'define');
+%         vars.T = diag(vars.T);
+%     end
     
     % Constants
     constCell = [];
     constCell = add_line(constCell, 'LB', vars.LB, 1, precision, var_options);
     constCell = add_line(constCell, 'UB', vars.UB, 1, precision, var_options);
-    constCell = add_line(constCell, 'Hi', vars.Hi, 1, precision, var_options);
-    constCell = add_line(constCell, 'Hi_0', vars.Hi_0, 1, precision, var_options);
-    constCell = add_line(constCell, 'Hi_N', vars.Hi_N, 1, precision, var_options);
+%     constCell = add_line(constCell, 'Hi', vars.Hi, 1, precision, var_options);
+%     constCell = add_line(constCell, 'Hi_0', vars.Hi_0, 1, precision, var_options);
+%     constCell = add_line(constCell, 'Hi_N', vars.Hi_N, 1, precision, var_options);
     constCell = add_line(constCell, 'AB', vars.AB, 1, precision, var_options);
+    constCell = add_line(constCell, 'GHi', vars.GHi, 1, precision, var_options);
+    constCell = add_line(constCell, 'GHin', vars.GHin, 1, precision, var_options);
+    constCell = add_line(constCell, 'GHiN', vars.GHiN, 1, precision, var_options);
+    constCell = add_line(constCell, 'HiG', vars.HiG, 1, precision, var_options);
+    constCell = add_line(constCell, 'HiGn', vars.HiGn, 1, precision, var_options);
+    constCell = add_line(constCell, 'HiGN', vars.HiGN, 1, precision, var_options);
+    constCell = add_line(constCell, 'Qi', vars.Qi, 1, precision, var_options);
+    constCell = add_line(constCell, 'Ri', vars.Ri, 1, precision, var_options);
+    constCell = add_line(constCell, 'Ti', vars.Ti, 1, precision, var_options);
+
     constCell = add_line(constCell, 'Alpha', vars.Alpha, 1, precision, var_options);
     constCell = add_line(constCell, 'Beta', vars.Beta, 1, precision, var_options);
     constCell = add_line(constCell, 'Q', vars.Q, 1, precision, var_options);
@@ -118,6 +140,7 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
         defCell = add_line(defCell, 'rho', vars.rho, 1, precision, 'define');
         defCell = add_line(defCell, 'rho_i', vars.rho_i, 1, precision, 'define');
     else
+        error('Current version of SPCIES does not accept a non-scalar rho in the laxMPC ADMM solver');
         constCell = add_line(constCell, 'rho', vars.rho, 1, precision, var_options);
         constCell = add_line(constCell, 'rho_0', vars.rho_0, 1, precision, var_options);
         constCell = add_line(constCell, 'rho_N', vars.rho_N, 1, precision, var_options);

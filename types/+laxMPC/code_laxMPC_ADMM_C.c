@@ -58,6 +58,9 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     double b[nn] = {0.0}; // First nn components of vector b (the rest are known to be zero)
     double q[nm] = {0.0};
     double qT[nn] = {0.0};
+    double q_hat[NN-1][nm] = {{0.0}}; // Decision variables z
+    double q_hat_0[mm] = {0.0};
+    double q_hat_N[nn] = {0.0};
     
     // Constant variables
     $INSERT_CONSTANTS$
@@ -86,20 +89,45 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     for(unsigned int j = 0; j < nn; j++){
         b[j] = 0.0;
         for(unsigned int i = 0; i < nn; i++){
-            b[j] = b[j] - AB[j][i]*x0[i];
+            b[j] = b[j] + AB[j][i]*x0[i];
         }
     }
 
     // Update the reference
     for(unsigned int j = 0; j < nn; j++){
+
+        // Part corresponding to Q
+        #ifdef Q_IS_DIAG
         q[j] = Q[j]*xr[j];
+        #else
+        q[j] = 0.0;
+        for(unsigned int i = 0; i < nn; i++){
+            q[j] = q[j] + Q[j][i]*xr[i];
+        }
+        #endif
+
+        // Part corresponding to T
+        #ifdef T_IS_DIAG
+        qT[j] = T[j]*xr[j];
+        #else
         qT[j] = 0.0;
         for(unsigned int i = 0; i < nn; i++){
             qT[j] = qT[j] + T[j][i]*xr[i];
         }
+        #endif
+
     }
+
+    // Part corresponding to R
     for(unsigned int j = 0; j < mm; j++){
+        #ifdef R_IS_DIAG
         q[j+nn] = R[j]*ur[j];
+        #else
+        q[j+nn] = 0.0;
+        for(unsigned int i = 0; i < mm; i++){
+            q[j+nn] = q[j+nn] + R[j][i]*ur[i];
+        }
+        #endif
     }
 
     // Algorithm
@@ -138,9 +166,9 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // Compute the first mm elements
         for(unsigned int j = 0; j < mm; j++){
             #ifdef SCALAR_RHO
-            z_0[j] = q[j+nn] + lambda_0[j] - rho*v_0[j];
+            q_hat_0[j] = q[j+nn] + lambda_0[j] - rho*v_0[j];
             #else
-            z_0[j] = q[j+nn] + lambda_0[j] - rho_0[j]*v_0[j];
+            q_hat_0[j] = q[j+nn] + lambda_0[j] - rho_0[j]*v_0[j];
             #endif
         }
 
@@ -148,9 +176,9 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         for(unsigned int l = 0; l < NN-1; l++){
             for(unsigned int j = 0; j < nm; j++){
                 #ifdef SCALAR_RHO
-                z[l][j] = q[j] + lambda[l][j] - rho*v[l][j];
+                q_hat[l][j] = q[j] + lambda[l][j] - rho*v[l][j];
                 #else
-                z[l][j] = q[j] + lambda[l][j] - rho[l][j]*v[l][j];
+                q_hat[l][j] = q[j] + lambda[l][j] - rho[l][j]*v[l][j];
                 #endif
             }
         }
@@ -158,9 +186,9 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // Compute the last nn elements
         for(unsigned int j = 0; j < nn; j++){
             #ifdef SCALAR_RHO
-            z_N[j] = qT[j] + lambda_N[j] - rho*v_N[j];
+            q_hat_N[j] = qT[j] + lambda_N[j] - rho*v_N[j];
             #else
-            z_N[j] = qT[j] + lambda_N[j] - rho_N[j]*v_N[j];
+            q_hat_N[j] = qT[j] + lambda_N[j] - rho_N[j]*v_N[j];
             #endif
         }
 
@@ -168,33 +196,73 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // I store it in mu to save a bit of memory
 
         // Compute the first nn elements
+
         for(unsigned int j = 0; j < nn; j++){
-            mu[0][j] = Hi[0][j]*z[0][j] - b[j];
+            mu[0][j] = b[j];
+            for(unsigned int i = 0; i < nn; i++){
+                mu[0][j] = mu[0][j] + GHin[j][i]*q_hat[0][j];
+            }
             for(unsigned int i = 0; i < mm; i++){
-                mu[0][j] = mu[0][j] - AB[j][i+nn]*Hi_0[i]*z_0[i];
+                mu[0][j] = mu[0][j] + GHi[j][i+nn]*q_hat_0[i];
             }
         }
 
+        // Old. TODO: delete
+        // for(unsigned int j = 0; j < nn; j++){
+            // mu[0][j] = Hi[0][j]*z[0][j] - b[j];
+            // for(unsigned int i = 0; i < mm; i++){
+                // mu[0][j] = mu[0][j] - AB[j][i+nn]*Hi_0[i]*z_0[i];
+            // }
+        // }
+
         // Compute all the other elements except for the last nn
+
         for(unsigned int l = 1; l < NN-1; l++){
             for(unsigned int j = 0; j < nn; j++){
-                mu[l][j] = Hi[l][j]*z[l][j];
+                mu[l][j] = 0.0;
+                for(unsigned int i = 0; i < nn; i++){
+                    mu[l][j] = mu[l][j] + GHin[j][i]*q_hat[l][j];
+                }
                 for(unsigned int i = 0; i < nm; i++){
-                    mu[l][j] = mu[l][j] - AB[j][i]*Hi[l-1][i]*z[l-1][i];
+                    mu[l][j] = mu[l][j] + GHi[j][i]*q_hat[l-1][i];
                 }
             }
         }
 
+
+        // Old. TODO: delete
+        // for(unsigned int l = 1; l < NN-1; l++){
+            // for(unsigned int j = 0; j < nn; j++){
+                // mu[l][j] = Hi[l][j]*z[l][j];
+                // for(unsigned int i = 0; i < nm; i++){
+                    // mu[l][j] = mu[l][j] - AB[j][i]*Hi[l-1][i]*z[l-1][i];
+                // }
+            // }
+        // }
+
+
         // Compute the last nn elements
+
         for(unsigned int j = 0; j < nn; j++){
             mu[NN-1][j] = 0.0;
             for(unsigned int i = 0; i < nn; i++){
-                mu[NN-1][j] = mu[NN-1][j] + Hi_N[j][i]*z_N[i];
+                mu[NN-1][j] = mu[NN-1][j] + GHiN[j][i]*q_hat_N[i];
             }
             for(unsigned int i = 0; i < nm; i++){
-                mu[NN-1][j] = mu[NN-1][j] - AB[j][i]*Hi[NN-2][i]*z[NN-2][i];
+                mu[NN-1][j] = mu[NN-1][j] + GHi[j][i]*q_hat[NN-2][i];
             }
         }
+
+        // Old. TODO: delete
+        // for(unsigned int j = 0; j < nn; j++){
+            // mu[NN-1][j] = 0.0;
+            // for(unsigned int i = 0; i < nn; i++){
+                // mu[NN-1][j] = mu[NN-1][j] + Hi_N[j][i]*z_N[i];
+            // }
+            // for(unsigned int i = 0; i < nm; i++){
+                // mu[NN-1][j] = mu[NN-1][j] - AB[j][i]*Hi[NN-2][i]*z[NN-2][i];
+            // }
+        // }
         
         // Compute mu, the solution of the system of equations W*mu = -G'*H^(-1)*q_hat - beq
 
@@ -267,38 +335,90 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         }
 
         // Compute z (note that, from before, we have that at this point z = q_hat)
+        // memcpy(z_0,q_hat_0,sizeof(double)*mm);
+        // memcpy(z,q_hat,sizeof(double)*(NN-1)*nm);
+        // memcpy(z_N,q_hat_N,sizeof(double)*nn);
 
         // Compute the first mm elements
+
         for(unsigned int j = 0; j < mm; j++){
-            for(unsigned int i = 0; i < nn; i++){
-                z_0[j] = z_0[j] + AB[i][j+nn]*mu[0][i];
+                z_0[j] = 0.0;
+            for(unsigned int i = 0; i < mm; i++){
+                z_0[j] = z_0[j] + Ri[j][i]*q_hat_0[j];
             }
-            z_0[j] = -Hi_0[j]*z_0[j];
+            for(unsigned int i = 0; i < nn; i++){
+                z_0[j] = z_0[j] + HiGn[j+nn][i]*mu[0][i];
+            }
         }
 
+        // Old. TODO: delete
+        // for(unsigned int j = 0; j < mm; j++){
+            // for(unsigned int i = 0; i < nn; i++){
+                // z_0[j] = z_0[j] + AB[i][j+nn]*mu[0][i];
+            // }
+            // z_0[j] = -Hi_0[j]*z_0[j];
+        // }
+
         // Compute all the other elements except for the last nn
+
         for(unsigned int l = 0; l < NN-1; l++){
             for(unsigned int j = 0; j < nn; j++){
-                z[l][j] = z[l][j] - mu[l][j];
+                z[l][j] = 0.0;
+                for(unsigned int i = 0; i < nn; i++){
+                    z[l][j] = z[l][j] + Qi[j][i]*q_hat[l][i];
+                }
+                for(unsigned int i = 0; i < nn; i++){
+                    z[l][j] = z[l][j] + HiG[j][i]*mu[l][i];
+                }
+            }
+            for(unsigned int j = 0; j < mm; j++){
+                z[l][j+nn] = 0.0;
+                for(unsigned int i = 0; i < mm; i++){
+                    z[l][j+nn] = z[l][j+nn] + Ri[j][i]*q_hat[l][i+nn];
+                }
             }
             for(unsigned int j = 0; j < nm; j++){
                 for(unsigned int i = 0; i < nn; i++){
-                    z[l][j] = z[l][j] + AB[i][j]*mu[l+1][i];
+                    z[l][j] = z[l][j] + HiGn[j][i]*mu[l+1][i];
                 }
-                z[l][j] = -Hi[l][j]*z[l][j];
             }
         }
 
+        // Old. TODO: delete
+        // for(unsigned int l = 0; l < NN-1; l++){
+            // for(unsigned int j = 0; j < nn; j++){
+                // z[l][j] = z[l][j] - mu[l][j];
+            // }
+            // for(unsigned int j = 0; j < nm; j++){
+                // for(unsigned int i = 0; i < nn; i++){
+                    // z[l][j] = z[l][j] + AB[i][j]*mu[l+1][i];
+                // }
+                // z[l][j] = -Hi[l][j]*z[l][j];
+            // }
+        // }
+
         // Compute the last nn elements
-        for(unsigned int j = 0; j < nn; j++){
-            aux_N[j] = z_N[j] - mu[NN-1][j];
-        }
+
         for(unsigned int j = 0; j < nn; j++){
             z_N[j] = 0.0;
             for(unsigned int i = 0; i < nn; i++){
-                z_N[j] = z_N[j] - Hi_N[j][i]*aux_N[i];
+                z_N[j] = z_N[j] + Ti[j][i]*q_hat_N[i]; 
+            }
+            for(unsigned int i = 0; i < nn; i++){
+                z_N[j] = z_N[j] + HiGN[j][i]*mu[NN-1][i];
             }
         }
+
+        // Old. TODO: delete
+        // for(unsigned int j = 0; j < nn; j++){
+            // aux_N[j] = z_N[j] - mu[NN-1][j];
+        // }
+        // for(unsigned int j = 0; j < nn; j++){
+            // z_N[j] = 0.0;
+            // for(unsigned int i = 0; i < nn; i++){
+                // z_N[j] = z_N[j] - Hi_N[j][i]*aux_N[i];
+            // }
+        // }
 
         // Step 2: Minimize w.r.t. v
 
@@ -470,6 +590,8 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     for(unsigned int j = 0; j < mm; j++){
         count++;
         z_opt[count] = z_0[j];
+        // z_opt[count] = q[j+nn];
+
         v_opt[count] = v_0[j];
         lambda_opt[count] = lambda_0[j];
     }
@@ -479,6 +601,8 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         for(unsigned int j = 0; j < nm; j++){
             count++;
             z_opt[count] = z[l][j];
+            // z_opt[count] = q[j];
+
             v_opt[count] = v[l][j];
             lambda_opt[count] = lambda[l][j];
         }
@@ -488,6 +612,8 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     for(unsigned int j = 0; j < nn; j++){
         count++;
         z_opt[count] = z_N[j];
+        // z_opt[count] = qT[j];
+
         v_opt[count] = v_N[j];
         lambda_opt[count] = lambda_N[j];
     }

@@ -47,11 +47,6 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, options, spcies_opti
         T = controller.param.T;
     end
     
-    % Check ingredients
-    if ~isdiag(blkdiag(Q, R))
-        error('Spcies:laxMPC:non_diagonal_matrices', 'Matrices Q and R must be diagonal');
-    end
-    
     %% Turn rho into a vector
     if isscalar(options.rho) && options.force_vector_rho
         rho = options.rho*ones(N*(n+m), 1);
@@ -108,10 +103,25 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, options, spcies_opti
     vars.Hi = reshape(diag(Hinv(m+(1:(N-1)*(n+m)),m+(1:(N-1)*(n+m)))), n+m, N-1)';
     vars.Hi_N = Hinv(end-n+1:end, end-n+1:end);
     vars.AB = [A B];
+    
+    GHi = Aeq*Hinv;
+    vars.GHi = -GHi(n+(1:n), m+(1:n+m));
+    vars.GHin = -GHi(1:n, m+(1:n));
+    vars.GHiN = -GHi(end-n+1:end, end-n+1:end);
+    
+    HiG = Hinv*Aeq';
+    vars.HiG = -HiG(m+(1:n), 1:n);
+    vars.HiGn = -HiG(m+(1:n+m), n+(1:n));
+    vars.HiGN = -HiG(end-n+1:end, end-n+1:end);
+    
+    vars.Qi = -Hinv(m+(1:n), m+(1:n));
+    vars.Ri = -Hinv(1:m, 1:m);
+    vars.Ti = -Hinv(end-n+1:end, end-n+1:end);
+    
     vars.UB = UB;
     vars.LB = LB;
-    vars.Q = -diag(Q);
-    vars.R = -diag(R);
+    vars.Q = -Q;
+    vars.R = -R;
     vars.T = -T;
     
     % rho
