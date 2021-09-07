@@ -34,7 +34,9 @@ To uninstall simply execute `spcies('uninstall')` in the command window. You can
 
 We recommend reading through and executing the [basic tutorial](examples/basic_tutorial.m) script located in [examples](examples). It explains the basic usage of the toolbox, including how to generate and use the solvers. We also recommend reading though and executing the other tutorials.
 
-Documentation of the solvers can be found in various articles available in open access formats. Please refer to the help of each solver for the specific articles. A more accessible and streamlined documentation and explanation of the solvers will be made available in due course.
+We refer the reader to this [Ph.D. dissertation](https://arxiv.org/abs/2109.02140) and the references therein for documentation on the MPC formulations and solver.
+
+A more accessible and streamlined documentation will be made available in due course.
 
 Users are encouraged to contact the authors by [email](mailto:pkrupa@us.es) or to participate in the [discussion](https://github.com/GepocUS/Spcies/discussions) board if they have any questions or need any help with using the toolbox.
 

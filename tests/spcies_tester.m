@@ -18,12 +18,12 @@
 %       - 'No': We did not obtain a solution close to the optimal one.
 %   - Flag: Flag returned by the solvers. If both solvers returned positive flags we
 %           display the largest flag. If one or more returned a negative or zero flag
-%           wwe return the smallest flag. A good result here is to see a positive integer.
-%   - Error: Some exception ocurred during the execution of the sparse or non-sparse solvers.
+%           we return the smallest flag. A good result here is to see a positive integer.
+%   - Error: Some exception occurred during the execution of the sparse or non-sparse solvers.
 % 
 % The ideal thing to see in each row is: SPCIES = 'Yes', Opt = 'Yes' and Flag >= 1.
 % 
-% INPTUS:
+% INPUTS:
 %   - verbose: (optional) Integer that determines if information is printed on screen.
 %              >=1: Table is printed. 0: Table is not printed. Default: 2.
 %   - debug: (optional) Boolean that determines if we catch and ignore exceptions during
