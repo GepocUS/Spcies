@@ -15,6 +15,8 @@
 %   spcies('install')       % Installs the toolbox
 %   spcies('uninstall')     % Uninstalls the toolbox
 %
+%   spcies('test')          % Test the solvers in the toolbox
+%
 
 function varargout = spcies(varargin)
 
@@ -46,6 +48,7 @@ switch varargin{1}
         addpath([root_path '/platforms/']);
         addpath([root_path '/platforms/Matlab/']);
         addpath([root_path '/generated_solvers/']);
+        addpath([root_path '/tests/']);
         savepath
         
     case 'uninstall'
@@ -56,8 +59,12 @@ switch varargin{1}
         rmpath([root_path '/platforms/']);
         rmpath([root_path '/platforms/Matlab/']);
         rmpath([root_path '/generated_solvers/']);
+        rmpath([root_path '/tests/']);
         warning('on','MATLAB:rmpath:DirNotFound')
         savepath
+        
+    case 'test'
+        [varargout{1}, varargout{2}] = spcies_tester(varargin{2:end});
         
     otherwise
         varargout{1} = 'Command not recognized';    

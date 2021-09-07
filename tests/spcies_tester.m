@@ -1,16 +1,91 @@
 %% spcies_tester - Tests the solvers in Spcies to see that everything works correctly
+% 
+% This function calls functions that test each of the solvers of the toolbox.
+% Two tests are performed: a comparison between the sparse and non-sparse versions,
+% and a comparison between the solution of the sparse version with the optimal
+% solution (which has been obtained through other means, typically quadprog).
+% 
+% Information is displayed showing if the solvers work correctly by means of a 
+% table that is printed on the Command Window. The columns of the table indicate:
+%   - Type: MPC formulation that is being tested.
+%   - Method: Method used to solve the MPC's optimization problem.
+%   - SPCIES: Indicates if the sparse and non-sparse solvers give the same solution.
+%       - 'Yes': They provide the same solution.
+%       - 'No': They do not provide the same solution.
+%   - Opt: Indicates if the solution obtained from the sparse solver is sufficiently
+%          close to the optimal one (obtained through other means).
+%       - 'Yes': Good suboptimal solution attained.
+%       - 'No': We did not obtain a solution close to the optimal one.
+%   - Flag: Flag returned by the solvers. If both solvers returned positive flags we
+%           display the largest flag. If one or more returned a negative or zero flag
+%           wwe return the smallest flag. A good result here is to see a positive integer.
+%   - Error: Some exception ocurred during the execution of the sparse or non-sparse solvers.
+% 
+% The ideal thing to see in each row is: SPCIES = 'Yes', Opt = 'Yes' and Flag >= 1.
+% 
+% INPTUS:
+%   - verbose: (optional) Integer that determines if information is printed on screen.
+%              >=1: Table is printed. 0: Table is not printed. Default: 2.
+%   - debug: (optional) Boolean that determines if we catch and ignore exceptions during
+%            the execution of the solvers. True: Do not ignore. False (default): Ignore.
+%   - type: String or cell of strings that indicate which formulations are tested. Call also
+%           be set to 'all' (default) to test all the MPC formulations.
+%   - method: String or cell of strings that indicate which methods are tested. Call also
+%             be set to 'all' (default) to test all the methods.
+% 
+% OUTPUTS:
+%   - correct: Boolean indicating if all the tests were successful.
+%              True: successful. False: at least one was not successful.
+%   - test: Cell of structures containing all the information of each test.
+%       - type: String indicating the type of MPC formulation.
+%       - method: String indicating the method.
+%       - fnc: String indicating the function called.
+%       - gap: Structure containing the difference between solutions.
+%           - spcies: Array containing the infinity norm between the solutions of the sparse
+%                     and non-sparse solvers. It contains as many elements as variables are 
+%                     returned by the solver.
+%           - opt: Infinity norm of the difference between the solution of the sparse solver
+%                  and the optimal solution.
+%       - exit: Array containing the exit flags of each solver -> [sparse, non-sparse].
+%       - error, spcies, opt, flag: Strings that are displayed in the table to the user.
+% 
+% This function is part of Spcies: https://github.com/GepocUS/Spcies
+% 
 
-function correct = spcies_tester(verbose, debug)
-    if nargin == 0
-        verbose = true;
-        debug = 0;
-    elseif nargin == 1
-        debug = 0;
-    end
+function [correct, test] = spcies_tester(varargin)
+
+    %% Default values
+    def_verbose = 2;
+    def_debug = 0;
+    def_type = 'all';
+    def_method = 'all';
+
+    %% Parser
+    par = inputParser;
+    par.CaseSensitive = false;
+    par.FunctionName = 'spcies_tester';
+    
+    % Optional
+    addOptional(par, 'verbose', def_verbose, @(x) isnumeric(x) && (x>=0));
+    addOptional(par, 'debug', def_debug, @(x) islogical(x) || x==1 || x==0);
+    
+    % Name-value parameters
+    addParameter(par, 'type', def_type, @(x) ischar(x) || iscell(x));
+    addParameter(par, 'method', def_method, @(x) ischar(x) || iscell(x));
+    
+    % Parse
+    parse(par, varargin{:})
+    
+    % Rename
+    verbose = par.Results.verbose;
+    debug = par.Results.debug;
+    type = par.Results.type;
+    method = par.Results.method;
+    
+    if isempty(type); type = def_type; end
+    if isempty(method); method = def_method; end
     
     %% Define the problem used for the tests. We will use the oscillating masses system
-    root_path = spcies_get_root_directory;
-    addpath([root_path '/examples']);
     
     p = 3; % Number of objects
     M = [1; 0.5; 1]; % Mass of each object
@@ -42,58 +117,104 @@ function correct = spcies_tester(verbose, debug)
 
     %% Test each one of the solvers
     t = 1;
+    test = [];
     
-    test{t}.type = 'laxMPC';
-    test{t}.method = 'ADMM ';
-    test{t}.fnc = 'test_laxMPC_ADMM';
-    t = t+1;
+    if any(strcmp('laxMPC', type)) || any(strcmp('all', type))
+        
+        if any(strcmp('ADMM', method)) || any(strcmp('all', method))
+            test{t}.type = 'lax';
+            test{t}.method = 'ADMM';
+            test{t}.fnc = 'test_laxMPC_ADMM';
+            t = t+1;
+        end
+        
+        if any(strcmp('FISTA', method)) || any(strcmp('all', method))
+            test{t}.type = 'lax';
+            test{t}.method = 'FISTA';
+            test{t}.fnc = 'test_laxMPC_FISTA';
+            t = t+1;
+        end
+        
+    end
     
-    test{t}.type = 'laxMPC';
-    test{t}.method = 'FISTA';
-    test{t}.fnc = 'test_laxMPC_FISTA';
-    t = t+1;
+    if any(strcmp('equMPC', type)) || any(strcmp('all', type))
+        
+        if any(strcmp('ADMM', method)) || any(strcmp('all', method))
+            test{t}.type = 'equ';
+            test{t}.method = 'ADMM';
+            test{t}.fnc = 'test_equMPC_ADMM';
+            t = t+1;
+        end
+        
+        if any(strcmp('FISTA', method)) || any(strcmp('all', method))
+            test{t}.type = 'equ';
+            test{t}.method = 'FISTA';
+            test{t}.fnc = 'test_equMPC_FISTA';
+            t = t+1;
+        end
+        
+    end
     
-%     test{t}.type = 'equMPC';
-%     test{t}.method = 'ADMM';
-%     test{t}.fnc = 'test_equMPC_ADMM';
-%     t = t+1;
-%     
-%     test{t}.type = 'equMPC';
-%     test{t}.method = 'FISTA';
-%     test{t}.fnc = 'test_equMPC_FISTA';
-%     t = t+1;
+    if any(strcmp('MPCT', type)) || any(strcmp('all', type))
     
-%     test{t}.name = 'ellipMPC_ADMM';
-%     test{t}.fnc = 'test_ellipMPC_ADMM';
-%     t = t+1;
-%     
-%     test{t}.name = 'MPCT_ADMM';
-%     test{t}.fnc = 'test_MPCT_EADMM';
-%     t = t+1;
-%     
-%     test{t}.name = 'MPCT_EADMM_cs';
-%     test{t}.fnc = 'test_MPCT_ADMM_cs';
-%     t = t+1;
-
+        if any(strcmp('EADMM', method)) || any(strcmp('all', method))
+            test{t}.type = 'MPCT';
+            test{t}.method = 'EADMM';
+            test{t}.fnc = 'test_MPCT_EADMM';
+            t = t+1;
+        end
+        
+        if any(strcmp('ADMM', method)) || any(strcmp('all', method))
+            test{t}.type = 'MPCT';
+            test{t}.method = 'ADMM';
+            test{t}.fnc = 'test_MPCT_ADMM';
+            t = t+1;
+        end
+        
+    end
+    
+    if any(strcmp('ellipMPC', type)) || any(strcmp('all', type))
+        
+        if any(strcmp('ADMM', method)) || any(strcmp('all', method))
+            test{t}.type = 'ellip';
+            test{t}.method = 'ADMM';
+            test{t}.fnc = 'test_ellipMPC_ADMM';
+            t = t+1;
+        end
+        
+    end
+    
     spcies_clear(); % Clear solvers
     
-    if verbose
-        fprintf('Starting Spcies testing routines.\n')
-    end
-    for i = 1:length(test)
+    if isempty(test)
         
-        fprintf('Starting test %d out of %d: %s using %s.\n', i, t-1, test{i}.type, test{i}.method);
+        if verbose > 0
+            warning('SPCIES tester: No matching solvers.')
+        end
         
-        if ~debug
-            try
-                test{i}.gap = eval([test{i}.fnc '(sys, status)']);
-                test{i}.error = 'No';
-            catch
-                test{i}.error = 'Yes';
+    else
+    
+        if verbose > 0
+            fprintf('Starting Spcies testing routines.\n')
+        end
+        for i = 1:length(test)
+
+            if verbose > 0
+                fprintf('Starting test %d out of %d: %s using %s.\n', i, t-1, test{i}.type, test{i}.method);
             end
-        else
-            test{i}.gap = eval([test{i}.fnc '(sys, status)']);
-            test{i}.error = 'No';
+
+            if ~debug
+                try
+                    [test{i}.gap, test{i}.exit] = eval([test{i}.fnc '(sys, status)']);
+                    test{i}.error = 'No';
+                catch
+                    test{i}.error = 'Yes';
+                end
+            else
+                [test{i}.gap, test{i}.exit] = eval([test{i}.fnc '(sys, status)']);
+                test{i}.error = 'No';
+            end
+
         end
         
     end
@@ -107,14 +228,15 @@ function correct = spcies_tester(verbose, debug)
         
         if strcmp(test{i}.error, 'Yes')
             correct = false;
-            test{i}.spcies = '?? ';
-            test{i}.opt = '?? ';
+            test{i}.spcies = '??';
+            test{i}.opt = '??';
+            test{i}.flag = '??';
         else
             
             % Check sparse and non-sparse solvers
             if max(test{i}.gap.spcies) > tol_spcies
                 correct = false;
-                test{i}.spcies = 'No ';
+                test{i}.spcies = 'No';
             else
                 test{i}.spcies = 'Yes';
             end
@@ -122,9 +244,16 @@ function correct = spcies_tester(verbose, debug)
             % Check against the optimal solution
             if max(test{i}.gap.opt) > tol_opt
                 correct = false;
-                test{i}.opt = 'No ';
+                test{i}.opt = 'No';
             else
                 test{i}.opt = 'Yes';
+            end
+            
+            if any(test{i}.exit <= 0)
+                correct = false;
+                test{i}.flag = num2str(min(test{i}.exit));
+            else
+                test{i}.flag = num2str(max(test{i}.exit));
             end
             
         end
@@ -132,21 +261,22 @@ function correct = spcies_tester(verbose, debug)
     end
     
     %% Print information
-    if verbose
+    if verbose > 0
         
-        fprintf('---------------------------------------\n');
-        fprintf('Type      Method  SPCIES  Opt   Error\n');
-        fprintf('---------------------------------------\n');
+        fprintf('Result:\n');
+        fprintf('----------------------------------------------\n');
+        fprintf('Type\tMethod\tSPCIES\tOpt\tFlag\tError\n');
+        fprintf('----------------------------------------------\n');
         for i = 1:length(test)
-            fprintf('%s    %s   %s     %s   %s\n', test{i}.type, test{i}.method, test{i}.spcies, test{i}.opt, test{i}.error);
+            fprintf('%s\t%s\t%s\t%s\t%s\t%s\n', test{i}.type, test{i}.method, test{i}.spcies, test{i}.opt, test{i}.flag, test{i}.error);
         end
-        fprintf('---------------------------------------\n\n');
+        fprintf('----------------------------------------------\n\n');
         
         if correct
             fprintf('SPCIES test result: Positive.\n');
         else
             fprintf('SPCIES test result: Negative.\n');
-            fprintf('Something was not ok. Please check the entries of the table.\n');
+            fprintf('Something was not OK. Please check the entries of the table.\n');
         end
         
     end
