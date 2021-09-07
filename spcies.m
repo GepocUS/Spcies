@@ -12,11 +12,13 @@
 %                             output, i.e., [version, hash] = spcies('version').
 %                             The first output is the latest version tag.
 %
-%   spcies('install')       % Installs the toolbox
-%   spcies('uninstall')     % Uninstalls the toolbox
+%   spcies('install')       % Installs the toolbox.
+%   spcies('uninstall')     % Uninstalls the toolbox.
 %
-%   spcies('test')          % Test the solvers in the toolbox
+%   spcies('test')          % Test the solvers in the toolbox.
 %
+% This function is part of Spcies: https://github.com/GepocUS/Spcies
+% 
 
 function varargout = spcies(varargin)
 
@@ -27,6 +29,16 @@ end
 
 switch varargin{1}
     
+    
+    % [version, git_hash] = spcies('version')
+    %
+    % Returns information of the version of the toolbox.
+    % 
+    % OUTPUTS:
+    %   - version: Version number of the toolbox -> v.MAJOR.MINOR.PATCH
+    %   - git_hash: Current git hash of the toolbox. Only works if git
+    %               is installed and the toolbox is being tracked.
+    % 
     case 'version'
         varargout{1} = 'v0.3.2';
         % If git is installed it will
@@ -41,6 +53,11 @@ switch varargin{1}
             varargout{2} = 'Could not obtain git hash';
         end
         
+    % spcies('install')
+    %
+    % Installs the toolbox. It adds the required directories to the
+    % Matlab path.
+    %
     case 'install'
         root_path = spcies_get_root_directory();
         addpath(root_path);
@@ -50,7 +67,12 @@ switch varargin{1}
         addpath([root_path '/generated_solvers/']);
         addpath([root_path '/tests/']);
         savepath
-        
+    
+    % spcies('uninstall')
+    %
+    % Uninstalls the toolbox. It removes the required directories from
+    % the Matlab path.
+    %
     case 'uninstall'
         root_path = spcies_get_root_directory();
         warning('off','MATLAB:rmpath:DirNotFound')
@@ -62,10 +84,18 @@ switch varargin{1}
         rmpath([root_path '/tests/']);
         warning('on','MATLAB:rmpath:DirNotFound')
         savepath
-        
+    
+    % spcies('test')
+    %
+    % Tests the solvers in the toolbox.
+    %
+    % This function calls the function /tests/spcies_tester.m with its default
+    % settings. Please refer to its documentation for further details.
+    %
     case 'test'
         [varargout{1}, varargout{2}] = spcies_tester(varargin{2:end});
-        
+    
+    % Command not recognized
     otherwise
         varargout{1} = 'Command not recognized';    
         
