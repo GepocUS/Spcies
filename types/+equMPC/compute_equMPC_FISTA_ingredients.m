@@ -48,7 +48,7 @@ function vars = compute_equMPC_FISTA_ingredients(controller, options, spcies_opt
     
     % Check ingredients
     if ~isdiag(blkdiag(Q, R))
-       error('Spcies:equMPC:non_diagonal_matrices', 'Matrices Q, R and P must be diagonal in the FISTA-based solver for equMPC');
+       error('Spcies:equMPC:FISTA:non_diagonal', 'equMPC using FISTA: matrices Q and R must be diagonal in the curret version of SPCIES');
     end
 
     %% Compute Hessian

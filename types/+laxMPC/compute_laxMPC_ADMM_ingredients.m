@@ -49,7 +49,7 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, options, spcies_opti
     
     % Check ingredients
     if ~isdiag(blkdiag(Q, R))
-        error('Spcies:laxMPC:non_diagonal_matrices', 'Matrices Q and R must be diagonal');
+        error('Spcies:laxMPC:ADMM:non_diagonal', 'laxMPC using ADMM: matrices Q and R must be diagonal in the curret version of SPCIES');
     end
     
     %% Turn rho into a vector

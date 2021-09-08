@@ -60,6 +60,11 @@ function [vars, vars_nonsparse] = compute_ellipMPC_ADMM_ingredients(controller, 
         end
     end
     
+    % Check ingredients
+    if ~isdiag(blkdiag(Q, R))
+        error('Spcies:ellipMPC:ADMM:non_diagonal', 'ellipMPC using ADMM: matrices Q and R must be diagonal in the curret version of SPCIES');
+    end
+    
     %% Turn rho into a vector
     if isscalar(options.rho) && options.force_vector_rho
         rho = options.rho*ones(N*(n+m), 1);

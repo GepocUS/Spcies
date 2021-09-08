@@ -49,7 +49,7 @@ function vars = compute_laxMPC_FISTA_ingredients(controller, options, spcies_opt
     
     % Check ingredients
     if ~isdiag(blkdiag(Q, R, T))
-        error('Spcies:laxMPC:non_diagonal_matrices', 'Matrices Q, R and P must be diagonal in the FISTA-based solver for laxMPC');
+        error('Spcies:laxMPC:FISTA:non_diagonal', 'laxMPC using ADMM: matrices Q, R and T must be diagonal in the curret version of SPCIES');
     end
      
     %% Compute the Hessian H and the vector q
