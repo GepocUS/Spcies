@@ -90,7 +90,7 @@ while(done == 0){
 
     // Compute the first nm elements of z1
     for(unsigned int j = 0; j < nm; j++){
-        z1[0][j] = (rho[0][j]*( z3[0][j] + z2[j]) - rho_0[j]*x0[j] + lambda[1][j] - lambda[0][j])*H1i[0][j];
+        z1[0][j] = (rho[0][j]*( z3[0][j] + z2[j]) + rho_0[j]*x0[j] + lambda[1][j] - lambda[0][j])*H1i[0][j];
         z1[0][j] = (z1[0][j] > LB_0[j]) ? z1[0][j] : LB_0[j]; // Saturate to lower bound
         z1[0][j] = (z1[0][j] > UB_0[j]) ? UB_0[j] : z1[0][j]; // Saturate to upper bound
     }
