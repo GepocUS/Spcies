@@ -40,13 +40,16 @@ switch varargin{1}
     %               is installed and the toolbox is being tracked.
     % 
     case 'version'
-        varargout{1} = 'v0.3.2';
-        % If git is installed it will
+        
+        varargout{1} = 'v0.3.3';
+        
+        % If git is installed it will return the hash of the current commit
         try
             [system_status, git_hash] = system('git rev-parse HEAD');
         catch
-            
+            varargout{2} = 'Could not obtain git hash';
         end
+        
         if system_status == 0
             varargout{2} = convertCharsToStrings(git_hash(1:end-1));
         else
