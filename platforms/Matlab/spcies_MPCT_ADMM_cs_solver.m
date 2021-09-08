@@ -141,8 +141,8 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_cs_solver(x0, xr, ur, varargin)
     done = false;
     k = 0;
     z = zeros(N*2*(n+m), 1);
-    z1 = z; % Value of z in the previous iteration
     v = zeros(N*2*(n+m), 1);
+    v1 = v; % Value of z in the previous iteration
     lambda = zeros(N*2*(n+m), 1);
     
     % Historics
@@ -199,7 +199,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_cs_solver(x0, xr, ur, varargin)
         
         % Compute residuals
         r_p = norm(z - v, Inf);
-        r_d = norm(z1 - z, Inf);
+        r_d = norm(v1 - v, Inf);
         
         % Check exit conditions
         if r_p <= options.tol && r_d <= options.tol
@@ -211,7 +211,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_cs_solver(x0, xr, ur, varargin)
         end
         
         % Update variables and historics
-        z1 = z;
+        v1 = v;
         
         if genHist > 0
             hRp(k) = r_p;

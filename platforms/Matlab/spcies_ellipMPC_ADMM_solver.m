@@ -139,7 +139,7 @@ function [u, k, e_flag, Hist] = spcies_ellipMPC_ADMM_solver(x0, xr, ur, varargin
     k = 0;
     z = zeros(N*(n+m), 1);
     v = zeros(N*(n+m), 1);
-    z1 = z;
+    v1 = v; % Value of z in the previous iteration
     lambda = zeros(N*(n+m), 1);
     
     % Historics
@@ -198,7 +198,7 @@ function [u, k, e_flag, Hist] = spcies_ellipMPC_ADMM_solver(x0, xr, ur, varargin
         
         % Compute residuals
         r_p = norm(z - v, Inf);
-        r_d = norm(z - z1, Inf);
+        r_d = norm(v - v1, Inf);
         
         % Check exit condition
         if r_p <= options.tol && r_d <= options.tol
@@ -210,7 +210,7 @@ function [u, k, e_flag, Hist] = spcies_ellipMPC_ADMM_solver(x0, xr, ur, varargin
         end
         
         % Update variables and historics
-        z1 = z;
+        v1 = v;
         
         if genHist > 0
             hRp(k) = r_p;

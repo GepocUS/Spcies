@@ -40,7 +40,7 @@ double ur[mm] = {0.0}; // Control input reference
 double z[NN*dnm] = {0.0}; // Decision variable z
 double v[NN*dnm] = {0.0}; // Decision variable v
 double lambda[NN*dnm] = {0.0}; // Decision variable lambda
-double z1[NN*dnm] = {0.0}; // Value of z at the last iteration
+double v1[NN*dnm] = {0.0}; // Value of z at the last iteration
 double b[nn] = {0.0}; // First nn components of vector b (the rest are known to be zero)
 double q[dnm] = {0.0}; // Cost function vector of P1 (contains xr and ur information)
 double q_hat[NN*dnm] = {0.0}; // Vector used to compute z
@@ -92,8 +92,8 @@ while(done == 0){
 
     k += 1; // Increment iteration counter
 
-    // Save the value of z into variable z1
-    memcpy(z1, z, sizeof(double)*NN*dnm);
+    // Save the value of v into variable v1
+    memcpy(v1, v, sizeof(double)*NN*dnm);
 
     //********** Update z **********//
 
@@ -189,7 +189,7 @@ while(done == 0){
     res_flag = 0; // Reset the residual flag
 
     for(unsigned int j = 0; j < NN*dnm; j++){
-        res_fixed_point = z1[j] - z[j];
+        res_fixed_point = v1[j] - v[j];
         res_primal_feas = z[j] - v[j];
         // Obtain absolute values
         res_fixed_point = ( res_fixed_point > 0.0 ) ? res_fixed_point : -res_fixed_point;

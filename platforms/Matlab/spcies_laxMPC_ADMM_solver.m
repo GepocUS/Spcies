@@ -240,7 +240,7 @@ function [u, k, e_flag, Hist] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
     k = 0;
     z = zeros(N*(n+m), 1);
     v = zeros(N*(n+m), 1);
-    v1 = v;
+    v1 = v; % Value of z in the previous iteration
     lambda = zeros(N*(n+m), 1);
     
     % Historics

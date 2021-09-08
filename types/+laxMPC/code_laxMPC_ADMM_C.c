@@ -47,9 +47,9 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     double z[NN-1][nm] = {{0.0}}; // Decision variables z
     double z_0[mm] = {0.0};
     double z_N[nn] = {0.0};
-    double z1[NN-1][nm] = {{0.0}}; // Value of the decision variables z at the last iteration
-    double z1_0[mm] = {0.0};
-    double z1_N[nn] = {0.0};
+    double v1[NN-1][nm] = {{0.0}}; // Value of the decision variables z at the last iteration
+    double v1_0[mm] = {0.0};
+    double v1_N[nn] = {0.0};
     double aux_N[nn] = {0.0}; // Auxiliary array used for multiple purposes
     double mu[NN][nn] = {{0.0}}; // Used to solve the system of equations
     unsigned int res_flag = 0; // Flag used to determine if the exit condition is satisfied
@@ -107,28 +107,10 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
         k += 1; // Increment iteration counter
 
-        // Step 0: Save the value of z into variable z1
-        memcpy(z1_0,z_0,sizeof(double)*mm);
-        memcpy(z1,z,sizeof(double)*(NN-1)*nm);
-        memcpy(z1_N,z_N,sizeof(double)*nn);
-
-        // TODO: Add as optional (if memcpy is not available in all devices) or delete this code
-        // Compute the first mm elements
-        // for(unsigned int j = 0; j < mm; j++){
-            // z1_0[j] = z_0[j];
-        // }
-
-        // Compute all the other elements except the last nn
-        // for(unsigned int l = 0; l < NN-1; l++){
-            // for(unsigned int j = 0; j < nm; j++){
-                // z1[j][l] = z[j][l];
-            // }
-        // }
-
-        // Compute the last nn elements
-        // for(unsigned int j = 0; j < nn; j++){
-            // z1_N[j] = z_N[j];
-        // }
+        // Step 0: Save the value of v into variable v1
+        memcpy(v1_0, v_0, sizeof(double)*mm);
+        memcpy(v1, v, sizeof(double)*(NN-1)*nm);
+        memcpy(v1_N, v_N, sizeof(double)*nn);
 
         // Step 1: Minimize w.r.t. z
 
@@ -374,7 +356,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
         // Compute the first mm elements
         for(unsigned int j = 0; j < mm; j++){
-            res_fixed_point = z1_0[j] - z_0[j];
+            res_fixed_point = v1_0[j] - v_0[j];
             res_primal_feas = z_0[j] - v_0[j];
             // Obtain absolute values
             res_fixed_point = ( res_fixed_point > 0.0 ) ? res_fixed_point : -res_fixed_point;
@@ -388,7 +370,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // Compute the last NN elements
         if(res_flag == 0){
             for(unsigned int j = 0; j < nn; j++){
-                res_fixed_point = z1_N[j] - z_N[j];
+                res_fixed_point = v1_N[j] - v_N[j];
                 res_primal_feas = z_N[j] - v_N[j];
                 // Obtain absolute values
                 res_fixed_point = ( res_fixed_point > 0.0 ) ? res_fixed_point : -res_fixed_point;
@@ -404,7 +386,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         if(res_flag == 0){
             for(unsigned int l = 0; l < NN-1; l++){
                 for(unsigned int j = 0; j < nm; j++){
-                    res_fixed_point = z1[l][j] - z[l][j];
+                    res_fixed_point = v1[l][j] - v[l][j];
                     res_primal_feas = z[l][j] - v[l][j];
                     // Obtain absolute values
                     res_fixed_point = ( res_fixed_point > 0.0 ) ? res_fixed_point : -res_fixed_point;

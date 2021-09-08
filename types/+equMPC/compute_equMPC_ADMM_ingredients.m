@@ -45,7 +45,7 @@ function vars = compute_equMPC_ADMM_ingredients(controller, options, spcies_opti
         R = controller.param.R;
     end
     
-    Check ingredients
+    % Check ingredients
     if ~isdiag(blkdiag(Q, R))
        error('Spcies:equMPC:ADMM:non_diagonal', 'equMPC using ADMM: matrices Q and R must be diagonal in the curret version of SPCIES');
     end
