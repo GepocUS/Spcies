@@ -178,7 +178,7 @@ function [vars, vars_nonsparse] = compute_ellipMPC_ADMM_ingredients(controller, 
         vars.scaling_u = controller.model.Nu;
         vars.scaling_i_u = 1./controller.model.Nu;
         vars.OpPoint_x = controller.model.x0;
-        vars.OpPoint_u = controllr.model.u0;
+        vars.OpPoint_u = controller.model.u0;
     else
         if isfield(controller.sys, 'Nx')
             vars.scaling_x = controller.sys.Nx;

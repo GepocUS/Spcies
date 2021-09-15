@@ -155,9 +155,9 @@ function [u, k, e_flag, Hist] = spcies_ellipMPC_ADMM_solver(x0, xr, ur, varargin
     
     % Obtain x0, xr and ur
     if options.in_engineering
-        x0 = scaling_x*(x0 - OpPoint_x);
-        xr = scaling_x*(xr - OpPoint_x);
-        ur = scaling_u*(ur - OpPoint_u);
+        x0 = var.scaling_x*(x0 - var.OpPoint_x);
+        xr = var.scaling_x*(xr - var.OpPoint_x);
+        ur = var.scaling_u*(ur - var.OpPoint_u);
     end
     
     % Update b

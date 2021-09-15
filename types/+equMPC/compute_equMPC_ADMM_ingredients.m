@@ -128,7 +128,7 @@ function vars = compute_equMPC_ADMM_ingredients(controller, options, spcies_opti
         vars.scaling_u = controller.model.Nu;
         vars.scaling_i_u = 1./controller.model.Nu;
         vars.OpPoint_x = controller.model.x0;
-        vars.OpPoint_u = controllr.model.u0;
+        vars.OpPoint_u = controller.model.u0;
     else
         if isfield(controller.sys, 'Nx')
             vars.scaling_x = controller.sys.Nx;

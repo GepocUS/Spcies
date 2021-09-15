@@ -188,7 +188,7 @@ function [u, k, e_flag, Hist] = spcies_equMPC_FISTA_solver(x0, xr, ur, lambda, v
         scaling_x = controller.model.Nx;
         scaling_u = controller.model.Nu;
         OpPoint_x = controller.model.x0;
-        OpPoint_u = controllr.model.u0;
+        OpPoint_u = controller.model.u0;
     else
         if isfield(controller.sys, 'Nx')
             scaling_x = controller.sys.Nx;
@@ -340,7 +340,7 @@ function [u, k, e_flag, Hist] = spcies_equMPC_FISTA_solver(x0, xr, ur, lambda, v
     
     % Control action
     if options.in_engineering
-        u = z_k(1:m)./var.scaling_u + var.OpPoint_u;
+        u = z_k(1:m)./scaling_u + OpPoint_u;
     else
         u = z_k(1:m);
     end
