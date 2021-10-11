@@ -294,9 +294,13 @@ void compute_z_lambda_equMPC_FISTA(double *z_0, double z[][nm], double lambda[][
 
         // Compute the solution of the QP
         z_0[j] = z_0[j]*QRi[j+nn]; // Multiply by the inverse of the Hessian
+        #ifdef VAR_BOUNDS
+        z_0[j] = (z_0[j] > LB0[j]) ? z_0[j] : LB0[j]; // maximum between v and the lower bound
+        z_0[j] = (z_0[j] > UB0[j]) ? UB0[j] : z_0[j]; // minimum between v and the upper bound
+        #else
         z_0[j] = (z_0[j] > LB[j+nn]) ? z_0[j] : LB[j+nn]; // maximum between v and the lower bound
         z_0[j] = (z_0[j] > UB[j+nn]) ? UB[j+nn] : z_0[j]; // minimum between v and the upper bound
-
+        #endif
     }
 
     // Compute all the other elements except the last nn
@@ -316,8 +320,13 @@ void compute_z_lambda_equMPC_FISTA(double *z_0, double z[][nm], double lambda[][
         // Compute the solution of the QP
         for(unsigned int j = 0; j < nm; j++){
             z[l][j] = z[l][j]*QRi[j]; // Multiply by the inverse of the Hessian
+            #ifdef VAR_BOUNDS
+            z[l][j] = (z[l][j] > LB[l][j]) ? z[l][j] : LB[l][j]; // maximum between v and the lower bound
+            z[l][j] = (z[l][j] > UB[l][j]) ? UB[l][j] : z[l][j]; // minimum between v and the upper bound
+            #else
             z[l][j] = (z[l][j] > LB[j]) ? z[l][j] : LB[j]; // maximum between v and the lower bound
             z[l][j] = (z[l][j] > UB[j]) ? UB[j] : z[l][j]; // minimum between v and the upper bound
+            #endif
         }
 
     }
