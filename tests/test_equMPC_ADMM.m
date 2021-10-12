@@ -13,6 +13,11 @@ function [gap, exit] = test_equMPC_ADMM(sys, status)
     param.R = 0.1*eye(sys.m);
     param.N = 10;
     
+%     sys.LBx = kron(ones(1, param.N), sys.LBx);
+%     sys.LBu = kron(ones(1, param.N), sys.LBu);
+%     sys.UBx = kron(ones(1, param.N), sys.UBx);
+%     sys.UBu = kron(ones(1, param.N), sys.UBu);
+    
     % Construct solver
     spcies_gen_controller('sys', sys, 'param', param, 'solver_options', solver_options,...
     'platform', 'Matlab', 'type', 'equMPC', 'method', 'ADMM');

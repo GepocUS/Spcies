@@ -291,8 +291,13 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
             #else
             v_0[j] = z_0[j] + rho_i_0[j]*lambda_0[j];
             #endif
+            #ifdef VAR_BOUNDS
+            v_0[j] = (v_0[j] > LB0[j]) ? v_0[j] : LB0[j]; // maximum between v and the lower bound
+            v_0[j] = (v_0[j] > UB0[j]) ? UB0[j] : v_0[j]; // minimum between v and the upper bound
+            #else
             v_0[j] = (v_0[j] > LB[j+nn]) ? v_0[j] : LB[j+nn]; // maximum between v and the lower bound
             v_0[j] = (v_0[j] > UB[j+nn]) ? UB[j+nn] : v_0[j]; // minimum between v and the upper bound
+            #endif
         }
 
         // Compute all the other elements except the last nn
@@ -303,8 +308,13 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
                 #else
                 v[l][j] = z[l][j] + rho_i[l][j]*lambda[l][j];
                 #endif
+                #ifdef VAR_BOUNDS
+                v[l][j] = (v[l][j] > LB[l][j]) ? v[l][j] : LB[l][j]; // maximum between v and the lower bound
+                v[l][j] = (v[l][j] > UB[l][j]) ? UB[l][j] : v[l][j]; // minimum between v and the upper bound
+                #else
                 v[l][j] = (v[l][j] > LB[j]) ? v[l][j] : LB[j]; // maximum between v and the lower bound
                 v[l][j] = (v[l][j] > UB[j]) ? UB[j] : v[l][j]; // minimum between v and the upper bound
+                #endif
             }
         }
 
@@ -315,8 +325,13 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
             #else
             v_N[j] = z_N[j] + rho_i_N[j]*lambda_N[j];
             #endif
+            #ifdef VAR_BOUNDS
+            v_N[j] = (v_N[j] > LBN[j]) ? v_N[j] : LBN[j]; // maximum between v and the lower bound
+            v_N[j] = (v_N[j] > UBN[j]) ? UBN[j] : v_N[j]; // minimum between v and the upper bound
+            #else
             v_N[j] = (v_N[j] > LB[j]) ? v_N[j] : LB[j]; // maximum between v and the lower bound
             v_N[j] = (v_N[j] > UB[j]) ? UB[j] : v_N[j]; // minimum between v and the upper bound
+            #endif
         }
 
         // Step 3: Update lambda

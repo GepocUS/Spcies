@@ -195,8 +195,16 @@ function [u, k, e_flag, Hist] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
     W = Aeq*Hinv*Aeq';
     
     % Compute the constraints
-    LB = [LBu; kron(ones(N-1,1), [LBx; LBu]); LBx]; 
-    UB = [UBu; kron(ones(N-1,1), [UBx; UBu]); UBx];
+    if min(size(LBx)) == 1
+        LB = [LBu; kron(ones(N-1,1), [LBx; LBu]); LBx]; 
+        UB = [UBu; kron(ones(N-1,1), [UBx; UBu]); UBx];
+    else
+        if size(LBx, 2) ~= N+1 || size(LBu, 2) ~= N+1 || size(UBx, 2) ~= N+1 || size(UBu, 2) ~= N+1
+            error('Matrices LBx, UBx, LBu and UBu must have N+1 columns');
+        end
+        LB = [LBu(:, 1); reshape([LBx(:, 2:N); LBu(:, 2:N)], (N-1)*(n+m), 1); LBx(:, N+1)];
+        UB = [UBu(:, 1); reshape([UBx(:, 2:N); UBu(:, 2:N)], (N-1)*(n+m), 1); UBx(:, N+1)];
+    end
     
     % Scaling and operation point
     if isa(controller, 'LaxMPC')

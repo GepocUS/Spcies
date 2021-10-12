@@ -14,6 +14,11 @@ function [gap, exit] = test_laxMPC_FISTA(sys, status)
     param.T = diag(sum(param.T, 2));
     param.N = 10;
     
+%     sys.LBx = kron(ones(1, param.N+1), sys.LBx);
+%     sys.LBu = kron(ones(1, param.N+1), sys.LBu);
+%     sys.UBx = kron(ones(1, param.N+1), sys.UBx);
+%     sys.UBu = kron(ones(1, param.N+1), sys.UBu);
+    
     % Construct solver
     spcies_gen_controller('sys', sys, 'param', param, 'solver_options', solver_options,...
     'platform', 'Matlab', 'type', 'laxMPC', 'method', 'FISTA');
