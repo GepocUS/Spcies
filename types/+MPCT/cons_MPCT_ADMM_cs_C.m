@@ -48,7 +48,7 @@ function constructor = cons_MPCT_ADMM_cs_C(recipe)
     this_path = fileparts(full_path);
 
     %% Default solver options
-    def_solver_options = MPCT.def_options_MPCT_cs_ADMM();
+    def_solver_options = MPCT.def_options_MPCT_ADMM_cs();
     
     % Fill recipe.solver_options with the defaults
     solver_options = utils.add_default_options_to_struct(recipe.solver_options, def_solver_options);

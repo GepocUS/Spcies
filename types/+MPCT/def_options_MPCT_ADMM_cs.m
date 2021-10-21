@@ -1,4 +1,4 @@
-%% def_options_MPCT_EADMM
+%% def_options_MPCT_ADMM_cs
 % 
 % Returns the default options for the ADMM_cs-based solver for the MPCT formulation
 % 
@@ -8,7 +8,7 @@
 %   - def_options: Structure containing the default options of the solver
 % 
 
-function def_options = def_options_MPCT_cs_ADMM()
+function def_options = def_options_MPCT_ADMM_cs()
 
     def_options.rho = 1e-2;
     def_options.epsilon_x = 1e-6;
