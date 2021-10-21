@@ -7,3 +7,5 @@
 dev_*
 /platforms/+Arduino/*
 /platforms/+Unity/*
+**/personal/*
+**/+personal/*
