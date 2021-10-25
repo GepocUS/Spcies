@@ -78,6 +78,7 @@ function spcies_gen_controller(varargin)
     to_import = strcat(type_names, '.*');
     import(to_import{:})
     import Other.*
+    import personal.*
     
     %% Instantiate the Spcies_problem object
     recipe = Spcies_problem(varargin{:});
