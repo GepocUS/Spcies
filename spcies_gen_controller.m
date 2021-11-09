@@ -77,7 +77,6 @@ function spcies_gen_controller(varargin)
     %% Import m files from ./types/*
     to_import = strcat(type_names, '.*');
     import(to_import{:})
-    import Other.*
     import personal.*
     
     %% Instantiate the Spcies_problem object
@@ -90,12 +89,6 @@ function spcies_gen_controller(varargin)
     
     %% Determine type, method and subclass fields
     
-        % Type
-    if ~any(strcmp(type_names, recipe.options.type))
-        warning('Spcies:type_not_recognized', 'The type was not recognized. Setting type to "Other".');
-        recipe.options.type = 'Other';
-    end
-    
         % Method
     if isempty(recipe.options.method)
         recipe.options.method = def_method.(recipe.options.type);
@@ -103,7 +96,13 @@ function spcies_gen_controller(varargin)
     
         % Subclass
     if isempty(recipe.options.subclass) && ~isempty(recipe.options.method)
-        recipe.options.subclass = def_subclass.(recipe.options.type).(recipe.options.method);
+        try
+            recipe.options.subclass = def_subclass.(recipe.options.type).(recipe.options.method);
+        catch ME
+            if (strcmp(ME.identifier, 'MATLAB:UndefinedFunction'))
+                recipe.options.subclass = '';
+            end
+        end            
     end
     
     %% Determine name of constructor function
