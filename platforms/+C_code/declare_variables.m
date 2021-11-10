@@ -17,12 +17,12 @@
 function s = declare_variables(vars)
 
     %% Preliminaries
-    s = ['']; % Initialize s to an empty string
     numVars = size(vars, 1); % Number of variables stored in vars (number of rows)
+    s = cell(1, numVars); % Initialize s to an empty string
 
     % Generate string s
     for i = 1:numVars
-        s = strcat(s, C_code.dec_var(vars(i,:)));
+        s{i} = C_code.dec_var(vars(i,:));
     end
 
 end

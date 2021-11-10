@@ -106,6 +106,16 @@ function s = dec_var(var)
             s = strcat(s, sprintf('#define %s', name), '\n');
         end
     else
+        
+    % Add the const tag
+    if any(strcmp(options, 'constant'))
+        s = strcat('const', [' ' s]);
+    end
+    
+    % Add the static tag 
+    if any(strcmp(options, 'static'))
+        s = strcat('static', [' ' s]);
+    end    
     
     % Add the type, pointer and name tags
     if any(strcmp(options, 'pointer'))
@@ -113,7 +123,7 @@ function s = dec_var(var)
     else
         pointer_tag = '';
     end
-    s = strcat(s, [type ' ' pointer_tag name]);
+    s = strcat(s, [ ' ' type ' ' pointer_tag name]);
     
     % Set dimensions
     if strcmp(order, 'vector')
@@ -230,16 +240,6 @@ function s = dec_var(var)
     % Add the end-of-line
     s = strcat(s, ';\n');
     
-     % Add the const tag
-    if any(strcmp(options, 'constant'))
-        s = strcat('const', [' ' s]);
-    end
-    
-    % Add the static tag 
-    if any(strcmp(options, 'static'))
-        s = strcat('static', [' ' s]);
-    end
-
     end
 
 end

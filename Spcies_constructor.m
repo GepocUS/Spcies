@@ -183,13 +183,17 @@ classdef Spcies_constructor
             % Add the shared data blocks to the files
             num_data = size(self.data, 1); % Get the number of shared data types
             for j = 1:num_data
-
+                
                 % Process the data into a string
                 data_string = utils.declare_variables(self.data{j, 2}, options);
+                num_data = length(data_string);
 
                 % Add data to each file_text
                 for i = 1:numel(fn)
-                    file_text.(fn{i}) = strrep(file_text.(fn{i}), self.data{j, 1}, data_string);
+                    for k = 1:num_data-1
+                        file_text.(fn{i}) = strrep(file_text.(fn{i}), self.data{j, 1}, strcat(data_string{k}, self.data{j, 1}));
+                    end
+                    file_text.(fn{i}) = strrep(file_text.(fn{i}), self.data{j, 1}, data_string{num_data});
                 end
 
             end
