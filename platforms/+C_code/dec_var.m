@@ -36,6 +36,8 @@ function s = dec_var(var)
     type = var{4};
     if length(var) > 4
         options = var{5};
+    else
+        options = '';
     end
     
     % Transform type to a C type
