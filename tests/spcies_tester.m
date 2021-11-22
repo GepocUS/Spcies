@@ -182,6 +182,13 @@ function [correct, test] = spcies_tester(varargin)
             t = t+1;
         end
         
+        if any(strcmp('SOC', method)) || any(strcmp('all', method))
+            test{t}.type = 'ellip';
+            test{t}.method = 'SOC';
+            test{t}.fnc = 'test_ellipMPC_ADMM_soc';
+            t = t+1;
+        end
+        
     end
     
     spcies_clear(); % Clear solvers
