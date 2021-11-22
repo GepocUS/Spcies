@@ -87,7 +87,9 @@ function spcies_gen_var_declaration(vars, language, varargin)
         the_dir.save_name = utils.find_unused_file_name(the_dir);
     end
     my_file = fopen(utils.get_full_path(the_dir), 'wt');
-    fprintf(my_file, var_text);
+    for i = 1:length(var_text)
+        fprintf(my_file, var_text{i});
+    end
     fclose(my_file);
     
 end
