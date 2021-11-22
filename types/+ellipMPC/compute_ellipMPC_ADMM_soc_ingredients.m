@@ -2,7 +2,13 @@
 %
 % Computes the ingredients for the ellipMPC controller solved using ADMM for the case in which
 % the terminal constraint is imposed using a second order cone constraint.
-%
+% 
+% The ellipMPC formulation can be found at 
+% 
+% P. Krupa, R. Jaouani, D. Limon, and T. Alamo, “A sparse ADMM-based solver for linear MPC subject
+% to terminal quadratic constraint,” arXiv:2105.08419, 2021.
+% 
+% However, there is currently no specific documentation on this solver.
 % 
 % INPUTS:
 %   - controller: Contains the information of the controller.

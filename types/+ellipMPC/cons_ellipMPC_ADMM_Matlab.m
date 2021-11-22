@@ -1,7 +1,7 @@
 %% cons_ellipMPC_ADMM_Matlab
 %
 % Generates the constructor for Matlab of the ADMM-based solver for MPC with
-% ellipsoidal terminal constraint
+% ellipsoidal terminal constraint.
 % 
 % Information about this formulation and the solver can be found at:
 %

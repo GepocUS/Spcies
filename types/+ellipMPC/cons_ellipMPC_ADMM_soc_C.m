@@ -1,3 +1,47 @@
+%% cons_ellipMPC_ADMM_soc_C
+%
+% Generates the constructor for C of the ADMM-based solver for MPC with ellipsoidal terminal constraint
+% for the case in which the terminal constraint is imposed using a second order cone constraint.
+%
+% The ellipMPC formulation can be found at 
+% 
+% P. Krupa, R. Jaouani, D. Limon, and T. Alamo, “A sparse ADMM-based solver for linear MPC subject
+% to terminal quadratic constraint,” arXiv:2105.08419, 2021.
+% 
+% However, there is currently no specific documentation on this solver.
+%
+% INPUTS:
+%   - recipe: An instance of the Spcies_problem class. Its properties must contain:
+%       - controller: Structure containing the information of the controller.
+%                 It must contain the fields .sys and .param.
+%                 - .sys: Structure containing the state space model (see Spcies_gen_controller).
+%                 - .param: Structure containing the ingredients of the controller:
+%                           - .Q: Cost function matrix Q.
+%                           - .R: Cost function matrix R.
+%                           - .T: Cost function matrix T.
+%                           - .N: Prediction horizon.
+%                           - .P: Matrix defining the geometry of the ellipsoidal terminal constraint.
+%                           - .c: Matrix defining the center of the ellipsoidal terminal constraint.
+%                                 Defaults to a vector of zeros (i.e., the origin).
+%                           - .r: Scalar defining the size of the ellipsoidal terminal constraint.
+%                                 Defaults to 1.
+%       - solver_options: Structure containing options of the EADMM solver.
+%              - .rho: Penalty parameter. Scalar of vector. Defaults to the scalar 1e-2.
+%                      If a vector is provided, it must have the same dimensions as the decision variables.
+%              - .tol: Exit tolerance of the solver. Defaults to 1e-4.
+%              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
+%              - .in_engineering: Boolean that determines if the arguments of the solver are given in
+%                                 engineering units (true) or incremental ones (false - default).
+%              - .debug: Boolean that determines if debugging options are enables in the solver.
+%                        Defaults to false.
+%              - .const_are_static: Boolean that determines if constants are defined as static variables.
+%                                   Defaults to true.
+% 
+% OUTPUTS:
+%   - constructor: An instance of the Spcies_constructor class ready for file generation.
+%                  
+% This function is part of Spcies: https://github.com/GepocUS/Spcies
+% 
 
 function constructor = cons_ellipMPC_ADMM_soc_C(recipe)
 
