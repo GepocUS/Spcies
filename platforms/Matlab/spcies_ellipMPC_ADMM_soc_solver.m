@@ -1,15 +1,14 @@
 %% spcies_ellipMPC_ADMM_solver - Solver for the lax MPC formulation using ADMM
 %
-% This is a non-sparse solver of the ADMM-based solver for MPC with ellipsoidal terminal constraint
+% This is a non-sparse solver of the ADMM-based solver for MPC with ellipsoidal terminal constraint.
+% This version uses a SOC constraint to deal with the quadratic terminal constraint.
 %
-% Information about this formulation and the solver can be found at:
+% The ellipMPC formulation can be found at 
 % 
 % P. Krupa, R. Jaouani, D. Limon, and T. Alamo, “A sparse ADMM-based solver for linear MPC subject
 % to terminal quadratic constraint,” arXiv:2105.08419, 2021.
 % 
-% Specifically, this formulation is given in equation (9) of the above reference.
-%
-% [u, k, e_flag, Hist] = spcies_laxMPC_ADMM_solver(x0, xr, ur, 'name', value, 'name', ...) 
+% However, there is currently no specific documentation on this solver.
 %
 % INPUTS:
 %   - x0: Current system state
@@ -82,17 +81,12 @@ function [u, k, e_flag, Hist] = spcies_ellipMPC_ADMM_soc_solver(x0, xr, ur, vara
     def_controller = []; % Default value for the controller argument
     def_genHist = 0; % Default amount of data generated for Hist
     def_verbose = 1; % Default amount of information displayed
-    def_options.rho = 1e-2;
-    def_options.sigma = 1e-2;
-    def_options.tol_p = 1e-4;
-    def_options.tol_d = 1e-4;
-    def_options.k_max = 1000;
-    def_options.in_engineering = false;
-
+    def_options = ellipMPC.def_options_ellipMPC_ADMM_soc; % Get defult solver options
+    
     %% Parser
     par = inputParser;
     par.CaseSensitive = false;
-    par.FunctionName = 'spcies_ellipMPC_ADMM_solver';
+    par.FunctionName = 'spcies_ellipMPC_ADMM_soc_solver';
     
     % Name-value parameters
     addParameter(par, 'sys', def_sys, @(x) isa(x, 'ss') || isa(x, 'ssModel') || isstruct(x));
@@ -132,7 +126,7 @@ function [u, k, e_flag, Hist] = spcies_ellipMPC_ADMM_soc_solver(x0, xr, ur, vara
     if verbose < 0; verbose = 0; end
     
     %% Generate ingredients of the solver
-    var = compute_ellipMPC_ADMM_SOC_ingredients(controller, options, []);
+    var = ellipMPC.compute_ellipMPC_ADMM_soc_ingredients(controller, options, []);
     N = var.N;
     n = var.n;
     m = var.m;
@@ -164,8 +158,8 @@ function [u, k, e_flag, Hist] = spcies_ellipMPC_ADMM_soc_solver(x0, xr, ur, vara
     hMu =  zeros(n_s, k_max);
     hLambda = zeros(dim, k_max);
     hS_proj = zeros(n_s, k_max);
-    hRp = zeros(dim+n_s, k_max);
-    hTp = zeros(1, k_max);
+    hRp = zeros(1, k_max);
+    hRd = zeros(1, k_max);
     
     z_ant = z;
     s_ant = s;
@@ -206,19 +200,16 @@ function [u, k, e_flag, Hist] = spcies_ellipMPC_ADMM_soc_solver(x0, xr, ur, vara
         s_hat = aux(dim+1:end);
         
         % Step 2.1: Compute z_{k+1}
-        %z = max( min(z_hat + lambda/var.rho, var.UB), var.LB);
         z = z_hat + lambda/var.sigma;
         z(1:(N-1)*(n+m)+m) = max( min(z(1:(N-1)*(n+m)+m) , var.UB), var.LB);
         
         % Step 3: Compute s_{k+1}
         s_proj = s_hat + mu/var.rho;
-        %s_proj = var.P_half*s_proj - var.bSOC;
+        
         % Projection onto the SOC
         s_proj_0 = s_proj(1);
         s_proj_1 = s_proj(2:end);
         ns_proj_1 = norm(s_proj_1, 2);
-        
-        %v = ((z_0 + nz_1)/(2*nz_1))*[nz_1; z_1];
         
         if ns_proj_1 <= s_proj_0
             s = s_proj;
@@ -235,7 +226,6 @@ function [u, k, e_flag, Hist] = spcies_ellipMPC_ADMM_soc_solver(x0, xr, ur, vara
         mu = mu + var.rho.*(s_hat - s);
         
         % Step 5: Compute residuals and exit tolerance
-        %rp = var.Gh*[z; s] - bh;
         rp = norm([z_hat; s_hat] - [z; s], Inf);
         rd = norm([z; s] - [z_ant; s_ant], Inf);
         
@@ -254,7 +244,7 @@ function [u, k, e_flag, Hist] = spcies_ellipMPC_ADMM_soc_solver(x0, xr, ur, vara
         % Update historics
         hZ(:, k) = z; hS(:, k) = s; hLambda(:, k) = lambda; hMu(:, k) = mu; 
         hZhat(:, k) = z_hat; hShat(:, k) = s_hat; hS_proj(:, k) = s_proj;
-        hRp(:, k) = rp;
+        hRp(k) = rp; Rd(k) = rd;
         
     end
     
@@ -291,7 +281,7 @@ function [u, k, e_flag, Hist] = spcies_ellipMPC_ADMM_soc_solver(x0, xr, ur, vara
     Hist.hZhat = hZhat(:,1:k); % Historic of x_hat
     Hist.hShat = hShat(:,1:k); % Historic of s_hat
     Hist.hS_proj = hS_proj(:,1:k); % Historic for the non-projected slack variables s_proj
-    Hist.hRp = hRp(:,1:k); % Historic of the primal residual
-    Hist.hTp = hTp(1:k); % Historic of the complete exit tolerance for the primal residual
+    Hist.hRp = hRp(1:k); % Historic of the primal residual
+    Hist.hRd = hTp(1:k); % Historic of the dual residual
 
 end

@@ -1,15 +1,11 @@
 %% spcies_ellipMPC_ADMM_solver - Solver for the lax MPC formulation using ADMM
 %
-% This is a non-sparse solver of the ADMM-based solver for MPC with ellipsoidal terminal constraint
+% This is a non-sparse solver of the ADMM-based solver for MPC with ellipsoidal terminal constraint.
 %
 % Information about this formulation and the solver can be found at:
 % 
 % P. Krupa, R. Jaouani, D. Limon, and T. Alamo, “A sparse ADMM-based solver for linear MPC subject
 % to terminal quadratic constraint,” arXiv:2105.08419, 2021.
-% 
-% Specifically, this formulation is given in equation (9) of the above reference.
-%
-% [u, k, e_flag, Hist] = spcies_laxMPC_ADMM_solver(x0, xr, ur, 'name', value, 'name', ...) 
 %
 % INPUTS:
 %   - x0: Current system state
