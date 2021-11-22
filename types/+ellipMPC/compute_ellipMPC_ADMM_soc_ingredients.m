@@ -176,6 +176,7 @@ function vars = compute_ellipMPC_ADMM_soc_ingredients(controller, options, spcie
     vars.Hhi_CSR = Hhi_CSR;
     vars.PhiP = inv(P_half)*P;
     vars.P_half_i = inv(P_half);
+    vars.bh = bh;
     
     % Scaling vectors and operating point
     if isa(controller, 'ellipMPC')

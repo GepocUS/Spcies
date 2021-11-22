@@ -18,7 +18,8 @@
 
 function def_options = def_options_ellipMPC_ADMM_soc()
     
-    def_options.rho = 1e-2;
+    def_options.rho = 5;
+    def_options.sigma = 5;
     def_options.tol_p = 1e-4;
     def_options.tol_d = 1e-4;
     def_options.k_max = 1000;

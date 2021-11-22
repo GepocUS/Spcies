@@ -171,13 +171,14 @@ function [u, k, e_flag, Hist] = spcies_ellipMPC_ADMM_soc_solver(x0, xr, ur, vara
         ur = var.scaling_u*(ur - var.OpPoint_u);
     end
     
-    % Update b
-    b = zeros(n_eq+n_s, 1);
+    % Update bh
     bh = var.bh;
     bh(1:n) = -var.A*x0;
+    bh(n_eq) = controller.param.r;
+    bh(n_eq+1+(1:n)) = -var.PhiP*xr;
     
     % Update q
-    q = -[var.R*ur; kron(ones(N-1, 1), [var.Q*xr; var.R*ur]); var.T*xr; 0];
+    q = [var.R*ur; kron(ones(N-1, 1), [var.Q*xr; var.R*ur]); var.T*xr; 0];
     
     while~done
         k = k + 1;
@@ -282,6 +283,6 @@ function [u, k, e_flag, Hist] = spcies_ellipMPC_ADMM_soc_solver(x0, xr, ur, vara
     Hist.hShat = hShat(:,1:k); % Historic of s_hat
     Hist.hS_proj = hS_proj(:,1:k); % Historic for the non-projected slack variables s_proj
     Hist.hRp = hRp(1:k); % Historic of the primal residual
-    Hist.hRd = hTp(1:k); % Historic of the dual residual
+    Hist.hRd = hRd(1:k); % Historic of the dual residual
 
 end
