@@ -1,35 +1,7 @@
-%% dec_var - C version
-%
-% Writes the code for declaring a variable in C.
-%
-% INPUTS:
-%   - var: variable to be declared. Single-rowed cell array with 6 columns.
-%          Each column contains the following information:
-%           - name: The name with which to declare the variable.
-%           - value: A Matlab variable containing its value.
-%           - initialize: Boolean that determines if it is initialized.
-%           - type: This determines the type of variable. We consider:
-%                   float, double, bool, int, uint, dint, udint, sint, usint
-%           - options: Cell array containing additional options:
-%               - define: The variable is declared as a #define.
-%               - constant: The variable is declared as a constant.
-%               - static: The variable is declared as static.
-%               - array: Forces the variable to be an array, even if its
-%                        dimension is 1.
-%               - pointer: Defines the variable as a pointer.
-% 
-% OUTPUTS:
-%   - s: String containing the text for the variable declaration.
-%
-% This function is part of Spcies: https://github.com/GepocUS/Spcies
-% 
 
 function s = dec_var(var)
 
-    %% Preliminaries
-    s = ''; % Initialize the output to an empty string
-
-    % Extract from the columns of var
+    %% Extract from the columns of var
     name = var{1};
     value = var{2};
     initialize = var{3};
@@ -93,30 +65,31 @@ function s = dec_var(var)
     if strcmp(order, 'scalar') && any(strcmp(options, 'array'))
         order = 'vector';
     end
-
-    %% Create string for variable declaration
     
-    % Add the #define tag if the class is set to 'define'
+    %% Open temporary file for writing the text to
+    thefile = fopen([spcies_get_root_directory '/generated_solvers/temp_write_var.txt'], 'wt');
+    
+    %% Write variable declaration
     if any(strcmp(options, 'define'))
         if initialize
             if strcmp(order, 'scalar')
-                s = strcat(s, sprintf('#define %s %s', name, write_value(value, type)), '\n');
+                fprintf(thefile, sprintf('#define %s %s', name, write_value(value, type)));
             else
                 warning(['Variable ' name ' cannot be initialized as #define because it is not a scalar']);
             end
         else
-            s = strcat(s, sprintf('#define %s', name), '\n');
+            fprintf(thefile, sprintf('#define %s', name));
         end
     else
         
     % Add the const tag
     if any(strcmp(options, 'constant'))
-        s = strcat('const', [' ' s]);
+        fprintf(thefile, 'const ');
     end
     
     % Add the static tag 
     if any(strcmp(options, 'static'))
-        s = strcat('static', [' ' s]);
+        fprintf(thefile, 'static ');
     end    
     
     % Add the type, pointer and name tags
@@ -125,124 +98,138 @@ function s = dec_var(var)
     else
         pointer_tag = '';
     end
-    s = strcat(s, [ ' ' type ' ' pointer_tag name]);
+    fprintf(thefile, [type ' ' pointer_tag name]);
     
     % Set dimensions
     if strcmp(order, 'vector')
-        s = strcat(s, sprintf('[%d]', max(dim)));
+        fprintf(thefile, sprintf('[%d]', max(dim)));
         
     elseif strcmp(order, 'matrix')
-        s = strcat(s, sprintf('[%d][%d]', dim(1), dim(2)));
+        fprintf(thefile, sprintf('[%d][%d]', dim(1), dim(2)));
         
     elseif strcmp(order, '3Dmatrix')
-        s = strcat(s, sprintf('[%d][%d][%d]', dim(3), dim(1), dim(2)));
+        fprintf(thefile, sprintf('[%d][%d][%d]', dim(3), dim(1), dim(2)));
         
     end
     
     if initialize
-        s = strcat(s, ' = ');
+        fprintf(thefile, ' = ');
         
         % Scalar
         if strcmp(order, 'scalar')
             
-            s = strcat(s, write_value(value, type));
+            fprintf(thefile, write_value(value, type));
         
         % Vector
         elseif strcmp(order, 'vector')
             
-            s = strcat(s, '{ ');
+            fprintf(thefile, '{ ');
             
             write_comma = false;
             for i=1:max(dim)
                 if write_comma
-                    s = strcat(s, ', ');
+                    fprintf(thefile, ', ');
                 else
                     write_comma = true;
                 end
-                s = strcat(s, write_value(value(i), type));
+                fprintf(thefile, write_value(value(i), type));
             end
             
-            s = strcat(s, ' }');
+            fprintf(thefile, ' }');
 
         % Matrix
         elseif strcmp(order, 'matrix')
             
-            s = strcat(s, '{ ');
+            fprintf(thefile, '{ ');
             
             for i = 1:dim(1)
                 
                 write_comma = false;
-                s = strcat(s, '{');
+                fprintf(thefile, '{');
                 
                 for j = 1:dim(2)
                     if write_comma
-                        s = strcat(s, ', ');
+                        fprintf(thefile, ', ');
                     else
                         write_comma = true;
                     end
-                    s = strcat(s, write_value(value(i, j), type));   
+                    fprintf(thefile, write_value(value(i, j), type)); 
                 end
                 
-                s = strcat(s, '}');
+                fprintf(thefile, '}');
                 if i < dim(1)
-                        s = strcat(s, ', ');
+                    fprintf(thefile, ', ');
                 end
                 
             end
             
-            s = strcat(s, ' }');
+            fprintf(thefile, ' }');
 
         % 3D Matrix
         elseif strcmp(order, '3Dmatrix')
             
-            s = strcat(s, '{ ');
+            fprintf(thefile, '{ ');
             
             for k = 1:dim(3)
                 
-                s = strcat(s, '{');
+                fprintf(thefile, '{');
                 
                 for i = 1:dim(1)
                     
                     write_comma = false;
-                        s = strcat(s, '{');
-                        
-                        for j = 1:dim(2)
-                            
-                            if write_comma
-                                s = strcat(s, ', ');
-                            else
-                                write_comma = true;
-                            end
-                            s = strcat(s, write_value(value(i, j, k), type));
-                            
+                    fprintf(thefile, '{');
+
+                    for j = 1:dim(2)
+
+                        if write_comma
+                            fprintf(thefile, ', ');
+                        else
+                            write_comma = true;
                         end
-                        
-                        s = strcat(s, '}');
-                        
-                        if i < dim(1)
-                            s = strcat(s, ', ');
-                        end
+                        fprintf(thefile, write_value(value(i, j, k), type));
+
+                    end
+
+                    fprintf(thefile, '}');
+
+                    if i < dim(1)
+                        fprintf(thefile, ', ');
+                    end
                         
                 end
                 
-                s = strcat(s, '}');
+                fprintf(thefile, '}');
                 
                 if k < dim(3)
-                    s = strcat(s, ', ');
+                    fprintf(thefile, ', ');
                 end
                 
             end
             
-            s = strcat(s, ' }');
+            fprintf(thefile, ' }');
             
         end
 
     end
     
     % Add the end-of-line
-    s = strcat(s, ';\n');
+    fprintf(thefile, ';');
     
     end
+    
+    fprintf(thefile, '\\n');
+    
+    %% Get string
+    
+    % Close file
+    fclose(thefile);
+    
+    % Read the file
+    s = fileread([spcies_get_root_directory '/generated_solvers/temp_write_var.txt']);
+    
+    % Delete file
+    delete([spcies_get_root_directory '/generated_solvers/temp_write_var.txt']);
+    
 
 end
 
@@ -254,9 +241,6 @@ function s = write_value(value, type)
     min_inf = -1e20;
     value(value==inf) = max_inf;
     value(value==-inf) = min_inf;
-    if value==-inf
-        disp('here');
-    end
     
     if contains(type, 'int')
         s = sprintf('%d', value);
@@ -264,14 +248,13 @@ function s = write_value(value, type)
     elseif contains(type, 'bool')
         
         if value == true
-            s = sprintf('1');
+            s = '1';
         else
-            s = sprintf('0');
+            s = '0';
         end
 
     else
-        s = sprintf('%1.20f', value);
+        s = sprintf('%1.15f', value);
     end
     
 end
-
