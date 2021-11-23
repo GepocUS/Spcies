@@ -52,6 +52,7 @@ function [def_opt, def_method, def_subclass] = spcies_default_options()
     def_method.equMPC = 'ADMM';
     def_method.ellipMPC = 'ADMM';
     def_method.MPCT = 'EADMM';
+    def_method.HMPC = 'ADMM';
     def_method.Other = '';
     
     % Default subclasses for each type of controller
@@ -62,6 +63,8 @@ function [def_opt, def_method, def_subclass] = spcies_default_options()
     def_subclass.ellipMPC.ADMM = '';
     def_subclass.MPCT.EADMM = '';
     def_subclass.MPCT.ADMM = 'cs';
+    def_subclass.HMPC.ADMM = '';
+    def_subclass.HMPC.SADMM = '';
     def_subclass.Other = '';
      
 end
