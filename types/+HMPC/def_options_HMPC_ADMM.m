@@ -2,6 +2,13 @@
 % 
 % Returns the default options for the ADMM-based solver for HMPC.
 %
+% Information about this formulation can be found at:
+%
+% P. Krupa, D. Limon, and T. Alamo, “Harmonic based model predictive
+% control for set-point tracking", IEEE Transactions on Automatic Control.
+%
+% Information about the solver itself will be available shortly.
+%
 % OUTPUT:
 %   - def_options: Structure containing the default options of the solver.
 %

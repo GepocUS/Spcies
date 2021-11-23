@@ -1,20 +1,21 @@
 %% compute_HMPC_ADMM_ingredients
 %
-% Computes the ingredients of the ADMM-based solver for HMPC
+% Computes the ingredients of the ADMM-based solver for HMPC.
 %
 % Information about this formulation can be found at:
 %
 % P. Krupa, D. Limon, and T. Alamo, “Harmonic based model predictive
 % control for set-point tracking", IEEE Transactions on Automatic Control.
+%
+% Information about the solver itself will be available shortly.
 % 
 % INPUTS:
 %   - controller: Contains the information of the controller.
-%   - options: Structure containing options of the EADMM solver.
+%   - options: Structure containing options of the ADMM solver.
 %   - spcies_options: Structure containing the options of the toolbox.
 % 
 % OUTPUTS:
 %   - vars: Structure containing the ingredients required by the solver
-%   - vars_nonsparse: Structure containing the ingredients for the non-sparse solver..
 % 
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 %
@@ -88,13 +89,13 @@ function var = compute_HMPC_ADMM_ingredients(controller, options, spcies_options
     end
     
     %% Compute Hessian matrix and q vector
-    % We construct each block of the Hessian matrix and then join them toguether
-    % We have the symetric blockis, H = [H11, H12, H13, H21, H22, H23, H31, H32, H33]
+    % We construct each block of the Hessian matrix and then join them together
+    % We have the symmetric block is, H = [H11, H12, H13, H21, H22, H23, H31, H32, H33]
     % The vector of decision variables is given by:
     %   z - (u_0, x_1, u_1, x_2, u_2, ...., x_{N-1}, u_{N-1}, xe, xs, xc, ue, us, uc)
     % H11 corresponds to x_i, u_i with themselves, H12 to crossterms between x_i with (xs, xs, xc), 
     % H13 to crossterms between u_i with (ue, us, uc), H22 of (xe, xs, xc) with themselves and H33 of (ue, us, uc) with themselves.
-    % Sin H is symetric, we only need to compute the diagonal blocks and the upper triangular blocks.
+    % Sin H is symmetric, we only need to compute the diagonal blocks and the upper triangular blocks.
 
     % Matrix H11
     H11 = blkdiag(R, kron(eye(N-1), blkdiag(Q, R)));
@@ -116,7 +117,7 @@ function var = compute_HMPC_ADMM_ingredients(controller, options, spcies_options
            s_sum*Q, Th + s2_sum*Q, sc_sum*Q;
            c_sum*Q, sc_sum*Q, Th + c2_sum*Q];
     
-    % Add the j=0 tern to the sumations of sines and cosines terms
+    % Add the j=0 tern to the summations of sines and cosines terms
     s_sum = s_sum + sin(-w*N);
     c_sum = c_sum + cos(-w*N);
     s2_sum = s2_sum + sin(-w*N)^2;

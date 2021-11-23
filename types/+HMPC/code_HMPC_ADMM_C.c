@@ -1,5 +1,5 @@
 /**
- * Sparse ADMM solver for the HMPC formulation with box constraints.
+ * ADMM or SADMM solver for the HMPC formulation with box constraints.
  *
  * ARGUMENTS:
  * The current system state is given in "pointer_x0". Pointer to array of size nn.
