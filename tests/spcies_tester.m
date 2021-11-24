@@ -119,6 +119,7 @@ function [correct, test] = spcies_tester(varargin)
     t = 1;
     test = [];
     
+    % laxMPC
     if any(strcmp('laxMPC', type)) || any(strcmp('all', type))
         
         if any(strcmp('ADMM', method)) || any(strcmp('all', method))
@@ -137,6 +138,7 @@ function [correct, test] = spcies_tester(varargin)
         
     end
     
+    % equMPC
     if any(strcmp('equMPC', type)) || any(strcmp('all', type))
         
         if any(strcmp('ADMM', method)) || any(strcmp('all', method))
@@ -155,6 +157,7 @@ function [correct, test] = spcies_tester(varargin)
         
     end
     
+    % MPCT
     if any(strcmp('MPCT', type)) || any(strcmp('all', type))
     
         if any(strcmp('EADMM', method)) || any(strcmp('all', method))
@@ -173,6 +176,7 @@ function [correct, test] = spcies_tester(varargin)
         
     end
     
+    % ellipMPC
     if any(strcmp('ellipMPC', type)) || any(strcmp('all', type))
         
         if any(strcmp('ADMM', method)) || any(strcmp('all', method))
@@ -188,6 +192,25 @@ function [correct, test] = spcies_tester(varargin)
             test{t}.fnc = 'test_ellipMPC_ADMM_soc';
             t = t+1;
         end
+        
+    end
+    
+    % HMPC
+    if any(strcmp('HMPC', type)) || any(strcmp('all', type))
+        
+        if any(strcmp('ADMM', method)) || any(strcmp('all', method))
+            test{t}.type = 'HMPC';
+            test{t}.method = 'ADMM';
+            test{t}.fnc = 'test_HMPC_ADMM';
+            t = t+1;
+        end
+        
+%         if any(strcmp('SADM', method)) || any(strcmp('all', method))
+%             test{t}.type = 'HMPC';
+%             test{t}.method = 'SADMM';
+%             test{t}.fnc = 'test_HMPC_SADMM';
+%             t = t+1;
+%         end
         
     end
     
