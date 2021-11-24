@@ -205,12 +205,12 @@ function [correct, test] = spcies_tester(varargin)
             t = t+1;
         end
         
-%         if any(strcmp('SADM', method)) || any(strcmp('all', method))
-%             test{t}.type = 'HMPC';
-%             test{t}.method = 'SADMM';
-%             test{t}.fnc = 'test_HMPC_SADMM';
-%             t = t+1;
-%         end
+        if any(strcmp('SADMM', method)) || any(strcmp('all', method))
+            test{t}.type = 'HMPC';
+            test{t}.method = 'SADMM';
+            test{t}.fnc = 'test_HMPC_SADMM';
+            t = t+1;
+        end
         
     end
     
