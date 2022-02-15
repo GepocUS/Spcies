@@ -1,13 +1,12 @@
-%% cons_HMPC_ADMM_Matlab
+%% cons_HMPC_ADMM_split_Matlab
 %
-% Generates the constructor for Matlab of the ADMM-based solver for the HMPC formulation.
+% Generates the constructor for Matlab of the ADMM-based solver for the HMPC formulation
+% which splits the decision variables into (z, s) and (z_hat, s_hat).
 % 
 % Information about this formulation can be found at:
 %
 % P. Krupa, D. Limon, and T. Alamo, “Harmonic based model predictive
 % control for set-point tracking", IEEE Transactions on Automatic Control.
-%
-% Information about the solver itself will be available shortly.
 % 
 % INPUTS:
 %   - recipe: An instance of the Spcies_problem class.
@@ -19,7 +18,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function constructor = cons_HMPC_ADMM_Matlab(recipe)
+function constructor = cons_HMPC_ADMM_split_Matlab(recipe)
 
     %% Add a name
     if isempty(recipe.options.save_name)
@@ -34,7 +33,7 @@ function constructor = cons_HMPC_ADMM_Matlab(recipe)
     recipe_C.options.save_name = [recipe.options.save_name '_plain_C'];
     recipe_C.options.save = false;
     
-    constructor_C = HMPC.cons_HMPC_ADMM_C(recipe_C);
+    constructor_C = HMPC.cons_HMPC_ADMM_split_C(recipe_C);
     constructor_C = constructor_C.construct(recipe_C.options);
     
     %% Generate constructor
@@ -46,7 +45,7 @@ function constructor = cons_HMPC_ADMM_Matlab(recipe)
     
     % Add mex file code
     constructor = constructor.new_empty_file('mex_code', recipe.options, 'c');
-    constructor.files.mex_code.blocks = {'$START$', [this_path '/struct_HMPC_ADMM_C_Matlab.c']};
+    constructor.files.mex_code.blocks = {'$START$', [this_path '/struct_HMPC_ADMM_split_C_Matlab.c']};
     constructor.files.mex_code.flags = {'$C_CODE_NAME$', constructor_C.files.code.dir.name};
     
     % Add the execution command for compiling the mex file

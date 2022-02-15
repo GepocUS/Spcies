@@ -1,10 +1,11 @@
-%% Non-sparse verison of the solver for the HMPC formulation with box constraints based on ADMM
+%% Non-sparse verison of the solver for the HMPC formulation with box constraints based on SADMM
 % This version projects onto SOCs, instead of the "diamond" sets.
+% It also uses the ADMM splitting method (\hat z, \hat s) = (z, s).
 %
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_SOC_solver(x0, xr, ur, varargin)
+function [u, k, e_flag, Hist] = spcies_HMPC_SADMM_split_SOC_solver(x0, xr, ur, varargin)
     
     %% Default options
     def_sys = []; % Default value for the sys argument
@@ -12,7 +13,7 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_SOC_solver(x0, xr, ur, varargin
     def_controller = []; % Default value for the controller argument
     def_genHist = 0; % Default amount of data generated for Hist
     def_verbose = 1; % Default amount of information displayed
-    def_options = HMPC.def_options_HMPC_ADMM();
+    def_options = HMPC.def_options_HMPC_SADMM();
     
     %% Parser
     par = inputParser;
@@ -66,7 +67,7 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_SOC_solver(x0, xr, ur, varargin
     end
 
     %% Generate ingredients of the solver
-    var = HMPC.compute_HMPC_ADMM_SOC_ingredients(controller, options, []);
+    var = HMPC.compute_HMPC_SADMM_split_SOC_ingredients(controller, options, []);
     N = var.N;
     n = var.n;
     m = var.m;
@@ -136,14 +137,18 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_SOC_solver(x0, xr, ur, varargin
             
         z_hat = rhs(1:dim);
         s_hat = rhs(dim+1:dim+n_s);
+        
+        % Step 2: Compute lambda_{k+1/2} and mu_{k+1/2}
+        lambda = lambda + options.alpha*var.sigma*(z_hat - z);
+        mu = mu + options.alpha*var.rho.*(s_hat - s);
 
-        % Step 2: Compute z_{k+1}
+        % Step 3: Compute z_{k+1}
         z = z_hat + lambda/var.sigma;
         if options.box_constraints
             z(1:(N-1)*(n+m)+m) = max( min(z(1:(N-1)*(n+m)+m) , var.UB), var.LB);
         end
         
-        % Step 3: Compute s_{k+1}
+        % Step 4: Compute s_{k+1}
         
         s_proj = s_hat + mu/var.rho;
         
@@ -167,20 +172,18 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_SOC_solver(x0, xr, ur, varargin
             
         end
         
-        % Step 3: Compute lambda_{k+1}
-        lambda = lambda + var.sigma*(z_hat - z);
+        % Step 5: Compute lambda_{k+1}
+        lambda = lambda + options.alpha*var.sigma*(z_hat - z);
+        mu = mu + options.alpha*var.rho.*(s_hat - s);
         
-        % Step 4: Compute y_{k+1}
-        mu = mu + var.rho.*(s_hat - s);
-        
-        % Step 5: Compute residuals and exit tolerance
+        % Step 6: Compute residuals and exit tolerance
         rp = norm([z_hat; s_hat] - [z; s], Inf);
         rd = norm([z; s] - [z_ant; s_ant], Inf);
 
         z_ant = z;
         s_ant = s;
         
-        % Step 6: Exit condition
+        % Step 7: Exit condition
         if rp <= tol_p && rd <= tol_d
             done = true;
             e_flag = 1;

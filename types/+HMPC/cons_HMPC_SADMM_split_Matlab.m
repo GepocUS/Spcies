@@ -1,13 +1,12 @@
-%% cons_HMPC_SADMM_Matlab
+%% cons_HMPC_SADMM_split_Matlab
 %
-% Generates the constructor for Matlab of the SADMM-based solver for the HMPC formulation.
+% Generates the constructor for Matlab of the SADMM-based solver for the HMPC formulation
+% which splits the decision variables into (z, s) and (z_hat, s_hat).
 % 
 % Information about this formulation can be found at:
 %
 % P. Krupa, D. Limon, and T. Alamo, “Harmonic based model predictive
 % control for set-point tracking", IEEE Transactions on Automatic Control.
-%
-% Information about the solver itself will be available shortly.
 % 
 % INPUTS:
 %   - recipe: An instance of the Spcies_problem class.
@@ -19,8 +18,8 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function constructor = cons_HMPC_SADMM_Matlab(recipe)
+function constructor = cons_HMPC_SADMM_split_Matlab(recipe)
 
-    constructor = HMPC.cons_HMPC_ADMM_Matlab(recipe);
+    constructor = HMPC.cons_HMPC_ADMM_split_Matlab(recipe);
 
 end

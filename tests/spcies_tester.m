@@ -200,14 +200,14 @@ function [correct, test] = spcies_tester(varargin)
         
         if any(strcmp('ADMM', method)) || any(strcmp('all', method))
             test{t}.type = 'HMPC';
-            test{t}.method = 'ADMM';
+            test{t}.method = 'ADMM_split';
             test{t}.fnc = 'test_HMPC_ADMM';
             t = t+1;
         end
         
         if any(strcmp('SADMM', method)) || any(strcmp('all', method))
             test{t}.type = 'HMPC';
-            test{t}.method = 'SADMM';
+            test{t}.method = 'SADMM_split';
             test{t}.fnc = 'test_HMPC_SADMM';
             t = t+1;
         end
@@ -295,10 +295,10 @@ function [correct, test] = spcies_tester(varargin)
         
         fprintf('Result:\n');
         fprintf('----------------------------------------------\n');
-        fprintf('Type\tMethod\tSPCIES\tOpt\tFlag\tError\n');
+        fprintf('Type\tMethod\t\tSPCIES\tOpt\tFlag\tError\n');
         fprintf('----------------------------------------------\n');
         for i = 1:length(test)
-            fprintf('%s\t%s\t%s\t%s\t%s\t%s\n', test{i}.type, test{i}.method, test{i}.spcies, test{i}.opt, test{i}.flag, test{i}.error);
+            fprintf('%s\t%s\t\t%s\t%s\t%s\t%s\n', test{i}.type, test{i}.method, test{i}.spcies, test{i}.opt, test{i}.flag, test{i}.error);
         end
         fprintf('----------------------------------------------\n\n');
         

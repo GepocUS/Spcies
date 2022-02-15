@@ -1,13 +1,12 @@
-%% compute_HMPC_ADMM_ingredients
+%% compute_HMPC_ADMM_split_ingredients
 %
-% Computes the ingredients of the ADMM-based solver for HMPC.
+% Computes the ingredients of the ADMM-based solver for HMPC which splits
+% the decision variables into (z, s) and (z_hat, s_hat).
 %
 % Information about this formulation can be found at:
 %
 % P. Krupa, D. Limon, and T. Alamo, “Harmonic based model predictive
 % control for set-point tracking", IEEE Transactions on Automatic Control.
-%
-% Information about the solver itself will be available shortly.
 % 
 % INPUTS:
 %   - controller: Contains the information of the controller.
@@ -20,7 +19,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 %
 
-function var = compute_HMPC_ADMM_ingredients(controller, options, spcies_options)
+function var = compute_HMPC_ADMM_split_ingredients(controller, options, spcies_options)
 
     %% Extract from controller
     
@@ -250,7 +249,7 @@ function var = compute_HMPC_ADMM_ingredients(controller, options, spcies_options
     
     % Check that the initial part of Pldl is the identity matrix
     if max(max(abs(Pldl(1:dim+n_s, 1:dim+n_s) - eye(dim+n_s)))) > 0
-        error("HMPC ADMM-based solver: LDL factorization error. Please contact the developers at https://github.com/GepocUS/Spcies/issues");
+        %error("HMPC ADMM-based solver: LDL factorization error. Please contact the developers at https://github.com/GepocUS/Spcies/issues");
     end
     
     %% Return variables for the solver
@@ -270,6 +269,8 @@ function var = compute_HMPC_ADMM_ingredients(controller, options, spcies_options
     var.UB = [controller.sys.UBu; kron(ones(N-1, 1), [controller.sys.UBx; controller.sys.UBu])];
     var.LBy = LBy;
     var.UBy = UBy;
+    var.E = E;
+    var.F = F;
     
     var.H = H; % Cost function: Hessian and vector q
     var.q = q;

@@ -1,5 +1,6 @@
 /**
  * ADMM or SADMM solver for the HMPC formulation with box constraints.
+ * This version of the ADMM-bases solver splits the decision variables as (z_hat, s_hat) = (z, s).
  *
  * ARGUMENTS:
  * The current system state is given in "pointer_x0". Pointer to array of size nn.

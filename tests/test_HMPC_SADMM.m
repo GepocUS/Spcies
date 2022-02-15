@@ -26,25 +26,25 @@ function [gap, exit] = test_HMPC_SADMM(sys, status)
     % Construct solver use_soc = false
     solver_options.use_soc = false;
     spcies_gen_controller('sys', sys, 'param', param, 'solver_options', solver_options,...
-    'platform', 'Matlab', 'type', 'HMPC', 'method', 'SADMM');
+    'platform', 'Matlab', 'type', 'HMPC', 'method', 'SADMM_split');
     
     % Solve using the sparse solver
     [~, ~, e_s, sol_s] = HMPC(status.x, status.xr, status.ur);
     
     % Solse using the non-sparse solver
-    [~, ~, e_ns, sol_ns] = spcies_HMPC_SADMM_solver(status.x, status.xr, status.ur, 'sys', sys,...
+    [~, ~, e_ns, sol_ns] = spcies_HMPC_SADMM_split_solver(status.x, status.xr, status.ur, 'sys', sys,...
                                                  'param', param, 'options', solver_options, 'genHist', 1);
                                              
     % Construct solver for use_soc = true
     solver_options.use_soc = true;
     spcies_gen_controller('sys', sys, 'param', param, 'solver_options', solver_options,...
-    'platform', 'Matlab', 'type', 'HMPC', 'method', 'SADMM');
+    'platform', 'Matlab', 'type', 'HMPC', 'method', 'SADMM_split');
 
     % Solve using the sparse solver
     [~, ~, e_s_soc, sol_s_soc] = HMPC(status.x, status.xr, status.ur);
     
     % Solse using the non-sparse solver
-    [~, ~, e_ns_soc, sol_ns_soc] = spcies_HMPC_SADMM_solver(status.x, status.xr, status.ur, 'sys', sys,...
+    [~, ~, e_ns_soc, sol_ns_soc] = spcies_HMPC_SADMM_split_solver(status.x, status.xr, status.ur, 'sys', sys,...
                                                  'param', param, 'options', solver_options, 'genHist', 1);
     
       

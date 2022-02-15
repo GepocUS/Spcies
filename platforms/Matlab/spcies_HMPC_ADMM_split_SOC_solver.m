@@ -1,11 +1,11 @@
-%% spcies_HMPC_SADMM_solver - Solver for HMPC based on SADMM
-%
-% This is a non-sparse verison of the solver for the HMPC formulation based on SADMM
+%% Non-sparse verison of the solver for the HMPC formulation with box constraints based on ADMM
+% This version projects onto SOCs, instead of the "diamond" sets.
+% It also uses the ADMM splitting method (\hat z, \hat s) = (z, s).
 %
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function [u, k, e_flag, Hist] = spcies_HMPC_SADMM_solver(x0, xr, ur, varargin)
+function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_split_SOC_solver(x0, xr, ur, varargin)
     
     %% Default options
     def_sys = []; % Default value for the sys argument
@@ -13,12 +13,12 @@ function [u, k, e_flag, Hist] = spcies_HMPC_SADMM_solver(x0, xr, ur, varargin)
     def_controller = []; % Default value for the controller argument
     def_genHist = 0; % Default amount of data generated for Hist
     def_verbose = 1; % Default amount of information displayed
-    def_options = HMPC.def_options_HMPC_SADMM();
+    def_options = HMPC.def_options_HMPC_ADMM();
     
     %% Parser
     par = inputParser;
     par.CaseSensitive = false;
-    par.FunctionName = 'spcies_ellipMPC_ADMM_solver';
+    par.FunctionName = 'spcies_HMPC_ADMM_split_SOC_solver';
     
     % Name-value parameters
     addParameter(par, 'sys', def_sys, @(x) isa(x, 'ss') || isa(x, 'ssModel') || isstruct(x));
@@ -67,7 +67,7 @@ function [u, k, e_flag, Hist] = spcies_HMPC_SADMM_solver(x0, xr, ur, varargin)
     end
 
     %% Generate ingredients of the solver
-    var = HMPC.compute_HMPC_ADMM_ingredients(controller, options, []);
+    var = HMPC.compute_HMPC_ADMM_split_SOC_ingredients(controller, options, []);
     N = var.N;
     n = var.n;
     m = var.m;
@@ -132,38 +132,27 @@ function [u, k, e_flag, Hist] = spcies_HMPC_SADMM_solver(x0, xr, ur, varargin)
         if ~options.sparse
             rhs = var.M1*q_hat + var.M2*bh;
         else
-%             rhs = utils.LDLsolve(var.L_CSC.val, var.L_CSC.row, var.L_CSC.col, var.Dinv, var.Pldl'*[-q_hat; bh]);
-            rhs = utils.LDLsolve(var.L_CSC.val, var.L_CSC.row, var.L_CSC.col, var.Dinv, [-q_hat; bh]);
+            rhs = utils.LDLsolve(var.L_CSC.val, var.L_CSC.row, var.L_CSC.col, var.Dinv, var.Pldl'*[-q_hat; bh]);
         end
             
         z_hat = rhs(1:dim);
         s_hat = rhs(dim+1:dim+n_s);
-        
-        % Step 2: Compute lambda_{k+1/2} and mu_{k+1/2}
-        lambda = lambda + options.alpha*var.sigma*(z_hat - z);
-        mu = mu + options.alpha*var.rho.*(s_hat - s);
 
-        % Step 3: Compute z_{k+1}
+        % Step 2: Compute z_{k+1}
         z = z_hat + lambda/var.sigma;
         if options.box_constraints
             z(1:(N-1)*(n+m)+m) = max( min(z(1:(N-1)*(n+m)+m) , var.UB), var.LB);
         end
         
-        % Step 4: Compute s_{k+1}
+        % Step 3: Compute s_{k+1}
         
         s_proj = s_hat + mu/var.rho;
         
         if options.box_constraints
         
             % Projection for s subject to the SOC constraints
-            if options.use_soc
-                for j = 1:n_soc
-                    s(3*(j-1) + (1:3)) = utils.proj_SOC(s_proj(3*(j-1) + (1:3)));
-                end
-            else
-                for j = 1:n+m
-                    s(3*(j-1) + (1:3)) = utils.proj_D(s_proj(3*(j-1) + (1:3)), var.LBy(j), var.UBy(j));
-                end
+            for j = 1:n_soc
+                s(3*(j-1) + (1:3)) = utils.proj_SOC(s_proj(3*(j-1) + (1:3)));
             end
             
         else
@@ -172,32 +161,27 @@ function [u, k, e_flag, Hist] = spcies_HMPC_SADMM_solver(x0, xr, ur, varargin)
             for j = 0:N-1
                 s(j*n_y+(1:n_y)) = max( min( s_proj(j*n_y+(1:n_y)), var.UBy), var.LBy);
             end
-            
             % Projection for s subject to the SOC constraints
-            if options.use_soc
-                for j = 1:n_soc
-                    s(N*n_y + 3*(j-1) + (1:3)) = utils.proj_SOC(s_proj(N*n_y + 3*(j-1) + (1:3)));
-                end
-            else
-                for j = 1:n_y
-                    s(N*n_y + 3*(j-1) + (1:3)) = utils.proj_D(s_proj(N*n_y + 3*(j-1) + (1:3)), var.LBy(j), var.UBy(j));
-                end
+            for j = 1:n_soc
+                s(N*n_y + 3*(j-1) + (1:3)) = utils.proj_SOC(s_proj(N*n_y + 3*(j-1) + (1:3)));
             end
             
         end
         
-        % Step 5: Compute lambda_{k+1}
-        lambda = lambda + options.alpha*var.sigma*(z_hat - z);
-        mu = mu + options.alpha*var.rho.*(s_hat - s);
+        % Step 3: Compute lambda_{k+1}
+        lambda = lambda + var.sigma*(z_hat - z);
         
-        % Step 6: Compute residuals and exit tolerance
+        % Step 4: Compute y_{k+1}
+        mu = mu + var.rho.*(s_hat - s);
+        
+        % Step 5: Compute residuals and exit tolerance
         rp = norm([z_hat; s_hat] - [z; s], Inf);
         rd = norm([z; s] - [z_ant; s_ant], Inf);
 
         z_ant = z;
         s_ant = s;
         
-        % Step 7: Exit condition
+        % Step 6: Exit condition
         if rp <= tol_p && rd <= tol_d
             done = true;
             e_flag = 1;

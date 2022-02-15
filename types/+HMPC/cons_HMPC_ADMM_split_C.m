@@ -1,13 +1,12 @@
-%% cons_HMPC_ADMM_C
+%% cons_HMPC_ADMM_split_C
 %
-% Generates the constructor for C of the HMPC formulation based on ADMM.
+% Generates the constructor for C of the HMPC formulation based on ADMM which splits
+% the decision variables into (z, s) and (z_hat, s_hat).
 % 
 % Information about this formulation can be found at:
 %
 % P. Krupa, D. Limon, and T. Alamo, “Harmonic based model predictive
 % control for set-point tracking", IEEE Transactions on Automatic Control.
-%
-% Information about the solver itself will be available shortly.
 % 
 % INPUTS:
 %   - recipe: An instance of the Spcies_problem class. Its properties must contain:
@@ -47,7 +46,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function constructor = cons_HMPC_ADMM_C(recipe)
+function constructor = cons_HMPC_ADMM_split_C(recipe)
     %% Preliminaries
     import utils.add_line
 
@@ -56,7 +55,7 @@ function constructor = cons_HMPC_ADMM_C(recipe)
     this_path = fileparts(full_path);
 
     %% Default solver options
-    if strcmp(recipe.options.method, 'SADMM')
+    if strcmp(recipe.options.method, 'SADMM_split')
         def_solver_options = HMPC.def_options_HMPC_SADMM();
     else
         def_solver_options = HMPC.def_options_HMPC_ADMM();
@@ -76,10 +75,10 @@ function constructor = cons_HMPC_ADMM_C(recipe)
     end
     
     %% Compute the ingredients of the controller
-    if strcmp(recipe.options.method, 'SADMM')
-        vars = HMPC.compute_HMPC_SADMM_ingredients(recipe.controller, solver_options, recipe.options);
+    if strcmp(recipe.options.method, 'SADMM_split')
+        vars = HMPC.compute_HMPC_SADMM_split_ingredients(recipe.controller, solver_options, recipe.options);
     else
-        vars = HMPC.compute_HMPC_ADMM_ingredients(recipe.controller, solver_options, recipe.options);
+        vars = HMPC.compute_HMPC_ADMM_split_ingredients(recipe.controller, solver_options, recipe.options);
     end
     
     %% Set save_name to type if none is provided
@@ -140,7 +139,7 @@ function constructor = cons_HMPC_ADMM_C(recipe)
     if solver_options.debug
         defCell = add_line(defCell, 'DEBUG', 1, 1, 'bool', 'define');
     end
-    if strcmp(recipe.options.method, 'SADMM')
+    if strcmp(recipe.options.method, 'SADMM_split')
         defCell = add_line(defCell, 'alpha_SADMM', solver_options.alpha, 1, precision, 'define');
         defCell = add_line(defCell, 'IS_SYMMETRIC', 1, 1, precision, 'define');
     end
@@ -197,11 +196,11 @@ function constructor = cons_HMPC_ADMM_C(recipe)
     % .c file
     constructor = constructor.new_empty_file('code', recipe.options, 'c');
     constructor.files.code.blocks = {'$START$', C_code.get_generic_solver_struct;...
-                                     '$INSERT_SOLVER$', [this_path '/code_HMPC_ADMM_C.c']};
+                                     '$INSERT_SOLVER$', [this_path '/code_HMPC_ADMM_split_C.c']};
     
     % .h file
     constructor = constructor.new_empty_file('header', recipe.options, 'h');
-    constructor.files.header.blocks = {'$START$', [this_path '/header_HMPC_ADMM_C.h']};
+    constructor.files.header.blocks = {'$START$', [this_path '/header_HMPC_ADMM_split_C.h']};
     
     % Data
     constructor.data = {'$INSERT_DEFINES$', defCell;...
