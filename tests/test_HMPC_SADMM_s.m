@@ -1,6 +1,6 @@
-%% Test for the HMPC formulation using SADMM
+%% Test for the HMPC formulation using SADMM with the (z_hat, s_hat) = (z, s) splitting
 
-function [gap, exit] = test_HMPC_SADMM(sys, status)
+function [gap, exit] = test_HMPC_SADMM_s(sys, status)
     
     % Solver options
     solver_options.rho = 2;
@@ -9,6 +9,7 @@ function [gap, exit] = test_HMPC_SADMM(sys, status)
     solver_options.tol_p = 1e-7;
     solver_options.tol_d = 1e-7;
     solver_options.debug = true;
+    solver_options.sparse = true;
     
     % Parameters of the MPC formulation
     param.N = 10;

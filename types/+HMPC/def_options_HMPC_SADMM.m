@@ -18,6 +18,5 @@
 function def_options = def_options_HMPC_SADMM()
 
     def_options = HMPC.def_options_HMPC_ADMM;
-    def_options.alpha = 0.95;
     
 end
