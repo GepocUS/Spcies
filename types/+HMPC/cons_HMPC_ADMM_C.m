@@ -155,6 +155,7 @@ function constructor = cons_HMPC_ADMM_C(recipe)
     constCell = add_line(constCell, 'Ct_row', vars.Ct_CSR.row-1, 1, 'int', var_options);
     
 %     constCell = add_line(constCell, 'C', vars.C, 1, precision, var_options);
+    constCell = add_line(constCell, 'QQ', vars.Q, 1, precision, var_options);
     constCell = add_line(constCell, 'Te', vars.Te, 1, precision, var_options);
     constCell = add_line(constCell, 'Se', vars.Se, 1, precision, var_options);
     constCell = add_line(constCell, 'LB', vars.LB, 1, precision, var_options);
