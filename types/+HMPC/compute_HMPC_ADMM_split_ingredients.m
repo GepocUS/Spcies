@@ -36,7 +36,7 @@ function var = compute_HMPC_ADMM_split_ingredients(controller, options, spcies_o
     if ~options.box_constraints
         if isa(controller.sys, 'ssModel')
             E = controller.sys.Cc;
-            F = controller.sys.Dc;
+            F = controller.sys.Dcu;
             LBy = controller.sys.LBy;
             UBy = controller.sys.UBy;   
         else
