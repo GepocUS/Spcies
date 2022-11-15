@@ -2,6 +2,7 @@
 *.swp
 *.pdf
 *.asv
+*.txt
 /old/*
 /development/*
 dev_*
