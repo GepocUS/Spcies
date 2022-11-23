@@ -163,17 +163,20 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, options, spcies_opti
     end
     
     % Alpha and Beta
-    vars.Beta = zeros(n,n,N);
-    vars.Alpha = zeros(n,n,N-1);
-    for i = 1:N
-        vars.Beta(:,:,i) = Wc((i-1)*n+(1:n),(i-1)*n+(1:n));
-        for j = 1:n
-            vars.Beta(j,j,i) = 1/vars.Beta(j,j,i);
+        vars.Beta = zeros(n,n,N);
+        vars.Alpha = zeros(n,n,N-1);
+        if ~options.time_varying
+            for i = 1:N
+                vars.Beta(:,:,i) = Wc((i-1)*n+(1:n),(i-1)*n+(1:n));
+                for j = 1:n
+                    vars.Beta(j,j,i) = 1/vars.Beta(j,j,i);
+                end
+            end
+            for i = 1:N-1
+                vars.Alpha(:,:,i) = Wc((i-1)*n+(1:n),i*n+(1:n));
+            end
         end
-    end
-    for i = 1:N-1
-        vars.Alpha(:,:,i) = Wc((i-1)*n+(1:n),i*n+(1:n));
-    end
+
     
 end
 

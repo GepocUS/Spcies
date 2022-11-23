@@ -87,6 +87,7 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
     defCell = add_line(defCell, 'k_max', solver_options.k_max, 1, 'uint', 'define');
     defCell = add_line(defCell, 'tol', solver_options.tol, 1, 'float', 'define');
     defCell = add_line(defCell, 'in_engineering', solver_options.in_engineering, 1, 'int', 'define');
+    defCell= add_line(defCell, 'time_varying', solver_options.time_varying, 1, 'int', 'define');
     if solver_options.debug
         defCell = add_line(defCell, 'DEBUG', 1, 1, 'bool', 'define');
     end
