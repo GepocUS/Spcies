@@ -21,5 +21,6 @@ function def_options = def_options_laxMPC_ADMM()
     def_options.in_engineering = false;
     def_options.debug = false;
     def_options.force_vector_rho = false; % If true, forces the penalty parameter rho to be defined as a vector
+    def_options.time_varying = false;
     
 end
