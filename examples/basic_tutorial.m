@@ -94,6 +94,7 @@ solver_options.tol = 1e-3; % Exit tolerance of the solver
 % MEX file that will be generated, or the directory where the solver is saved.
 options.save_name = 'lax_solver';
 options.directory = '';
+options.time_varying = true;
 
 % If an empty field is provided (as in options.directory = ''), then
 % it is given its default value.
