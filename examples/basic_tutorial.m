@@ -89,12 +89,13 @@ param = struct('Q', Q, 'R', R, 'T', T, 'N', N);
 solver_options.rho = 15; % Value of the penalty parameter of the ADMM algorithm
 solver_options.k_max = 5000; % Maximum number of iterations of the solver
 solver_options.tol = 1e-3; % Exit tolerance of the solver
+solver_options.time_varying = false;
 
 % Next, we can set some of the options of the toolbox, such as the name of the
 % MEX file that will be generated, or the directory where the solver is saved.
 options.save_name = 'lax_solver';
 options.directory = '';
-options.time_varying = true;
+
 
 % If an empty field is provided (as in options.directory = ''), then
 % it is given its default value.
