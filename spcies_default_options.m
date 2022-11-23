@@ -48,7 +48,6 @@ function [def_opt, def_method, def_subclass] = spcies_default_options()
     def_opt.const_are_static = true; % Determines if constant variables are defined as static
     def_opt.precision = 'double'; % Determines the precision of real numbers ('float' or 'double')
     def_opt.save = 1; % Determines if the file is saved (currently unused)
-    def_opt.time_varying = false; % Determines if the linear model parameters might change during control loop.
     
     % Default metods for each type of controller
     def_method.laxMPC = 'ADMM';
