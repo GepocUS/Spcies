@@ -89,7 +89,7 @@ param = struct('Q', Q, 'R', R, 'T', T, 'N', N);
 solver_options.rho = 15; % Value of the penalty parameter of the ADMM algorithm
 solver_options.k_max = 5000; % Maximum number of iterations of the solver
 solver_options.tol = 1e-3; % Exit tolerance of the solver
-solver_options.time_varying = false;
+solver_options.time_varying = true;
 
 % Next, we can set some of the options of the toolbox, such as the name of the
 % MEX file that will be generated, or the directory where the solver is saved.
@@ -161,7 +161,11 @@ for i = 1:num_iter
     % flag (1: solution found, -1: maximum iterations).
     % The name of the function must match the string in 'save_name'.
     tic;
-    [u, hK(i), hE(i)] = lax_solver(x, xr, ur);
+    if ~solver_options.time_varying
+        [u, hK(i), hE(i)] = lax_solver(x, xr, ur);
+    else
+        [u, hK(i), hE(i)] = lax_solver(x, xr, ur, sys.A, sys.B, diag(Q), diag(R), T);
+    end
     hT(i) = toc;
     
     % Simulate the system
