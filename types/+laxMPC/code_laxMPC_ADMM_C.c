@@ -20,19 +20,19 @@
 
 #ifdef CONF_MATLAB
 
-// #if time_varying == false
+#if time_varying == 0
 void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt){
-// #else
-// void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *pointer_T, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt);
-// #endif
+#else
+void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *pointer_T, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt){
+#endif
 
 #else
     
-// #if time_varying == false
+#if time_varying == 0
 void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, int *pointer_k, int *e_flag, solution *sol){
-// #else
-// void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *pointer_T, double *u_opt, int *pointer_k, int *e_flag, solution *sol);
-// #endif
+#else
+void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *pointer_T, double *u_opt, int *pointer_k, int *e_flag, solution *sol){
+#endif
 
 #endif
 
@@ -46,6 +46,19 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     double x0[nn]; // Current system state
     double xr[nn]; // State reference
     double ur[mm]; // Control input reference
+    #if time_varying == 1
+        double A[nn][nn];
+        double B[nn][mm];
+        double AB[nn][nm]={{0.0}};
+        double Q[nn];
+        double R[mm];
+        double T[nn][nn];
+        double Hi[NN-1][nm];
+        double Hi_0[mm];
+        double Hi_N[nn][nn];
+        double Alpha[NN-1][nn][nn]={{{0.0}}};
+        double Beta[NN][nn][nn]={{{0.0}}};
+    #endif
     double v[NN-1][nm] = {{0.0}}; // Decision variables v
     double v_0[mm] = {0.0};
     double v_N[nn] = {0.0};
@@ -87,6 +100,22 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     }
     for(unsigned int i = 0; i < mm; i++){
         ur[i] = pointer_ur[i];
+    }
+    #endif
+
+    #if time_varying == 1
+    for(unsigned int i = 0; i < nn; i++){
+        Q[i] = pointer_Q[i];
+        for(unsigned int j = 0; j < nn; j++){
+            A[i][j] = pointer_A[nn*i+j];
+            T[i][j] = pointer_T[nn*i+j];
+        }
+        for(unsigned int j = 0; j < mm; j++){
+            B[i][j] = pointer_B[nn*i+j];
+            if(i == 0){
+                R[j] = pointer_R[j];
+            }
+        }
     }
     #endif
  
