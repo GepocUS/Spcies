@@ -107,15 +107,17 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
         constCell = add_line(constCell, 'LB', vars.LB, 1, precision, var_options);
         constCell = add_line(constCell, 'UB', vars.UB, 1, precision, var_options);
     end
-    constCell = add_line(constCell, 'Hi', vars.Hi, 1, precision, var_options);
-    constCell = add_line(constCell, 'Hi_0', vars.Hi_0, 1, precision, var_options);
-    constCell = add_line(constCell, 'Hi_N', vars.Hi_N, 1, precision, var_options);
-    constCell = add_line(constCell, 'AB', vars.AB, 1, precision, var_options);
-    constCell = add_line(constCell, 'Alpha', vars.Alpha, 1, precision, var_options);
-    constCell = add_line(constCell, 'Beta', vars.Beta, 1, precision, var_options);
-    constCell = add_line(constCell, 'Q', vars.Q, 1, precision, var_options);
-    constCell = add_line(constCell, 'R', vars.R, 1, precision, var_options);
-    constCell = add_line(constCell, 'T', vars.T, 1, precision, var_options);
+    if ~solver_options.time_varying
+        constCell = add_line(constCell, 'Hi', vars.Hi, 1, precision, var_options);
+        constCell = add_line(constCell, 'Hi_0', vars.Hi_0, 1, precision, var_options);
+        constCell = add_line(constCell, 'Hi_N', vars.Hi_N, 1, precision, var_options);
+        constCell = add_line(constCell, 'Q', vars.Q, 1, precision, var_options);
+        constCell = add_line(constCell, 'R', vars.R, 1, precision, var_options);
+        constCell = add_line(constCell, 'T', vars.T, 1, precision, var_options);
+        constCell = add_line(constCell, 'AB', vars.AB, 1, precision, var_options);
+        constCell = add_line(constCell, 'Alpha', vars.Alpha, 1, precision, var_options);
+        constCell = add_line(constCell, 'Beta', vars.Beta, 1, precision, var_options);
+    end
     if solver_options.in_engineering
         constCell = add_line(constCell, 'scaling_x', vars.scaling_x, 1, precision, var_options);
         constCell = add_line(constCell, 'scaling_u', vars.scaling_u, 1, precision, var_options);
