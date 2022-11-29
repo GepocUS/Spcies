@@ -49,7 +49,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     #if time_varying == 1
         double A[nn][nn];
         double B[nn][mm];
-        double AB[nn][nm]={{0.0}};
+        double AB[nn][nm];
         double Q[nn];
         double R[mm];
         double T[nn][nn];
@@ -107,16 +107,21 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     for(unsigned int i = 0; i < nn; i++){
         Q[i] = pointer_Q[i];
         for(unsigned int j = 0; j < nn; j++){
-            A[i][j] = pointer_A[nn*i+j];
-            T[i][j] = pointer_T[nn*i+j];
+            A[i][j] = pointer_A[i+j*nn];
+            T[i][j] = pointer_T[i+j*nn];
+            // Constructing AB: Part of A
+            AB[i][j] = A[i][j];
         }
-        for(unsigned int j = 0; j < mm; j++){
-            B[i][j] = pointer_B[nn*i+j];
-            if(i == 0){
+        for(unsigned int j=0; j < mm; j++){
+            if (i==0){
                 R[j] = pointer_R[j];
             }
+            B[i][j] = pointer_B[i+j*nn];
+            // Constructing AB: Part of B
+            AB[i][nn+j] = B[i][j];
         }
     }
+
     #endif
  
     // Update first nn elements of beq
@@ -236,7 +241,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
                 for(unsigned int i = 0; i < j; i++){
                     mu[l][j] = mu[l][j] - Beta[l][i][j]*mu[l][i];
                 }
-                mu[l][j] = Beta[l][j][j]*mu[l][j];
+                mu[l][j] = Beta[l][j][j]*mu[l][j];  
             }
         }
 
@@ -509,10 +514,10 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     }
 
     // All other elements except the last nn
-    for(unsigned int l = 0; l < NN-1; l++){
+    for(unsigned int l = 0; l < nn; l++){
         for(unsigned int j = 0; j < nm; j++){
             count++;
-            z_opt[count] = z[l][j];
+            z_opt[count] = AB[l][j];
             v_opt[count] = v[l][j];
             lambda_opt[count] = lambda[l][j];
         }
