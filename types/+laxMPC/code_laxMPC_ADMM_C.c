@@ -56,6 +56,8 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         double Hi[NN-1][nm];
         double Hi_0[mm];
         double Hi_N[nn][nn];
+        double R_rho_i[mm] = {0.0}; // 1./(R+rho*eye(mm))
+        double Q_rho_i[nn] = {0.0}; // 1./(Q+rho*eye(nn))
         double Alpha[NN-1][nn][nn]={{{0.0}}};
         double Beta[NN][nn][nn]={{{0.0}}};
     #endif
@@ -106,6 +108,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     #if time_varying == 1
     for(unsigned int i = 0; i < nn; i++){
         Q[i] = pointer_Q[i];
+        Q_rho_i[i] = 1/(Q[i]+rho);
         for(unsigned int j = 0; j < nn; j++){
             A[i][j] = pointer_A[i+j*nn];
             T[i][j] = pointer_T[i+j*nn];
@@ -115,15 +118,42 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         for(unsigned int j=0; j < mm; j++){
             if (i==0){
                 R[j] = pointer_R[j];
+                R_rho_i[j] = 1/(R[j]+rho);
             }
             B[i][j] = pointer_B[i+j*nn];
             // Constructing AB: Part of B
             AB[i][nn+j] = B[i][j];
         }
-    }
 
+    }
     #endif
- 
+    
+    #if time_varying == 1
+    // For the case of time_varying==true, now that all elements are caught,
+    // alpha's and beta's can be obtained from explicit formulas
+//     for(unsigned int k = 0; k < NN ; k++){
+//         for(unsigned int i = 0 ; i < nn ; i++){
+//             for(unsigned int j = 0 ; j < nn ; j++){
+//                 if (k==1){
+//                     if (i==j){
+//                         
+//                         Beta[k][i][j] = B[i][j]*R_rho_i[]*B[][];
+// 
+// 
+//                     }
+//                     
+//                 }
+//                   
+// 
+//             }
+//         }
+// 
+//     }
+
+    // end of calculation of alpha's and beta's
+
+    #endif    
+
     // Update first nn elements of beq
     for(unsigned int j = 0; j < nn; j++){
         b[j] = 0.0;
