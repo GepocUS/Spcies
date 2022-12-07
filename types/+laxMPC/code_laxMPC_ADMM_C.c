@@ -131,24 +131,53 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     #if time_varying == 1
     // For the case of time_varying==true, now that all elements are caught,
     // alpha's and beta's can be obtained from explicit formulas
-//     for(unsigned int k = 0; k < NN ; k++){
-//         for(unsigned int i = 0 ; i < nn ; i++){
-//             for(unsigned int j = 0 ; j < nn ; j++){
-//                 if (k==1){
-//                     if (i==j){
-//                         
-//                         Beta[k][i][j] = B[i][j]*R_rho_i[]*B[][];
-// 
-// 
-//                     }
-//                     
-//                 }
-//                   
-// 
-//             }
-//         }
-// 
-//     }
+    for(unsigned int h = 0; h < NN ; h++){
+        for(unsigned int i = 0 ; i < nn ; i++){
+            for(unsigned int j = 0 ; j < nn ; j++){
+                if (h==0){
+                    if (i==j){
+
+                        for (unsigned int m = 0 ; m < mm ; m++){
+                            Beta[h][i][j] += B[i][m]*R_rho_i[m]*B[j][m];
+                        }
+                        
+                        Beta[h][i][j] += Q_rho_i[i];
+
+                        if(i>0){
+                            for(unsigned int l = 0 ; l <= i-1 ; l++){
+                                Beta[h][i][j] -= Beta[h][l][i]*Beta[h][l][i];
+                            }
+                            
+                        }
+
+                        Beta[h][i][j] = sqrt(Beta[h][i][j]);
+
+                    }
+
+                    else if (j>i){
+
+                        for (unsigned int m = 0 ; m<mm ; m++){
+                            Beta[h][i][j] += B[i][m]*R_rho_i[m]*B[j][m];
+                        }
+
+                        if(i>0){
+                            for(unsigned int l = 0 ; l <= i-1 ; l++){
+                                Beta[h][i][j] -= Beta[h][l][i]*Beta[h][l][j];
+                            }
+                            
+                        }
+
+                        Beta[h][i][j] = Beta[h][i][j]/Beta[h][i][i];
+
+                    }
+                    
+                }
+                  
+
+            }
+        }
+
+    }
 
     // end of calculation of alpha's and beta's
 
@@ -545,9 +574,9 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
     // All other elements except the last nn
     for(unsigned int l = 0; l < nn; l++){
-        for(unsigned int j = 0; j < nm; j++){
+        for(unsigned int j = 0; j < nn; j++){
             count++;
-            z_opt[count] = AB[l][j];
+            z_opt[count] = Beta[0][l][j];
             v_opt[count] = v[l][j];
             lambda_opt[count] = lambda[l][j];
         }
