@@ -134,7 +134,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     for(unsigned int h = 0; h < NN ; h++){
         for(unsigned int i = 0 ; i < nn ; i++){
             for(unsigned int j = 0 ; j < nn ; j++){
-                if (h==0){
+                if (h==0){ //Beta{0}
                     if (i==j){
 
                         for (unsigned int m = 0 ; m < mm ; m++){
@@ -171,6 +171,61 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
                     }
                     
+                } // Hasta aquí OK
+
+                else if (h<NN-1){ //Beta{1} to Beta{N-1}
+                    if(i==j){
+                        for(unsigned int n = 0 ; n < nn ; n++){
+                            Beta[h][i][j] += A[i][n]*Q_rho_i[n]*A[j][n];
+                        }
+
+                        for(unsigned int m = 0 ; m < mm ; m++){
+                            Beta[h][i][j] += B[i][m]*R_rho_i[m]*B[j][m];
+                        }
+
+                        Beta[h][i][j] += Q_rho_i[i];
+
+                        for(unsigned int k = 0 ; k < nn ; k++){
+                            Beta[h][i][j] -= Alpha[h-1][k][i]*Alpha[h-1][k][j];
+                        }
+                        
+                        if(i>0){
+                            for(unsigned int l = 0 ; l<=i-1 ; l++){
+                                Beta[h][i][j] -= Beta[h][l][i]*Beta[h][l][i];
+                            }
+                        }
+                        
+                        Beta[h][i][j] = sqrt(Beta[h][i][j]);
+
+                    }
+
+                    else if (j>i){
+                        
+                        for(unsigned int n = 0 ; n < nn ; n++){
+                            Beta[h][i][j] += A[i][n]*Q_rho_i[n]*A[j][n];
+                        }
+
+                        for(unsigned int m = 0 ; m < mm ; m++){
+                            Beta[h][i][j] += B[i][m]*R_rho_i[m]*B[j][m];
+                        }
+
+                        for(unsigned int k = 0 ; k < nn ; k++){
+                            Beta[h][i][j] -= Alpha[h-1][k][i]*Alpha[h-1][k][j];
+                        }
+
+                        if(i>0){
+                            for(unsigned int l = 0 ; l<=i-1 ; l++){
+                                Beta[h][i][j] -= Beta[h][l][i]*Beta[h][l][j];
+                            }
+                        }
+
+                        Beta[h][i][j] = Beta[h][i][j]/Beta[h][i][i];
+
+                    }
+
+                }
+
+                else{ //Beta{N}
                 }
                   
 
