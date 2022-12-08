@@ -23,7 +23,8 @@
 #if time_varying == 0
 void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt){
 #else
-void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *pointer_T, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt){
+// void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *pointer_T, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt){
+void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt){
 #endif
 
 #else
@@ -31,7 +32,8 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 #if time_varying == 0
 void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, int *pointer_k, int *e_flag, solution *sol){
 #else
-void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *pointer_T, double *u_opt, int *pointer_k, int *e_flag, solution *sol){
+// void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *pointer_T, double *u_opt, int *pointer_k, int *e_flag, solution *sol){
+void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, int *pointer_k, int *e_flag, solution *sol){
 #endif
 
 #endif
@@ -52,7 +54,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         double AB[nn][nm];
         double Q[nn];
         double R[mm];
-        double T[nn][nn];
+//         double T[nn][nn];
         double Hi[NN-1][nm];
         double Hi_0[mm];
         double Hi_N[nn][nn];
@@ -112,7 +114,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         Q_rho_i[i] = 1/(Q[i]+rho);
         for(unsigned int j = 0; j < nn; j++){
             A[i][j] = pointer_A[i+j*nn];
-            T[i][j] = pointer_T[i+j*nn];
+//             T[i][j] = pointer_T[i+j*nn];
             // Constructing AB: Part of A
             AB[i][j] = A[i][j];
         }
@@ -228,8 +230,54 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
                 else{ //Beta{N} // Todo Ok: Cálculo de Beta's y Alphas. Solo falta ésta
 
-                    
+                    if(i==j){
+                        for(unsigned int n=0 ; n<nn ; n++){
+                            Beta[h][i][j] += A[i][n] * Q_rho_i[n] * A[j][n];                         
+                        }
+                        for (unsigned int m=0 ; m<mm ; m++){
+                            Beta[h][i][j] += B[i][m] * R_rho_i[m] * B[j][m];
+                        }
 
+                        Beta[h][i][j] += T_rho_i[i][j];
+
+                        for(unsigned int k=0 ; k<nn ; k++){
+                            Beta[h][i][j] -= Alpha[h-1][k][i]*Alpha[h-1][k][j];
+                        }
+
+                        if(i>0){
+                            for(unsigned int l=0 ; l<=i-1 ; l++){
+                                Beta[h][i][j] -= Beta[h][l][i] * Beta[h][l][i];
+                            }
+                        }
+
+                        Beta[h][i][j] = sqrt(Beta[h][i][j]);
+
+                    }
+
+                    else if(j>i){
+                        for(unsigned int n=0 ; n<nn ; n++){
+                            Beta[h][i][j] += A[i][n] * Q_rho_i[n] * A[j][n];
+                        }
+                        for(unsigned int m=0 ; m<mm ; m++){
+                            Beta[h][i][j] += B[i][m] * R_rho_i[m] * B[j][m];
+                        }
+
+                        Beta[h][i][j] += T_rho_i[i][j];
+
+                        for(unsigned int k=0 ; k<nn ; k++){
+                            Beta[h][i][j] -= Alpha[h-1][k][i] * Alpha[h-1][k][j];
+                        }
+
+                        if(i>0){
+                            for(unsigned int l=0 ; l<=i-1 ; l++){
+                                Beta[h][i][j] -= Beta[h][l][i] * Beta[h][l][j];
+                            }
+                        }
+
+                        Beta[h][i][j] = Beta[h][i][j]/Beta[h][i][i];
+
+                    }
+                    
                 }
                   
 
@@ -665,7 +713,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     for(unsigned int l = 0; l < nn; l++){
         for(unsigned int j = 0; j < nn; j++){
             count++;
-            z_opt[count] = Alpha[1][l][j];
+            z_opt[count] = Beta[9][l][j];
             v_opt[count] = v[l][j];
             lambda_opt[count] = lambda[l][j];
         }
