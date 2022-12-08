@@ -106,6 +106,7 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, options, spcies_opti
     vars.n = n;
     vars.m = m;
     vars.N = N;
+    vars.T = -T;
     if ~options.time_varying
         vars.Hi_0 = diag(Hinv(1:m, 1:m));
         vars.Hi = reshape(diag(Hinv(m+(1:(N-1)*(n+m)),m+(1:(N-1)*(n+m)))), n+m, N-1)';
@@ -113,7 +114,8 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, options, spcies_opti
         vars.AB = [A B];
         vars.Q = -diag(Q);
         vars.R = -diag(R);
-        vars.T = -T;
+    else
+        vars.T_rho_i = inv(T+rho*eye(n));
     end
     vars.UB = UB;
     vars.LB = LB;
