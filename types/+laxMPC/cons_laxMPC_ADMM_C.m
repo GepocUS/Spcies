@@ -118,8 +118,8 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
         constCell = add_line(constCell, 'Beta', vars.Beta, 1, precision, var_options);
     else
         constCell = add_line(constCell, 'T_rho_i', vars.T_rho_i, 1, precision, var_options);
-        constCell = add_line(constCell, 'T', vars.T, 1, precision, var_options);
     end
+    constCell = add_line(constCell, 'T', vars.T, 1, precision, var_options);
     if solver_options.in_engineering
         constCell = add_line(constCell, 'scaling_x', vars.scaling_x, 1, precision, var_options);
         constCell = add_line(constCell, 'scaling_u', vars.scaling_u, 1, precision, var_options);
