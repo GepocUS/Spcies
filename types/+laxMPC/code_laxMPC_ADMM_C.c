@@ -58,8 +58,9 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         double Hi_N[nn][nn];
         double R_rho_i[mm] = {0.0}; // 1./(R+rho*eye(mm))
         double Q_rho_i[nn] = {0.0}; // 1./(Q+rho*eye(nn))
-        double Alpha[NN-1][nn][nn]={{{0.0}}};
-        double Beta[NN][nn][nn]={{{0.0}}};
+        double Alpha[NN-1][nn][nn] = {{{0.0}}};
+        double Beta[NN][nn][nn] = {{{0.0}}};
+        double inv_Beta[nn][nn] = {{0.0}}; // Inverse of only the current beta is stored
     #endif
     double v[NN-1][nm] = {{0.0}}; // Decision variables v
     double v_0[mm] = {0.0};
@@ -171,7 +172,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
                     }
                     
-                } // Hasta aquí OK
+                }
 
                 else if (h<NN-1){ //Beta{1} to Beta{N-1}
                     if(i==j){
@@ -225,11 +226,44 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
                 }
 
-                else{ //Beta{N}
+                else{ //Beta{N} // Todo Ok: Cálculo de Beta's y Alphas. Solo falta ésta
+
+                    
+
                 }
                   
 
             }
+        }
+
+        // Calculation of Alpha's
+        if (h < NN-1){
+            // Calculation of the inverse of the current Beta, needed for current Alpha
+            memset(inv_Beta, 0, sizeof(inv_Beta)); // Reset of inv_Beta when a new Beta is calculated
+            
+            for (int i=nn-1 ; i>=0 ; i--){
+                for (unsigned int j=0 ; j<nn ; j++){
+                    if(i==j){
+                        inv_Beta[i][i] = 1/Beta[h][i][i]; // Calculation of diagonal elements
+                    }
+                    else if (j>i){
+                        for(unsigned int k = i+1 ; k<=j ; k++){
+                            inv_Beta[i][j] += Beta[h][i][k]*inv_Beta[k][j];
+                        }
+                        inv_Beta[i][j] = -1/Beta[h][i][i]*inv_Beta[i][j];
+                    }
+                }
+            }
+
+            for (unsigned int i=0 ; i<nn ; i++){
+                for (unsigned int j=0 ; j<nn ; j++){
+                    for (unsigned int k=0 ; k<=i ; k++){
+                        Alpha[h][i][j] -= inv_Beta[k][i] * A[j][k] * Q_rho_i[k];
+                    }
+                }
+            }
+
+    
         }
 
     }
@@ -631,7 +665,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     for(unsigned int l = 0; l < nn; l++){
         for(unsigned int j = 0; j < nn; j++){
             count++;
-            z_opt[count] = Beta[0][l][j];
+            z_opt[count] = Alpha[1][l][j];
             v_opt[count] = v[l][j];
             lambda_opt[count] = lambda[l][j];
         }
