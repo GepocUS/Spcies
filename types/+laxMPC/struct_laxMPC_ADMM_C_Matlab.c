@@ -18,7 +18,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     double *B;
     double *Q;
     double *R;
-    double *T;
+//     double *T;
     #endif
     double *u_opt; // Local u_opt
     double *k; // Local k
@@ -31,7 +31,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     // Check number of inputs
     #if time_varying == 1
-    if(nrhs != 8){
+    if(nrhs != 7){
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:number",
                           "Not enough inputs");
     }
@@ -85,10 +85,10 @@ void mexFunction(int nlhs, mxArray *plhs[],
                           "R must be a diagonal vector of mm elements");
     }
 
-    if( !mxIsDouble(prhs[7]) || mxGetNumberOfElements(prhs[7]) != nn*nn ){
-        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:T",
-                          "T must be of dimension nn by nn");
-    }
+//     if( !mxIsDouble(prhs[7]) || mxGetNumberOfElements(prhs[7]) != nn*nn ){
+//         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:T",
+//                           "T must be of dimension nn by nn");
+//     }
 
     #endif
 
@@ -137,11 +137,11 @@ void mexFunction(int nlhs, mxArray *plhs[],
     R = mxGetPr(prhs[6]);
     #endif
 
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    T = mxGetDoubles(prhs[7]);
-    #else
-    T = mxGetPr(prhs[7]);
-    #endif
+//     #if MX_HAS_INTERLEAVED_COMPLEX
+//     T = mxGetDoubles(prhs[7]);
+//     #else
+//     T = mxGetPr(prhs[7]);
+//     #endif
 
     #endif
 
@@ -200,7 +200,8 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     // Call solver
     #if time_varying == 1
-    laxMPC_ADMM(x0, xr, ur, A, B, Q, R, T, u_opt, k, e_flag, z_opt, v_opt, lambda_opt);
+//     laxMPC_ADMM(x0, xr, ur, A, B, Q, R, T, u_opt, k, e_flag, z_opt, v_opt, lambda_opt);
+    laxMPC_ADMM(x0, xr, ur, A, B, Q, R, u_opt, k, e_flag, z_opt, v_opt, lambda_opt);
     #else
     laxMPC_ADMM(x0, xr, ur, u_opt, k, e_flag, z_opt, v_opt, lambda_opt);
     #endif
