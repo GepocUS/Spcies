@@ -115,6 +115,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         for(unsigned int j = 0; j < nn; j++){
             A[i][j] = pointer_A[i+j*nn];
 //             T[i][j] = pointer_T[i+j*nn];
+            Hi_N[i][j] = T_rho_i[i][j];
             // Constructing AB: Part of A
             AB[i][j] = A[i][j];
         }
@@ -122,12 +123,25 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
             if (i==0){
                 R[j] = pointer_R[j];
                 R_rho_i[j] = 1/(R[j]+rho);
+                Hi_0[j] = R_rho_i[j];
             }
             B[i][j] = pointer_B[i+j*nn];
             // Constructing AB: Part of B
             AB[i][nn+j] = B[i][j];
         }
 
+    }
+
+    // Constructing Hi
+    for(unsigned int i=0 ; i<NN-1 ; i++){
+        for(unsigned int j=0 ; j<nm ; j++){
+            if(j<nn){
+                Hi[i][j] = Q_rho_i[j];
+            }
+            else{
+                Hi[i][j] = R_rho_i[j-nn];
+            }
+        }
     }
     #endif
     
@@ -332,6 +346,14 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     }
 
     // end of calculation of alpha's and beta's
+
+    // Inverting Q and R, needed for the rest of the program
+    for(unsigned int i=0 ; i<nn ; i++){
+        Q[i] = -Q[i];
+    }
+    for(unsigned int i=0 ; i<mm ; i++){
+        R[i] = -R[i];
+    }
 
     #endif    
 
@@ -719,7 +741,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     int count = -1;
     for(unsigned int j = 0; j < mm; j++){
         count++;
-        z_opt[count] = Hi_0[j];
+        z_opt[count] = z_0[j];
         v_opt[count] = v_0[j];
         lambda_opt[count] = lambda_0[j];
     }
@@ -728,7 +750,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     for(unsigned int l = 0; l < nn; l++){
         for(unsigned int j = 0; j < nn; j++){
             count++;
-            z_opt[count] = Alpha[8][l][j];
+            z_opt[count] = z[l][j];
             v_opt[count] = v[l][j];
             lambda_opt[count] = lambda[l][j];
         }
