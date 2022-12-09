@@ -55,7 +55,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         double Q[nn];
         double R[mm];
 //         double T[nn][nn];
-        double Hi[NN-1][nm];
+        double Hi[NN-1][nm]; // Falta calcularles en línea el valor a estos tres
         double Hi_0[mm];
         double Hi_N[nn][nn];
         double R_rho_i[mm] = {0.0}; // 1./(R+rho*eye(mm))
@@ -228,7 +228,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
                 }
 
-                else{ //Beta{N} // Todo Ok: Cálculo de Beta's y Alphas. Solo falta ésta
+                else{ //Beta{N}
 
                     if(i==j){
                         for(unsigned int n=0 ; n<nn ; n++){
@@ -287,8 +287,15 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // Calculation of Alpha's
         if (h < NN-1){
             // Calculation of the inverse of the current Beta, needed for current Alpha
-            memset(inv_Beta, 0, sizeof(inv_Beta)); // Reset of inv_Beta when a new Beta is calculated
+//             memset(inv_Beta, 0, sizeof(inv_Beta)); // Reset of inv_Beta when a new Beta is calculated
             
+            for(unsigned int i=0 ; i<nn ; i++){
+                for(unsigned int j=0 ; j<nn ; j++){
+                    inv_Beta[i][j] = 0;
+                }
+            }
+
+
             for (int i=nn-1 ; i>=0 ; i--){
                 for (unsigned int j=0 ; j<nn ; j++){
                     if(i==j){
@@ -314,6 +321,14 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     
         }
 
+    }
+
+    for (unsigned int h=0 ; h<NN ; h++){
+
+        for (unsigned int i=0 ; i<nn ; i++){
+            Beta[h][i][i] = 1/Beta[h][i][i]; // We need to make the component-wise inversion of the diagonal elements of Beta's
+        }
+        
     }
 
     // end of calculation of alpha's and beta's
@@ -704,7 +719,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     int count = -1;
     for(unsigned int j = 0; j < mm; j++){
         count++;
-        z_opt[count] = z_0[j];
+        z_opt[count] = Hi_0[j];
         v_opt[count] = v_0[j];
         lambda_opt[count] = lambda_0[j];
     }
@@ -713,7 +728,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     for(unsigned int l = 0; l < nn; l++){
         for(unsigned int j = 0; j < nn; j++){
             count++;
-            z_opt[count] = Beta[9][l][j];
+            z_opt[count] = Alpha[8][l][j];
             v_opt[count] = v[l][j];
             lambda_opt[count] = lambda[l][j];
         }
