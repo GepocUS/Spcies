@@ -154,6 +154,7 @@ function constructor = cons_HMPC_ADMM_split_C(recipe)
     constCell = add_line(constCell, 'sigma', vars.sigma, 1, precision, var_options_penalty);
     constCell = add_line(constCell, 'sigma_i', vars.sigma_i, 1, precision, var_options_penalty);
     constCell = add_line(constCell, 'A', vars.A, 1, precision, var_options);
+    constCell = add_line(constCell, 'QQ', vars.Q, 1, precision, var_options);
     constCell = add_line(constCell, 'Te', vars.Te, 1, precision, var_options);
     constCell = add_line(constCell, 'Se', vars.Se, 1, precision, var_options);
     constCell = add_line(constCell, 'LB', vars.LB, 1, precision, var_options);

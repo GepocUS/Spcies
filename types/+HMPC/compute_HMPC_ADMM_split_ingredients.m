@@ -36,7 +36,7 @@ function var = compute_HMPC_ADMM_split_ingredients(controller, options, spcies_o
     if ~options.box_constraints
         if isa(controller.sys, 'ssModel')
             E = controller.sys.Cc;
-            F = controller.sys.Dc;
+            F = controller.sys.Dcu;
             LBy = controller.sys.LBy;
             UBy = controller.sys.UBy;   
         else
@@ -65,12 +65,12 @@ function var = compute_HMPC_ADMM_split_ingredients(controller, options, spcies_o
     
     %% Compute auxiliary terms used to compute the Hessian
     
-    % Sin and cos at each prediction step j: s_j = sin(w*(j-N)); c_j = cos(w*(j-N));
+    % Sin and cos at each prediction step j: s_j = sin(w*j); c_j = cos(w*j);
     s_j = zeros(1, N);
     c_j = zeros(1, N);
     for j = 0:N-1
-        s_j(j+1) = sin(w*(j-N));
-        c_j(j+1) = cos(w*(j-N));
+        s_j(j+1) = sin(w*j);
+        c_j(j+1) = cos(w*j);
     end
     
     % Terms obtained from the summation of sine and cosine
@@ -79,12 +79,12 @@ function var = compute_HMPC_ADMM_split_ingredients(controller, options, spcies_o
     s2_sum = 0;
     c2_sum = 0;
     sc_sum = 0;
-    for j = 1:N-1
-        s_sum = s_sum + sin(w*(j-N));
-        c_sum = c_sum + cos(w*(j-N));
-        s2_sum = s2_sum + sin(w*(j-N))^2;
-        c2_sum = c2_sum + cos(w*(j-N))^2;
-        sc_sum = sc_sum + sin(w*(j-N))*cos(w*(j-N));
+    for j = 0:N-1
+        s_sum = s_sum + sin(w*j);
+        c_sum = c_sum + cos(w*j);
+        s2_sum = s2_sum + sin(w*j)^2;
+        c2_sum = c2_sum + cos(w*j)^2;
+        sc_sum = sc_sum + sin(w*j)*cos(w*j);
     end
     
     %% Compute Hessian matrix and q vector
@@ -112,16 +112,9 @@ function var = compute_HMPC_ADMM_split_ingredients(controller, options, spcies_o
     end
 
     % Matrix H22
-    H22 = [Te + (N-1)*Q, s_sum*Q, c_sum*Q;
+    H22 = [Te + N*Q, s_sum*Q, c_sum*Q;
            s_sum*Q, Th + s2_sum*Q, sc_sum*Q;
            c_sum*Q, sc_sum*Q, Th + c2_sum*Q];
-    
-    % Add the j=0 tern to the summations of sines and cosines terms
-    s_sum = s_sum + sin(-w*N);
-    c_sum = c_sum + cos(-w*N);
-    s2_sum = s2_sum + sin(-w*N)^2;
-    c2_sum = c2_sum + cos(-w*N)^2;
-    sc_sum = sc_sum + sin(-w*N)*cos(-w*N);
     
     % Matrix H33
     H33 = [Se + N*R, s_sum*R, c_sum*R;
@@ -144,7 +137,7 @@ function var = compute_HMPC_ADMM_split_ingredients(controller, options, spcies_o
         G(i:i+n-1,((j-1)*(n+m)+(n+m+1)):((j-1)*(n+m)+(n+m+1)+n-1)) = -eye(n);
     end
     G = [B -eye(n) zeros(n, size(G, 2) - n); zeros(size(G, 1), m) G];
-    G = [G, [zeros(size(G, 1)-n, 3*(n+m)); -eye(n), zeros(n), -eye(n), zeros(n, 3*m)]];
+    G = [G, [zeros(size(G, 1)-n, 3*(n+m)); -eye(n), -eye(n)*sin(w*(N)), -eye(n)*cos(w*(N)), zeros(n, 3*m)]];
     G = [G; zeros(3*n, size(G, 2)-3*(n+m)), [(A - eye(n)) zeros(n, 2*n), B, zeros(n, 2*m);
                                             zeros(n), (A - cos(w)*eye(n)), sin(w)*eye(n), zeros(n, m), B, zeros(n, m);
                                             zeros(n), -sin(w)*eye(n), (A - cos(w)*eye(n)), zeros(n, 2*m), B]];
@@ -262,6 +255,7 @@ function var = compute_HMPC_ADMM_split_ingredients(controller, options, spcies_o
     var.n_y = n_y;
     var.n_soc = n_soc;
     
+    var.Q = Q;
     var.Te = Te;
     var.Se = Se;
     var.A = A;

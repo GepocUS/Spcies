@@ -17,26 +17,35 @@
  */
 
 #include <stdio.h>
+#ifdef MEASURE_TIME
+#include <time.h>
+#endif
 
 #ifdef CONF_MATLAB
 
 #if time_varying == 0
-void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt){
+void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
 #else
 // void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *pointer_T, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt){
-void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt){
+void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
 #endif
 
 #else
     
 #if time_varying == 0
-void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, int *pointer_k, int *e_flag, solution *sol){
+void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, int *pointer_k, int *e_flag, solution *sol, double *update_time, double *solve_time, double *polish_time, double *run_time){
 #else
 // void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *pointer_T, double *u_opt, int *pointer_k, int *e_flag, solution *sol){
-void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, int *pointer_k, int *e_flag, solution *sol){
+void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, int *pointer_k, int *e_flag, solution *sol, double *update_time, double *solve_time, double *polish_time, double *run_time){
 #endif
 
 #endif
+
+    #ifdef MEASURE_TIME
+    // Initialize time variables
+    struct timespec start, post_update, post_solve, post_polish;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+    #endif
 
     // Initialize ADMM variables
     int done = 0; // Flag used to determine when the algorithm should exit
@@ -377,6 +386,16 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         q[j+nn] = R[j]*ur[j];
     }
 
+    // Measure time
+    #ifdef MEASURE_TIME
+    clock_gettime(CLOCK_MONOTONIC_RAW, &post_update);
+    #ifdef CONF_MATLAB
+    *update_time = (double) ( (post_update.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_update.tv_nsec - start.tv_nsec) / 1000000.0 );
+    #else
+    sol->update_time = (double) ( (post_update.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_update.tv_nsec - start.tv_nsec) / 1000000.0 );
+    #endif
+    #endif
+
     // Algorithm
     while(done == 0){
 
@@ -713,6 +732,16 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
     }
 
+    // Measure time
+    #ifdef MEASURE_TIME
+    clock_gettime(CLOCK_MONOTONIC_RAW, &post_solve);
+    #ifdef CONF_MATLAB
+    *solve_time = (double) ( (post_solve.tv_sec - post_update.tv_sec) * 1000.0 ) + (double) ( (post_solve.tv_nsec - post_update.tv_nsec) / 1000000.0 );
+    #else
+    sol->solve_time = (double) ( (post_solve.tv_sec - post_update.tv_sec) * 1000.0 ) + (double) ( (post_solve.tv_nsec - post_update.tv_nsec) / 1000000.0 );
+    #endif
+    #endif
+
     // Control action
     #if in_engineering == 1
     for(unsigned int j = 0; j < mm; j++){
@@ -795,6 +824,18 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
     #endif
 
+    #endif
+
+    // Measure time
+    #ifdef MEASURE_TIME
+    clock_gettime(CLOCK_MONOTONIC_RAW, &post_polish);
+    #ifdef CONF_MATLAB
+    *run_time = (double) ( (post_polish.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - start.tv_nsec) / 1000000.0 );
+    *polish_time = (double) ( (post_polish.tv_sec - post_solve.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - post_solve.tv_nsec) / 1000000.0 );
+    #else
+    sol->run_time = (double) ( (post_polish.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - start.tv_nsec) / 1000000.0 );
+    sol->polish_time = (double) ( (post_polish.tv_sec - post_solve.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - post_solve.tv_nsec) / 1000000.0 );
+    #endif
     #endif
 
 }

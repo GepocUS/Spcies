@@ -93,12 +93,17 @@ for(unsigned int j = 0; j < nn; j++){
 // Update the elements of q corresponding to the reference
 for(unsigned int j = 0; j < nn; j++){
     for(unsigned int i = 0; i < nn; i++){
-        q[(NN-1)*nm+mm+j] -= Te[j][i]*xr[i];
+        q[(NN-1)*nm+mm+j] -= Te[j][i]*xr[i] + QQ[j][i]*x0[i];
+    }
+}
+for(unsigned int j = 0; j < nn; j++){
+    for(unsigned int i = 0; i < nn; i++){
+        q[(NN-1)*nm+2*nn+mm+j] -= QQ[j][i]*x0[i];
     }
 }
 for(unsigned int j = 0; j < mm; j++){
     for(unsigned int i = 0; i < mm; i++){
-        q[(NN-1)*nm+mm+3*nn+j] -= Se[j][i]*ur[i];
+        q[(NN-1)*nm+3*nn+mm+j] -= Se[j][i]*ur[i];
     }
 }
 

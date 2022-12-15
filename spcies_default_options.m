@@ -26,6 +26,7 @@
 %               option forces the use of an array if set to true.
 %   - time_varying: Boolean that determines if the model of the system
 %               might change during the execution of the control loop.
+%   - time: If set to true the solvers returns timing information.
 %
 % OUTPUTS:
 %   - def_opt: Structure containing the default options of the toolbox.
@@ -48,6 +49,7 @@ function [def_opt, def_method, def_subclass] = spcies_default_options()
     def_opt.const_are_static = true; % Determines if constant variables are defined as static
     def_opt.precision = 'double'; % Determines the precision of real numbers ('float' or 'double')
     def_opt.save = 1; % Determines if the file is saved (currently unused)
+    def_opt.time = 0; % Determines if timing results are measured and returned by the solvers
     
     % Default metods for each type of controller
     def_method.laxMPC = 'ADMM';
