@@ -19,6 +19,10 @@ void mexFunction(int nlhs, mxArray *plhs[],
     double *z_opt; // Local z_opt
     double *v_opt; // Local v_opt
     double *lambda_opt; // Local lambda_opt
+    double *update_time_sol; // Local update_time
+    double *solve_time_sol; // Local solve_time
+    double *polish_time_sol; // Local polish_time
+    double *run_time_sol; // Local run_time
 
     // Check inputs and outputs
 
@@ -74,8 +78,8 @@ void mexFunction(int nlhs, mxArray *plhs[],
     plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL); // k
     plhs[2] = mxCreateDoubleMatrix(1, 1, mxREAL); // e_flag
 
-    const char *field_names[] = {"z", "v", "lambda"};
-    plhs[3] = mxCreateStructMatrix(1, 1, 3, field_names);
+    const char *field_names[] = {"z", "v", "lambda", "update_time", "solve_time", "polish_time", "run_time"};
+    plhs[3] = mxCreateStructMatrix(1, 1, 7, field_names);
 
     #if MX_HAS_INTERLEAVED_COMPLEX
     u_opt = mxGetDoubles(plhs[0]);
@@ -95,10 +99,14 @@ void mexFunction(int nlhs, mxArray *plhs[],
     e_flag = mxGetData(plhs[2]);
     #endif
 
-    mxArray *z, *v, *lambda;
+    mxArray *z, *v, *lambda, *update_time, *solve_time, *polish_time, *run_time;
     z = mxCreateDoubleMatrix(NN*nm, 1, mxREAL);
     v = mxCreateDoubleMatrix(NN*nm, 1, mxREAL);
     lambda = mxCreateDoubleMatrix(NN*nm, 1, mxREAL);
+    update_time = mxCreateDoubleMatrix(1, 1, mxREAL);
+    solve_time = mxCreateDoubleMatrix(1, 1, mxREAL);
+    polish_time = mxCreateDoubleMatrix(1, 1, mxREAL);
+    run_time = mxCreateDoubleMatrix(1, 1, mxREAL);
 
     #if MX_HAS_INTERLEAVED_COMPLEX
     z_opt = mxGetDoubles(z);
@@ -118,12 +126,40 @@ void mexFunction(int nlhs, mxArray *plhs[],
     lambda_opt = mxGetData(lambda);
     #endif
 
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    update_time_sol = mxGetDoubles(update_time);
+    #else
+    update_time_sol = mxGetData(update_time);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    solve_time_sol = mxGetDoubles(solve_time);
+    #else
+    solve_time_sol = mxGetData(solve_time);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    polish_time_sol = mxGetDoubles(polish_time);
+    #else
+    polish_time_sol = mxGetData(polish_time);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    run_time_sol = mxGetDoubles(run_time);
+    #else
+    run_time_sol = mxGetData(run_time);
+    #endif
+
     mxSetField(plhs[3], 0, "z", z);
     mxSetField(plhs[3], 0, "v", v);
     mxSetField(plhs[3], 0, "lambda", lambda);
+    mxSetField(plhs[3], 0, "update_time", update_time);
+    mxSetField(plhs[3], 0, "solve_time", solve_time);
+    mxSetField(plhs[3], 0, "polish_time", polish_time);
+    mxSetField(plhs[3], 0, "run_time", run_time);
 
     // Call solver
-    laxMPC_ADMM(x0, xr, ur, u_opt, k, e_flag, z_opt, v_opt, lambda_opt);
+    laxMPC_ADMM(x0, xr, ur, u_opt, k, e_flag, z_opt, v_opt, lambda_opt, update_time_sol, solve_time_sol, polish_time_sol, run_time_sol);
 
 }
 

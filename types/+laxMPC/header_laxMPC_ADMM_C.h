@@ -7,11 +7,15 @@ typedef struct {
     double z[NN*nm]; // Optimal z
     double v[NN*nm]; // Optimal v
     double lambda[NN*nm]; // Optimal lambda
+    double update_time;
+    double solve_time;
+    double polish_time;
+    double run_time;
 } solution;
 
 #ifdef CONF_MATLAB
 
-void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt);
+void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time);
 
 #else
 

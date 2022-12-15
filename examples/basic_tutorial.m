@@ -94,6 +94,7 @@ solver_options.tol = 1e-3; % Exit tolerance of the solver
 % MEX file that will be generated, or the directory where the solver is saved.
 options.save_name = 'lax_solver';
 options.directory = '';
+options.time = true; % This option tells Spcies to measure the time internally.
 
 % If an empty field is provided (as in options.directory = ''), then
 % it is given its default value.
@@ -158,9 +159,11 @@ for i = 1:num_iter
     % to the system 'u', the number of iterations and an exit
     % flag (1: solution found, -1: maximum iterations).
     % The name of the function must match the string in 'save_name'.
-    tic;
-    [u, hK(i), hE(i)] = lax_solver(x, xr, ur);
-    hT(i) = toc;
+    % The info output is a structure that contains usefull information,
+    % such as the optimal solution of the MPC's optimization problem and
+    % the computation times of the solver.
+    [u, hK(i), hE(i), info] = lax_solver(x, xr, ur);
+    hT(i) = info.run_time;
     
     % Simulate the system
     x = sys.A*x + sys.B*u;
@@ -196,7 +199,7 @@ grid on;
 
 % Computation time
 subplot(2, 2, 3);
-bar(0:num_iter-1, hT*1000);
+bar(0:num_iter-1, hT);
 xlabel('Sample time');
 ylabel('Computation time [ms]');
 grid on;

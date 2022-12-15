@@ -51,6 +51,7 @@ classdef Spcies_problem
                 addParameter(par, 'const_are_static', def_options.const_are_static, @(x) islogical(x) || x==1 || x==0);
                 addParameter(par, 'precision', def_options.precision, @(x) ischar(x));
                 addParameter(par, 'save', def_options.save);
+                addParameter(par, 'time', def_options.time, @(x) islogical(x) || x==1 || x==0);
                 
             % Parse
             parse(par, varargin{:});
