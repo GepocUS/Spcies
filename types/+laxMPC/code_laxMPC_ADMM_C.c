@@ -17,8 +17,15 @@
  */
 
 #include <stdio.h>
+
 #ifdef MEASURE_TIME
+
+#if WIN32
+#include <Windows.h>
+#else // If Linux
 #include <time.h>
+#endif
+
 #endif
 
 #ifdef CONF_MATLAB
@@ -42,9 +49,22 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 #endif
 
     #ifdef MEASURE_TIME
+
+    #if WIN32
+    static LARGE_INTEGER frequency, start, post_update, post_solve, post_polish;
+    __int64 t_update_time, t_solve_time, t_polish_time, t_run_time; // Time in nano-seconds
+
+    if (frequency.QuadPart == 0){
+    QueryPerformanceFrequency(&frequency);}
+
+    QueryPerformanceCounter(&start); // Get time at the start
+
+    #else // If Linux
     // Initialize time variables
     struct timespec start, post_update, post_solve, post_polish;
     clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+    #endif
+
     #endif
 
     // Initialize ADMM variables
@@ -56,34 +76,34 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     #endif
     double x0[nn]; // Current system state
     double xr[nn]; // State reference
-    double ur[mm]; // Control input reference
+    double ur[mm_]; // Control input reference
     #if time_varying == 1
         double A[nn][nn];
-        double B[nn][mm];
+        double B[nn][mm_];
         double AB[nn][nm];
         double Q[nn];
-        double R[mm];
+        double R[mm_];
 //         double T[nn][nn];
         double Hi[NN-1][nm]; // Falta calcularles en línea el valor a estos tres
-        double Hi_0[mm];
+        double Hi_0[mm_];
         double Hi_N[nn][nn];
-        double R_rho_i[mm] = {0.0}; // 1./(R+rho*eye(mm))
+        double R_rho_i[mm_] = {0.0}; // 1./(R+rho*eye(mm))
         double Q_rho_i[nn] = {0.0}; // 1./(Q+rho*eye(nn))
         double Alpha[NN-1][nn][nn] = {{{0.0}}};
         double Beta[NN][nn][nn] = {{{0.0}}};
         double inv_Beta[nn][nn] = {{0.0}}; // Inverse of only the current beta is stored
     #endif
     double v[NN-1][nm] = {{0.0}}; // Decision variables v
-    double v_0[mm] = {0.0};
+    double v_0[mm_] = {0.0};
     double v_N[nn] = {0.0};
     double lambda[NN-1][nm] = {{0.0}}; // Dual variables lambda
-    double lambda_0[mm] = {0.0};
+    double lambda_0[mm_] = {0.0};
     double lambda_N[nn] = {0.0};
     double z[NN-1][nm] = {{0.0}}; // Decision variables z
-    double z_0[mm] = {0.0};
+    double z_0[mm_] = {0.0};
     double z_N[nn] = {0.0};
     double v1[NN-1][nm] = {{0.0}}; // Value of the decision variables z at the last iteration
-    double v1_0[mm] = {0.0};
+    double v1_0[mm_] = {0.0};
     double v1_N[nn] = {0.0};
     double aux_N[nn] = {0.0}; // Auxiliary array used for multiple purposes
     double mu[NN][nn] = {{0.0}}; // Used to solve the system of equations
@@ -103,7 +123,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         x0[i] = scaling_x[i]*( pointer_x0[i] - OpPoint_x[i] );
         xr[i] = scaling_x[i]*( pointer_xr[i] - OpPoint_x[i] );
     }
-    for(unsigned int i = 0; i < mm; i++){
+    for(unsigned int i = 0; i < mm_; i++){
         ur[i] = scaling_u[i]*( pointer_ur[i] - OpPoint_u[i] );
     }
     #endif
@@ -112,7 +132,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         x0[i] = pointer_x0[i];
         xr[i] = pointer_xr[i];
     }
-    for(unsigned int i = 0; i < mm; i++){
+    for(unsigned int i = 0; i < mm_; i++){
         ur[i] = pointer_ur[i];
     }
     #endif
@@ -128,7 +148,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
             // Constructing AB: Part of A
             AB[i][j] = A[i][j];
         }
-        for(unsigned int j=0; j < mm; j++){
+        for(unsigned int j=0; j < mm_; j++){
             if (i==0){
                 R[j] = pointer_R[j];
                 R_rho_i[j] = 1/(R[j]+rho);
@@ -155,6 +175,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     #endif
     
     #if time_varying == 1
+//     for (unsigned o = 0 ; o<20000 ; o++){ // Prueba para ver qué pasa con el update time. Problema: Disminuye el solve_time si lo pongo cuando time_varying esta a true. Preguntar.
     // For the case of time_varying==true, now that all elements are caught,
     // alpha's and beta's can be obtained from explicit formulas
     for(unsigned int h = 0; h < NN ; h++){
@@ -163,7 +184,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
                 if (h==0){ //Beta{0}
                     if (i==j){
 
-                        for (unsigned int m = 0 ; m < mm ; m++){
+                        for (unsigned int m = 0 ; m < mm_ ; m++){
                             Beta[h][i][j] += B[i][m]*R_rho_i[m]*B[j][m];
                         }
                         
@@ -182,7 +203,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
                     else if (j>i){
 
-                        for (unsigned int m = 0 ; m<mm ; m++){
+                        for (unsigned int m = 0 ; m<mm_ ; m++){
                             Beta[h][i][j] += B[i][m]*R_rho_i[m]*B[j][m];
                         }
 
@@ -205,7 +226,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
                             Beta[h][i][j] += A[i][n]*Q_rho_i[n]*A[j][n];
                         }
 
-                        for(unsigned int m = 0 ; m < mm ; m++){
+                        for(unsigned int m = 0 ; m < mm_ ; m++){
                             Beta[h][i][j] += B[i][m]*R_rho_i[m]*B[j][m];
                         }
 
@@ -231,7 +252,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
                             Beta[h][i][j] += A[i][n]*Q_rho_i[n]*A[j][n];
                         }
 
-                        for(unsigned int m = 0 ; m < mm ; m++){
+                        for(unsigned int m = 0 ; m < mm_ ; m++){
                             Beta[h][i][j] += B[i][m]*R_rho_i[m]*B[j][m];
                         }
 
@@ -257,7 +278,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
                         for(unsigned int n=0 ; n<nn ; n++){
                             Beta[h][i][j] += A[i][n] * Q_rho_i[n] * A[j][n];                         
                         }
-                        for (unsigned int m=0 ; m<mm ; m++){
+                        for (unsigned int m=0 ; m<mm_ ; m++){
                             Beta[h][i][j] += B[i][m] * R_rho_i[m] * B[j][m];
                         }
 
@@ -281,7 +302,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
                         for(unsigned int n=0 ; n<nn ; n++){
                             Beta[h][i][j] += A[i][n] * Q_rho_i[n] * A[j][n];
                         }
-                        for(unsigned int m=0 ; m<mm ; m++){
+                        for(unsigned int m=0 ; m<mm_ ; m++){
                             Beta[h][i][j] += B[i][m] * R_rho_i[m] * B[j][m];
                         }
 
@@ -353,14 +374,14 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         }
         
     }
-
+//     }
     // end of calculation of alpha's and beta's
 
     // Inverting Q and R, needed for the rest of the program
     for(unsigned int i=0 ; i<nn ; i++){
         Q[i] = -Q[i];
     }
-    for(unsigned int i=0 ; i<mm ; i++){
+    for(unsigned int i=0 ; i<mm_ ; i++){
         R[i] = -R[i];
     }
 
@@ -382,18 +403,38 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
             qT[j] = qT[j] + T[j][i]*xr[i];
         }
     }
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         q[j+nn] = R[j]*ur[j];
     }
 
     // Measure time
     #ifdef MEASURE_TIME
+
+    #if WIN32
+    QueryPerformanceCounter(&post_update); // Get time after the update    
+    t_update_time = 1000000000ULL * (post_update.QuadPart - start.QuadPart) / frequency.QuadPart;
+    #else // If Linux
     clock_gettime(CLOCK_MONOTONIC_RAW, &post_update);
+    #endif
+
     #ifdef CONF_MATLAB
+    
+    #if WIN32
+    *update_time = t_update_time/(double)1e+9;
+    #else // If Linux
     *update_time = (double) ( (post_update.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_update.tv_nsec - start.tv_nsec) / 1000000.0 );
+    #endif
+
     #else
+
+    #if WIN32
+    sol->update_time = t_update_time/(double)1e+9;
+    #else // If Linux
     sol->update_time = (double) ( (post_update.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_update.tv_nsec - start.tv_nsec) / 1000000.0 );
     #endif
+
+    #endif
+
     #endif
 
     // Algorithm
@@ -402,7 +443,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         k += 1; // Increment iteration counter
 
         // Step 0: Save the value of v into variable v1
-        memcpy(v1_0, v_0, sizeof(double)*mm);
+        memcpy(v1_0, v_0, sizeof(double)*mm_);
         memcpy(v1, v, sizeof(double)*(NN-1)*nm);
         memcpy(v1_N, v_N, sizeof(double)*nn);
 
@@ -412,7 +453,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // I store vector q_hat in z because I save memory and computation
         
         // Compute the first mm elements
-        for(unsigned int j = 0; j < mm; j++){
+        for(unsigned int j = 0; j < mm_; j++){
             #ifdef SCALAR_RHO
             z_0[j] = q[j+nn] + lambda_0[j] - rho*v_0[j];
             #else
@@ -446,7 +487,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // Compute the first nn elements
         for(unsigned int j = 0; j < nn; j++){
             mu[0][j] = Hi[0][j]*z[0][j] - b[j];
-            for(unsigned int i = 0; i < mm; i++){
+            for(unsigned int i = 0; i < mm_; i++){
                 mu[0][j] = mu[0][j] - AB[j][i+nn]*Hi_0[i]*z_0[i];
             }
         }
@@ -545,7 +586,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // Compute z (note that, from before, we have that at this point z = q_hat)
 
         // Compute the first mm elements
-        for(unsigned int j = 0; j < mm; j++){
+        for(unsigned int j = 0; j < mm_; j++){
             for(unsigned int i = 0; i < nn; i++){
                 z_0[j] = z_0[j] + AB[i][j+nn]*mu[0][i];
             }
@@ -579,7 +620,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // Step 2: Minimize w.r.t. v
 
         // Compute the first mm variables
-        for(unsigned int j = 0; j < mm; j++){
+        for(unsigned int j = 0; j < mm_; j++){
             #ifdef SCALAR_RHO
             v_0[j] = z_0[j] + rho_i*lambda_0[j];
             #else
@@ -631,7 +672,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // Step 3: Update lambda
 
         // Compute the first mm elements
-        for(unsigned int j = 0; j < mm; j++){
+        for(unsigned int j = 0; j < mm_; j++){
             #ifdef SCALAR_RHO
             lambda_0[j] = lambda_0[j] + rho*( z_0[j] - v_0[j] );
             #else
@@ -664,7 +705,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         res_flag = 0; // Reset the residual flag
 
         // Compute the first mm elements
-        for(unsigned int j = 0; j < mm; j++){
+        for(unsigned int j = 0; j < mm_; j++){
             res_fixed_point = v1_0[j] - v_0[j];
             res_primal_feas = z_0[j] - v_0[j];
             // Obtain absolute values
@@ -734,22 +775,42 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
     // Measure time
     #ifdef MEASURE_TIME
+    
+    #if WIN32
+    QueryPerformanceCounter(&post_solve); // Get time after solving
+    t_solve_time = 1000000000ULL * (post_solve.QuadPart - post_update.QuadPart) / frequency.QuadPart;
+    #else // If Linux
     clock_gettime(CLOCK_MONOTONIC_RAW, &post_solve);
+    #endif
+    
     #ifdef CONF_MATLAB
+    
+    #if WIN32
+    *solve_time = t_solve_time/(double)1e+9;
+    #else // If Linux
     *solve_time = (double) ( (post_solve.tv_sec - post_update.tv_sec) * 1000.0 ) + (double) ( (post_solve.tv_nsec - post_update.tv_nsec) / 1000000.0 );
+    #endif
+
     #else
+    
+    #if WIN32
+    sol->solve_time = t_solve_time/(double)1e+9;
+    #else // If Linux
     sol->solve_time = (double) ( (post_solve.tv_sec - post_update.tv_sec) * 1000.0 ) + (double) ( (post_solve.tv_nsec - post_update.tv_nsec) / 1000000.0 );
     #endif
+    
+    #endif
+    
     #endif
 
     // Control action
     #if in_engineering == 1
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         u_opt[j] = v_0[j]*scaling_i_u[j] + OpPoint_u[j];
     }
     #endif
     #if in_engineering == 0
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         u_opt[j] = v_0[j];
     }
     #endif
@@ -768,7 +829,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
     // First mm variables
     int count = -1;
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         count++;
         z_opt[count] = z_0[j];
         v_opt[count] = v_0[j];
@@ -797,7 +858,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
     // First mm variables
     int count = -1;
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         count++;
         sol->z[count] = z_0[j];
         sol->v[count] = v_0[j];
@@ -828,14 +889,37 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
     // Measure time
     #ifdef MEASURE_TIME
+    
+    #if WIN32
+    QueryPerformanceCounter(&post_polish); // Get time after polishing
+    t_run_time = 1000000000ULL * (post_polish.QuadPart - start.QuadPart) / frequency.QuadPart;
+    t_polish_time = 1000000000ULL * (post_polish.QuadPart - post_solve.QuadPart) / frequency.QuadPart;
+    #else // If Linux
     clock_gettime(CLOCK_MONOTONIC_RAW, &post_polish);
+    #endif
+
     #ifdef CONF_MATLAB
-    *run_time = (double) ( (post_polish.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - start.tv_nsec) / 1000000.0 );
+
+    #if WIN32
+    *run_time =  t_run_time/(double)1e+9;
+    *polish_time = t_polish_time/(double)1e+9;
+    #else // If Linux
+    *run_time =  (double) ( (post_polish.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - start.tv_nsec) / 1000000.0 );
     *polish_time = (double) ( (post_polish.tv_sec - post_solve.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - post_solve.tv_nsec) / 1000000.0 );
+    #endif
+
     #else
+
+    #if WIN32
+    sol->run_time = t_run_time/(double)1e+9;
+    sol->polish_time = t_polish_time/(double)1e+9;
+    #else // If Linux
     sol->run_time = (double) ( (post_polish.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - start.tv_nsec) / 1000000.0 );
     sol->polish_time = (double) ( (post_polish.tv_sec - post_solve.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - post_solve.tv_nsec) / 1000000.0 );
     #endif
+
+    #endif
+    
     #endif
 
 }

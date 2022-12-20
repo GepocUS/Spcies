@@ -1,7 +1,9 @@
 #ifndef $INSERT_NAME$_h
 #define $INSERT_NAME$_h
 
+
 $INSERT_DEFINES$
+
 
 typedef struct {
     double z[NN*nm]; // Optimal z
@@ -25,10 +27,10 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 #else
 
 #if time_varying == 0
-void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, int *pointer_k, int *e_flag, solution *sol, double *update_time, double *solve_time, double *polish_time, double *run_time);
+void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, int *pointer_k, int *e_flag, solution *sol);//, double *update_time, double *solve_time, double *polish_time, double *run_time);
 #else
 // void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *pointer_T, double *u_opt, int *pointer_k, int *e_flag, solution *sol);
-void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, int *pointer_k, int *e_flag, solution *sol, double *update_time, double *solve_time, double *polish_time, double *run_time);
+void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, int *pointer_k, int *e_flag, solution *sol);//, double *update_time, double *solve_time, double *polish_time, double *run_time);
 #endif
 
 #endif
