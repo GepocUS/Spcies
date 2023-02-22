@@ -80,7 +80,7 @@ function constructor = cons_equMPC_ADMM_C(recipe)
     % Defines
     defCell = [];
     defCell = add_line(defCell, 'nn', n, 1, 'uint', 'define');
-    defCell = add_line(defCell, 'mm', m, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'mm_', m, 1, 'uint', 'define');
     defCell = add_line(defCell, 'nm', n+m, 1, 'uint', 'define');
     defCell = add_line(defCell, 'NN', N, 1, 'uint', 'define');
     defCell = add_line(defCell, 'k_max', solver_options.k_max, 1, 'uint', 'define');
