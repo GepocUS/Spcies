@@ -90,6 +90,9 @@ function constructor = cons_equMPC_ADMM_C(recipe)
     if solver_options.debug
         defCell = add_line(defCell, 'DEBUG', 1, 1, 'bool', 'define');
     end
+    if recipe.options.time
+        defCell = add_line(defCell, 'MEASURE_TIME', 1, 1, 'bool', 'define');
+    end
 
     % Constants
     constCell = [];
