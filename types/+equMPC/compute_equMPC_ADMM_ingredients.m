@@ -86,10 +86,11 @@ function vars = compute_equMPC_ADMM_ingredients(controller, options, spcies_opti
     Aeq = Aeq(:,1:end-n);
     
     %% Compute matrix W
-    Hinv = inv(Hhat);
-    W = Aeq*Hinv*Aeq';
-    Wc = chol(W);
-    
+    if ~options.time_varying
+        Hinv = inv(Hhat);
+        W = Aeq*Hinv*Aeq';
+        Wc = chol(W);
+    end
     %% Compute the tightened constraints
     if isa(controller, 'EqualityMPC')
         LB = [controller.model.LBx; controller.model.LBu];
