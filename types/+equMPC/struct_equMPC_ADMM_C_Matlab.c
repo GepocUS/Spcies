@@ -137,7 +137,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     #endif
 
     // Prepare output data
-    plhs[0] = mxCreateDoubleMatrix(mm, 1, mxREAL); // u_opt
+    plhs[0] = mxCreateDoubleMatrix(mm_, 1, mxREAL); // u_opt
     plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL); // k
     plhs[2] = mxCreateDoubleMatrix(1, 1, mxREAL); // e_flag
 
@@ -163,9 +163,9 @@ void mexFunction(int nlhs, mxArray *plhs[],
     #endif
 
     mxArray *z, *v, *lambda, *update_time, *solve_time, *polish_time, *run_time;
-    z = mxCreateDoubleMatrix((NN-1)*nm+mm, 1, mxREAL);
-    v = mxCreateDoubleMatrix((NN-1)*nm+mm, 1, mxREAL);
-    lambda = mxCreateDoubleMatrix((NN-1)*nm+mm, 1, mxREAL);
+    z = mxCreateDoubleMatrix((NN-1)*nm+mm_, 1, mxREAL);
+    v = mxCreateDoubleMatrix((NN-1)*nm+mm_, 1, mxREAL);
+    lambda = mxCreateDoubleMatrix((NN-1)*nm+mm_, 1, mxREAL);
     update_time = mxCreateDoubleMatrix(1, 1, mxREAL);
     solve_time = mxCreateDoubleMatrix(1, 1, mxREAL);
     polish_time = mxCreateDoubleMatrix(1, 1, mxREAL);
