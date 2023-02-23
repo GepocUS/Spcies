@@ -18,6 +18,16 @@
 
 #include <stdio.h>
 
+#ifdef MEASURE_TIME
+
+#if WIN32
+#include <Windows.h>
+#else // If Linux
+#include <time.h>
+#endif
+
+#endif
+
 #ifdef CONF_MATLAB
 
 #if time_varying == 0
@@ -35,6 +45,25 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 #endif
 
 #endif
+
+    #ifdef MEASURE_TIME
+
+    #if WIN32
+    static LARGE_INTEGER frequency, start, post_update, post_solve, post_polish;
+    __int64 t_update_time, t_solve_time, t_polish_time, t_run_time; // Time in nano-seconds
+
+    if (frequency.QuadPart == 0){
+    QueryPerformanceFrequency(&frequency);}
+
+    QueryPerformanceCounter(&start); // Get time at the start
+
+    #else // If Linux
+    // Initialize time variables
+    struct timespec start, post_update, post_solve, post_polish;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+    #endif
+
+    #endif
 
     // Initialize ADMM variables
     int done = 0; // Flag used to determine when the algorithm should exit
@@ -171,6 +200,36 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     for(unsigned int j = 0; j < mm_; j++){
         q[j+nn] = R[j]*ur[j];
     }
+
+        // Measure time
+    #ifdef MEASURE_TIME
+
+    #if WIN32
+    QueryPerformanceCounter(&post_update); // Get time after the update    
+    t_update_time = 1000000000ULL * (post_update.QuadPart - start.QuadPart) / frequency.QuadPart;
+    #else // If Linux
+    clock_gettime(CLOCK_MONOTONIC_RAW, &post_update);
+    #endif
+
+    #ifdef CONF_MATLAB
+    
+    #if WIN32
+    *update_time = t_update_time/(double)1e+9;
+    #else // If Linux
+    *update_time = (double) ( (post_update.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_update.tv_nsec - start.tv_nsec) / 1000000.0 );
+    #endif
+
+    #else
+
+    #if WIN32
+    sol->update_time = t_update_time/(double)1e+9;
+    #else // If Linux
+    sol->update_time = (double) ( (post_update.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_update.tv_nsec - start.tv_nsec) / 1000000.0 );
+    #endif
+
+    #endif
+
+    #endif
 
     // Algorithm
     while(done == 0){
@@ -445,6 +504,37 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
     }
 
+    // Measure time
+    #ifdef MEASURE_TIME
+    
+    #if WIN32
+    QueryPerformanceCounter(&post_solve); // Get time after solving
+    t_solve_time = 1000000000ULL * (post_solve.QuadPart - post_update.QuadPart) / frequency.QuadPart;
+    #else // If Linux
+    clock_gettime(CLOCK_MONOTONIC_RAW, &post_solve);
+    #endif
+    
+    #ifdef CONF_MATLAB
+    
+    #if WIN32
+    *solve_time = t_solve_time/(double)1e+9;
+    #else // If Linux
+    *solve_time = (double) ( (post_solve.tv_sec - post_update.tv_sec) * 1000.0 ) + (double) ( (post_solve.tv_nsec - post_update.tv_nsec) / 1000000.0 );
+    #endif
+
+    #else
+    
+    #if WIN32
+    sol->solve_time = t_solve_time/(double)1e+9;
+    #else // If Linux
+    sol->solve_time = (double) ( (post_solve.tv_sec - post_update.tv_sec) * 1000.0 ) + (double) ( (post_solve.tv_nsec - post_update.tv_nsec) / 1000000.0 );
+    #endif
+    
+    #endif
+    
+    #endif
+
+
     // Control action
     #if in_engineering == 1
     for(unsigned int j = 0; j < mm_; j++){
@@ -511,6 +601,41 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
     #endif
 
+    #endif
+
+    // Measure time
+    #ifdef MEASURE_TIME
+    
+    #if WIN32
+    QueryPerformanceCounter(&post_polish); // Get time after polishing
+    t_run_time = 1000000000ULL * (post_polish.QuadPart - start.QuadPart) / frequency.QuadPart;
+    t_polish_time = 1000000000ULL * (post_polish.QuadPart - post_solve.QuadPart) / frequency.QuadPart;
+    #else // If Linux
+    clock_gettime(CLOCK_MONOTONIC_RAW, &post_polish);
+    #endif
+
+    #ifdef CONF_MATLAB
+
+    #if WIN32
+    *run_time =  t_run_time/(double)1e+9;
+    *polish_time = t_polish_time/(double)1e+9;
+    #else // If Linux
+    *run_time =  (double) ( (post_polish.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - start.tv_nsec) / 1000000.0 );
+    *polish_time = (double) ( (post_polish.tv_sec - post_solve.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - post_solve.tv_nsec) / 1000000.0 );
+    #endif
+
+    #else
+
+    #if WIN32
+    sol->run_time = t_run_time/(double)1e+9;
+    sol->polish_time = t_polish_time/(double)1e+9;
+    #else // If Linux
+    sol->run_time = (double) ( (post_polish.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - start.tv_nsec) / 1000000.0 );
+    sol->polish_time = (double) ( (post_polish.tv_sec - post_solve.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - post_solve.tv_nsec) / 1000000.0 );
+    #endif
+
+    #endif
+    
     #endif
 
 }
