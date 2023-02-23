@@ -23,11 +23,18 @@ $INSERT_CONSTANTS$
 
 #ifdef CONF_MATLAB
 
-void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt){
+#if time_varying == 0
+void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
+#else
+void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt, , double *update_time, double *solve_time, double *polish_time, double *run_time){
 
 #else
 
+#if time_varying == 0
 void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, int *pointer_k, int *e_flag, sol_laxMPC_FISTA *sol){
+#else
+void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, int *pointer_k, int *e_flag, sol_laxMPC_FISTA *sol){
+#endif
 
 #endif
 
@@ -42,6 +49,19 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
     double x0[nn] = {0.0}; // Current system state
     double xr[nn] = {0.0}; // State reference
     double ur[mm] = {0.0}; // Control input reference
+    #if time_varying == 1
+        double A[nn][nn];
+        double B[nn][mm_];
+        double AB[nn][nm];
+        double Q[nn];
+        double R[mm_];
+        double QRi[nm];
+        double Ri[mm_] = {0.0}; // 1./(diag(R))
+        double Qi[nn] = {0.0}; // 1./(diag(Q))
+        double Alpha[NN-1][nn][nn] = {{{0.0}}};
+        double Beta[NN][nn][nn] = {{{0.0}}};
+        double inv_Beta[nn][nn] = {{0.0}}; // Inverse of only the current beta is stored
+    #endif
     double z[NN-1][nm] = {{0.0}}; // Primal decision variables
     double z_0[mm] = {0.0};
     double z_N[nn] = {0.0};
@@ -88,7 +108,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
     // Update the reference
     for(unsigned int j = 0; j < nn; j++){
         q[j] = Q[j]*xr[j];
-        qT[j] = T[j]*xr[j];
+        qT[j] = T[j]*xr[j]; // Revisar si esto hay que dejarlo así, o si necesitamos T completa (matriz diagonal)
     }
     for(unsigned int j = 0; j < mm; j++){
         q[j+nn] = R[j]*ur[j];
