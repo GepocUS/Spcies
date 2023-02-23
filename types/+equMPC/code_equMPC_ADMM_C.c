@@ -20,11 +20,19 @@
 
 #ifdef CONF_MATLAB
 
-void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt){
+#if time_varying == 0
+void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
+#else
+void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
+#endif
 
 #else
 
+#if time_varying == 0
 void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, int *pointer_k, int *e_flag, solution *sol){
+#else
+void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, double *pointer_k, double *e_flag, solution *sol){
+#endif
 
 #endif
 
@@ -38,15 +46,28 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     double x0[nn]; // Current system state
     double xr[nn]; // State reference
     double ur[mm]; // Control input reference
+    #if time_varying == 1
+        double A[nn][nn];
+        double B[nn][mm_];
+        double AB[nn][nm];
+        double Q[nn];
+        double R[mm_];
+        double Hi[NN-1][nm];
+        double Hi_0[mm_];
+        double R_rho_i[mm_] = {0.0}; // 1./(R+rho*eye(mm))
+        double Q_rho_i[nn] = {0.0}; // 1./(Q+rho*eye(nn))
+        double Alpha[NN-1][nn][nn] = {{{0.0}}};
+        double Beta[NN][nn][nn] = {{{0.0}}};
+        double inv_Beta[nn][nn] = {{0.0}}; // Inverse of only the current beta is stored
+    #endif
     double v[NN-1][nm] = {{0.0}}; // Decision variables v
-    double v_0[mm] = {0.0};
+    double v_0[mm_] = {0.0};
     double lambda[NN-1][nm] = {{0.0}}; // Dual variables lambda
-    double lambda_0[mm] = {0.0};
+    double lambda_0[mm_] = {0.0};
     double z[NN-1][nm] = {{0.0}}; // Decision variables z
-    double z_0[mm] = {0.0};
+    double z_0[mm_] = {0.0};
     double v1[NN-1][nm] = {{0.0}}; // Value of the decision variables z at the last iteration
-    double v1_0[mm] = {0.0};
-    double aux_N[nn] = {0.0}; // Auxiliary array used for multiple purposes
+    double v1_0[mm_] = {0.0};
     double mu[NN][nn] = {{0.0}}; // Used to solve the system of equations
     unsigned int res_flag = 0; // Flag used to determine if the exit condition is satisfied
     double res_fixed_point; // Variable used to determine if a fixed point has been reached
@@ -76,6 +97,64 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         ur[i] = pointer_ur[i];
     }
     #endif
+
+    #if time_varying == 1
+    for(unsigned int i = 0; i < nn; i++){
+        Q[i] = pointer_Q[i];
+        Q_rho_i[i] = 1/(Q[i]+rho);
+        for(unsigned int j = 0; j < nn; j++){
+            A[i][j] = pointer_A[i+j*nn];
+            // Constructing AB: Part of A
+            AB[i][j] = A[i][j];
+        }
+        for(unsigned int j=0; j < mm_; j++){
+            if (i==0){
+                R[j] = pointer_R[j];
+                R_rho_i[j] = 1/(R[j]+rho);
+                Hi_0[j] = R_rho_i[j];
+            }
+            B[i][j] = pointer_B[i+j*nn];
+            // Constructing AB: Part of B
+            AB[i][nn+j] = B[i][j];
+        }
+
+    }
+
+    // Constructing Hi
+    for(unsigned int i=0 ; i<NN-1 ; i++){
+        for(unsigned int j=0 ; j<nm ; j++){
+            if(j<nn){
+                Hi[i][j] = Q_rho_i[j];
+            }
+            else{
+                Hi[i][j] = R_rho_i[j-nn];
+            }
+        }
+    }
+    #endif
+
+
+    // Here goes the calculation of alpha's and beta's
+    #if time_varying == 1
+
+    
+
+
+
+//     REMEMBER AFTER THE CALCULATION OF ALPHA'S AND BETA'S TO UNCOMMENT THIS
+
+//     // end of calculation of alpha's and beta's
+// 
+//     // Inverting Q and R, needed for the rest of the program
+//     for(unsigned int i=0 ; i<nn ; i++){
+//         Q[i] = -Q[i];
+//     }
+//     for(unsigned int i=0 ; i<mm_ ; i++){
+//         R[i] = -R[i];
+//     }
+    #endif
+
+
  
     // Update first nn elements of beq
     for(unsigned int j = 0; j < nn; j++){
