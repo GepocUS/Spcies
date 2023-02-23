@@ -165,22 +165,211 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
     // Here goes the calculation of alpha's and beta's
     #if time_varying == 1
+    
+    for(unsigned int h = 0; h < NN ; h++){
+        for(unsigned int i = 0 ; i < nn ; i++){
+            for(unsigned int j = 0 ; j < nn ; j++){
+                if (h==0){ //Beta{0}
+                    if (i==j){
+
+                        for (unsigned int m = 0 ; m < mm_ ; m++){
+                            Beta[h][i][j] += B[i][m]*R_rho_i[m]*B[j][m];
+                        }
+                        
+                        Beta[h][i][j] += Q_rho_i[i];
+
+                        if(i>0){
+                            for(unsigned int l = 0 ; l <= i-1 ; l++){
+                                Beta[h][i][j] -= Beta[h][l][i]*Beta[h][l][i];
+                            }
+                            
+                        }
+
+                        Beta[h][i][j] = sqrt(Beta[h][i][j]);
+
+                    }
+
+                    else if (j>i){
+
+                        for (unsigned int m = 0 ; m<mm_ ; m++){
+                            Beta[h][i][j] += B[i][m]*R_rho_i[m]*B[j][m];
+                        }
+
+                        if(i>0){
+                            for(unsigned int l = 0 ; l <= i-1 ; l++){
+                                Beta[h][i][j] -= Beta[h][l][i]*Beta[h][l][j];
+                            }
+                            
+                        }
+
+                        Beta[h][i][j] = Beta[h][i][j]/Beta[h][i][i];
+
+                    }
+                    
+                }
+
+                else if (h<NN-1){ //Beta{1} to Beta{N-1}
+                    if(i==j){
+                        for(unsigned int n = 0 ; n < nn ; n++){
+                            Beta[h][i][j] += A[i][n]*Q_rho_i[n]*A[j][n];
+                        }
+
+                        for(unsigned int m = 0 ; m < mm_ ; m++){
+                            Beta[h][i][j] += B[i][m]*R_rho_i[m]*B[j][m];
+                        }
+
+                        Beta[h][i][j] += Q_rho_i[i];
+
+                        for(unsigned int k = 0 ; k < nn ; k++){
+                            Beta[h][i][j] -= Alpha[h-1][k][i]*Alpha[h-1][k][j];
+                        }
+                        
+                        if(i>0){
+                            for(unsigned int l = 0 ; l<=i-1 ; l++){
+                                Beta[h][i][j] -= Beta[h][l][i]*Beta[h][l][i];
+                            }
+                        }
+                        
+                        Beta[h][i][j] = sqrt(Beta[h][i][j]);
+
+                    }
+
+                    else if (j>i){
+                        
+                        for(unsigned int n = 0 ; n < nn ; n++){
+                            Beta[h][i][j] += A[i][n]*Q_rho_i[n]*A[j][n];
+                        }
+
+                        for(unsigned int m = 0 ; m < mm_ ; m++){
+                            Beta[h][i][j] += B[i][m]*R_rho_i[m]*B[j][m];
+                        }
+
+                        for(unsigned int k = 0 ; k < nn ; k++){
+                            Beta[h][i][j] -= Alpha[h-1][k][i]*Alpha[h-1][k][j];
+                        }
+
+                        if(i>0){
+                            for(unsigned int l = 0 ; l<=i-1 ; l++){
+                                Beta[h][i][j] -= Beta[h][l][i]*Beta[h][l][j];
+                            }
+                        }
+
+                        Beta[h][i][j] = Beta[h][i][j]/Beta[h][i][i];
+
+                    }
+
+                }
+
+                else{ //Beta{N}
+
+                    if(i==j){
+                        for(unsigned int n=0 ; n<nn ; n++){
+                            Beta[h][i][j] += A[i][n] * Q_rho_i[n] * A[j][n];                         
+                        }
+
+                        for (unsigned int m=0 ; m<mm_ ; m++){
+                            Beta[h][i][j] += B[i][m] * R_rho_i[m] * B[j][m];
+                        }
+
+                        for(unsigned int k=0 ; k<nn ; k++){
+                            Beta[h][i][j] -= Alpha[h-1][k][i]*Alpha[h-1][k][j];
+                        }
+
+                        if(i>0){
+                            for(unsigned int l=0 ; l<=i-1 ; l++){
+                                Beta[h][i][j] -= Beta[h][l][i] * Beta[h][l][i];
+                            }
+                        }
+
+                        Beta[h][i][j] = sqrt(Beta[h][i][j]);
+
+                    }
+
+                    else if(j>i){
+                        for(unsigned int n=0 ; n<nn ; n++){
+                            Beta[h][i][j] += A[i][n] * Q_rho_i[n] * A[j][n];
+                        }
+
+                        for(unsigned int m=0 ; m<mm_ ; m++){
+                            Beta[h][i][j] += B[i][m] * R_rho_i[m] * B[j][m];
+                        }
+                        
+                        for(unsigned int k=0 ; k<nn ; k++){
+                            Beta[h][i][j] -= Alpha[h-1][k][i] * Alpha[h-1][k][j];
+                        }
+
+                        if(i>0){
+                            for(unsigned int l=0 ; l<=i-1 ; l++){
+                                Beta[h][i][j] -= Beta[h][l][i] * Beta[h][l][j];
+                            }
+                        }
+
+                        Beta[h][i][j] = Beta[h][i][j]/Beta[h][i][i];
+
+                    }
+                    
+                }
+                  
+
+            }
+        }
+
+        // Calculation of Alpha's
+        if (h < NN-1){
+            // Calculation of the inverse of the current Beta, needed for current Alpha
+//             memset(inv_Beta, 0, sizeof(inv_Beta)); // Reset of inv_Beta when a new Beta is calculated
+            
+            for(unsigned int i=0 ; i<nn ; i++){
+                for(unsigned int j=0 ; j<nn ; j++){
+                    inv_Beta[i][j] = 0;
+                }
+            }
+
+
+            for (int i=nn-1 ; i>=0 ; i--){
+                for (unsigned int j=0 ; j<nn ; j++){
+                    if(i==j){
+                        inv_Beta[i][i] = 1/Beta[h][i][i]; // Calculation of diagonal elements
+                    }
+                    else if (j>i){
+                        for(unsigned int k = i+1 ; k<=j ; k++){
+                            inv_Beta[i][j] += Beta[h][i][k]*inv_Beta[k][j];
+                        }
+                        inv_Beta[i][j] = -1/Beta[h][i][i]*inv_Beta[i][j];
+                    }
+                }
+            }
+
+            for (unsigned int i=0 ; i<nn ; i++){
+                for (unsigned int j=0 ; j<nn ; j++){
+                    for (unsigned int k=0 ; k<=i ; k++){
+                        Alpha[h][i][j] -= inv_Beta[k][i] * A[j][k] * Q_rho_i[k];
+                    }
+                }
+            }
 
     
+        }
 
+    }
 
+    for (unsigned int h=0 ; h<NN ; h++){
 
-//     REMEMBER AFTER THE CALCULATION OF ALPHA'S AND BETA'S TO UNCOMMENT THIS
+        for (unsigned int i=0 ; i<nn ; i++){
+            Beta[h][i][i] = 1/Beta[h][i][i]; // We need to make the component-wise inversion of the diagonal elements of Beta's
+        }
+        
+    }
 
-//     // end of calculation of alpha's and beta's
-// 
-//     // Inverting Q and R, needed for the rest of the program
-//     for(unsigned int i=0 ; i<nn ; i++){
-//         Q[i] = -Q[i];
-//     }
-//     for(unsigned int i=0 ; i<mm_ ; i++){
-//         R[i] = -R[i];
-//     }
+    // End of calculation of Alpha's and Beta's
+
+    // Inverting Q and R, needed for the rest of the program
+    for(unsigned int i=0 ; i<nn ; i++){
+        Q[i] = -Q[i];
+    }
+    for(unsigned int i=0 ; i<mm_ ; i++){
+        R[i] = -R[i];
+    }
     #endif
 
 
