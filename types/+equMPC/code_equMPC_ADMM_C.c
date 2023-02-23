@@ -45,7 +45,7 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     #endif
     double x0[nn]; // Current system state
     double xr[nn]; // State reference
-    double ur[mm]; // Control input reference
+    double ur[mm_]; // Control input reference
     #if time_varying == 1
         double A[nn][nn];
         double B[nn][mm_];
@@ -84,7 +84,7 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         x0[i] = scaling_x[i]*( pointer_x0[i] - OpPoint_x[i] );
         xr[i] = scaling_x[i]*( pointer_xr[i] - OpPoint_x[i] );
     }
-    for(unsigned int i = 0; i < mm; i++){
+    for(unsigned int i = 0; i < mm_; i++){
         ur[i] = scaling_u[i]*( pointer_ur[i] - OpPoint_u[i] );
     }
     #endif
@@ -93,7 +93,7 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         x0[i] = pointer_x0[i];
         xr[i] = pointer_xr[i];
     }
-    for(unsigned int i = 0; i < mm; i++){
+    for(unsigned int i = 0; i < mm_; i++){
         ur[i] = pointer_ur[i];
     }
     #endif
@@ -168,7 +168,7 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     for(unsigned int j = 0; j < nn; j++){
         q[j] = Q[j]*xr[j];
     }
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         q[j+nn] = R[j]*ur[j];
     }
 
@@ -178,7 +178,7 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         k += 1; // Increment iteration counter
 
         // Step 0: Save the value of v into variable v1
-        memcpy(v1_0, v_0, sizeof(double)*mm);
+        memcpy(v1_0, v_0, sizeof(double)*mm_);
         memcpy(v1, v, sizeof(double)*(NN-1)*nm);
 
         // Step 1: Minimize w.r.t. z
@@ -187,7 +187,7 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // I store vector q_hat in z because I save memory and computation
         
         // Compute the first mm elements
-        for(unsigned int j = 0; j < mm; j++){
+        for(unsigned int j = 0; j < mm_; j++){
             #ifdef SCALAR_RHO
             z_0[j] = q[j+nn] + lambda_0[j] - rho*v_0[j];
             #else
@@ -212,7 +212,7 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // Compute the first nn elements
         for(unsigned int j = 0; j < nn; j++){
             mu[0][j] = Hi[0][j]*z[0][j] - b[j];
-            for(unsigned int i = 0; i < mm; i++){
+            for(unsigned int i = 0; i < mm_; i++){
                 mu[0][j] = mu[0][j] - AB[j][i+nn]*Hi_0[i]*z_0[i];
             }
         }
@@ -309,7 +309,7 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // Compute z (note that, from before, we have that at this point z = q_hat)
 
         // Compute the first mm elements
-        for(unsigned int j = 0; j < mm; j++){
+        for(unsigned int j = 0; j < mm_; j++){
             for(unsigned int i = 0; i < nn; i++){
                 z_0[j] = z_0[j] + AB[i][j+nn]*mu[0][i];
             }
@@ -332,7 +332,7 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // Step 2: Minimize w.r.t. v
 
         // Compute the first mm variables
-        for(unsigned int j = 0; j < mm; j++){
+        for(unsigned int j = 0; j < mm_; j++){
             #ifdef SCALAR_RHO
             v_0[j] = z_0[j] + rho_i*lambda_0[j];
             #else
@@ -368,7 +368,7 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // Step 3: Update lambda
 
         // Compute the first mm elements
-        for(unsigned int j = 0; j < mm; j++){
+        for(unsigned int j = 0; j < mm_; j++){
             #ifdef SCALAR_RHO
             lambda_0[j] = lambda_0[j] + rho*( z_0[j] - v_0[j] );
             #else
@@ -392,7 +392,7 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         res_flag = 0; // Reset the residual flag
 
         // Compute the first mm elements
-        for(unsigned int j = 0; j < mm; j++){
+        for(unsigned int j = 0; j < mm_; j++){
             res_fixed_point = v1_0[j] - v_0[j];
             res_primal_feas = z_0[j] - v_0[j];
             // Obtain absolute values
@@ -447,12 +447,12 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
     // Control action
     #if in_engineering == 1
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         u_opt[j] = v_0[j]*scaling_i_u[j] + OpPoint_u[j];
     }
     #endif
     #if in_engineering == 0
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         u_opt[j] = v_0[j];
     }
     #endif
@@ -471,7 +471,7 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
     // First mm variables
     int count = -1;
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         count++;
         z_opt[count] = z_0[j];
         v_opt[count] = v_0[j];
@@ -492,7 +492,7 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
     // First mm variables
     int count = -1;
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         count++;
         sol->z[count] = z_0[j];
         sol->v[count] = v_0[j];
