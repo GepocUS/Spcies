@@ -61,7 +61,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
                           "xr must be of dimension nn");
     }
     // Check that ur is of the correct dimension
-    if( !mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != mm ){
+    if( !mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != mm_ ){
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:ur",
                           "ur must be of dimension mm");
     }
@@ -135,7 +135,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     #endif
 
     // Prepare output data
-    plhs[0] = mxCreateDoubleMatrix(mm, 1, mxREAL); // u_opt
+    plhs[0] = mxCreateDoubleMatrix(mm_, 1, mxREAL); // u_opt
     plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL); // k
     plhs[2] = mxCreateDoubleMatrix(1, 1, mxREAL); // e_flag
 
