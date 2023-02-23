@@ -108,11 +108,11 @@ function vars = compute_equMPC_ADMM_ingredients(controller, options, spcies_opti
         vars.Hi_0 = diag(Hinv(1:m, 1:m));
         vars.Hi = reshape(diag(Hinv(m+(1:(N-1)*(n+m)),m+(1:(N-1)*(n+m)))), n+m, N-1)';
         vars.AB = [A B];
-        vars.UB = UB;
-        vars.LB = LB;
         vars.Q = -diag(Q);
         vars.R = -diag(R);
     end
+    vars.UB = UB;
+    vars.LB = LB;
     
     % rho
     if (vars.rho_is_scalar)
