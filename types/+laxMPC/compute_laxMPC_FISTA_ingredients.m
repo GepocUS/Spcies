@@ -69,10 +69,11 @@ function vars = compute_laxMPC_FISTA_ingredients(controller, options, spcies_opt
     Aeq = [B -eye(n) zeros(n, size(Aeq, 2) - n); zeros(size(Aeq, 1), m) Aeq]; % Initial condition
     
     %% Compute matrix W
-    Hinv = inv(H);
-    W = Aeq*Hinv*Aeq';
-    Wc = chol(W);
-    
+    if ~options.time_varying
+        Hinv = inv(H);
+        W = Aeq*Hinv*Aeq';
+        Wc = chol(W);
+    end    
     %% Compute the tightened constraints
     if isa(controller, 'LaxMPC')
         LB = [controller.model.LBx; controller.model.LBu];
@@ -86,14 +87,18 @@ function vars = compute_laxMPC_FISTA_ingredients(controller, options, spcies_opt
     vars.n = n;
     vars.m = m;
     vars.N = N;
-    vars.AB = [A B];
+    vars.T = -diag(T); % Creo que aquí para nuestras alpha's y beta's, esto va a haber que pasarlo sin el diag
+    vars.Ti = -1./diag(T);
+
+    if ~options.time_varying
+        vars.AB = [A B];
+        vars.Q = -diag(Q);
+        vars.R = -diag(R);
+        vars.QRi = -[1./diag(Q); 1./diag(R)];
+    end
+    
     vars.UB = UB;
     vars.LB = LB;
-    vars.Q = -diag(Q);
-    vars.R = -diag(R);
-    vars.T = -diag(T);
-    vars.QRi = -[1./diag(Q); 1./diag(R)];
-    vars.Ti = -1./diag(T);
     
     % Scaling vectors and operating point
     if isa(controller, 'LaxMPC')
@@ -131,16 +136,18 @@ function vars = compute_laxMPC_FISTA_ingredients(controller, options, spcies_opt
     end
     
     % Alpha and Beta
-    vars.Beta = zeros(n,n,N);
-    vars.Alpha = zeros(n,n,N-1);
-    for i = 1:N
-        vars.Beta(:,:,i) = Wc((i-1)*n+(1:n),(i-1)*n+(1:n));
-        for j = 1:n
-            vars.Beta(j,j,i) = 1/vars.Beta(j,j,i);
+    if ~options.time_varying
+        vars.Beta = zeros(n,n,N);
+        vars.Alpha = zeros(n,n,N-1);
+        for i = 1:N
+            vars.Beta(:,:,i) = Wc((i-1)*n+(1:n),(i-1)*n+(1:n));
+            for j = 1:n
+                vars.Beta(j,j,i) = 1/vars.Beta(j,j,i);
+            end
         end
-    end
-    for i = 1:N-1
-        vars.Alpha(:,:,i) = Wc((i-1)*n+(1:n),i*n+(1:n));
+        for i = 1:N-1
+            vars.Alpha(:,:,i) = Wc((i-1)*n+(1:n),i*n+(1:n));
+        end
     end
     
 end

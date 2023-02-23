@@ -85,8 +85,12 @@ function constructor = cons_laxMPC_FISTA_C(recipe)
     defCell = add_line(defCell, 'k_max', solver_options.k_max, 1, 'uint', 'define');
     defCell = add_line(defCell, 'tol', solver_options.tol, 1, 'float', 'define');
     defCell = add_line(defCell, 'in_engineering', solver_options.in_engineering, 1, 'int', 'define');
+    defCell= add_line(defCell, 'time_varying', solver_options.time_varying, 1, 'int', 'define');
     if solver_options.debug
         defCell = add_line(defCell, 'DEBUG', 1, 1, 'bool', 'define');
+    end
+    if recipe.options.time
+        defCell = add_line(defCell, 'MEASURE_TIME', 1, 1, 'bool', 'define');
     end
     
     % Constants
@@ -104,13 +108,15 @@ function constructor = cons_laxMPC_FISTA_C(recipe)
         constCell = add_line(constCell, 'LB', vars.LB, 1, precision, var_options);
         constCell = add_line(constCell, 'UB', vars.UB, 1, precision, var_options);
     end
-    constCell = add_line(constCell, 'AB', vars.AB, 1, precision, var_options);
-    constCell = add_line(constCell, 'Alpha', vars.Alpha, 1, precision, var_options);
-    constCell = add_line(constCell, 'Beta', vars.Beta, 1, precision, var_options);
-    constCell = add_line(constCell, 'Q', vars.Q, 1, precision, var_options);
-    constCell = add_line(constCell, 'R', vars.R, 1, precision, var_options);
+    if ~solver_options.time_varying
+        constCell = add_line(constCell, 'AB', vars.AB, 1, precision, var_options);
+        constCell = add_line(constCell, 'Alpha', vars.Alpha, 1, precision, var_options);
+        constCell = add_line(constCell, 'Beta', vars.Beta, 1, precision, var_options);
+        constCell = add_line(constCell, 'Q', vars.Q, 1, precision, var_options);
+        constCell = add_line(constCell, 'R', vars.R, 1, precision, var_options);
+        constCell = add_line(constCell, 'QRi', vars.QRi, 1, precision, var_options);
+    end
     constCell = add_line(constCell, 'T', vars.T, 1, precision, var_options);
-    constCell = add_line(constCell, 'QRi', vars.QRi, 1, precision, var_options);
     constCell = add_line(constCell, 'Ti', vars.Ti, 1, precision, var_options);
     if solver_options.in_engineering
         constCell = add_line(constCell, 'scaling_x', vars.scaling_x, 1, precision, var_options);
