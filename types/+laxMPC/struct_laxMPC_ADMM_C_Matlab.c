@@ -76,7 +76,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     
     if( !mxIsDouble(prhs[4]) || mxGetNumberOfElements(prhs[4]) != nn*mm_ ){
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:B",
-                          "A must be of dimension nn by mm");
+                          "B must be of dimension nn by mm");
     }
 
     if( !mxIsDouble(prhs[5]) || mxGetNumberOfElements(prhs[5]) != nn ){
