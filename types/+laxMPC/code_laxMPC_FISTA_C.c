@@ -18,15 +18,38 @@
 
 #include <stdio.h>
 
+#ifdef MEASURE_TIME
+
+#if WIN32
+#include <Windows.h>
+#else // If Linux
+#include <time.h>
+#endif
+
+#endif
+
 // Constant variables
 $INSERT_CONSTANTS$
+#if time_varying == 1
+    static double A[nn][nn];
+    static double B[nn][mm_];
+    static double AB[nn][nm];
+    static double Q[nn];
+    static double R[mm_];
+    static double QRi[nm];
+    static double Ri[mm_]; // 1./(diag(R)) Needed for calculation of Alpha's and Beta's online
+    static double Qi[nn]; // 1./(diag(Q)) Needed for calculation of Alpha's and Beta's online
+    static double Alpha[NN-1][nn][nn] = {{{0.0}}};
+    static double Beta[NN][nn][nn] = {{{0.0}}};
+    static double inv_Beta[nn][nn] = {{0.0}}; // Inverse of only the current beta is stored
+#endif
 
 #ifdef CONF_MATLAB
 
 #if time_varying == 0
 void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
 #else
-void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt, , double *update_time, double *solve_time, double *polish_time, double *run_time){
+void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
 #endif
 
 #else
@@ -36,6 +59,25 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
 #else
 void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, int *pointer_k, int *e_flag, sol_laxMPC_FISTA *sol){
 #endif
+
+#endif
+
+#ifdef MEASURE_TIME
+
+    #if WIN32
+    static LARGE_INTEGER frequency, start, post_update, post_solve, post_polish;
+    __int64 t_update_time, t_solve_time, t_polish_time, t_run_time; // Time in nano-seconds
+
+    if (frequency.QuadPart == 0){
+    QueryPerformanceFrequency(&frequency);}
+
+    QueryPerformanceCounter(&start); // Get time at the start
+
+    #else // If Linux
+    // Initialize time variables
+    struct timespec start, post_update, post_solve, post_polish;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+    #endif
 
 #endif
 
@@ -50,19 +92,6 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
     double x0[nn] = {0.0}; // Current system state
     double xr[nn] = {0.0}; // State reference
     double ur[mm_] = {0.0}; // Control input reference
-    #if time_varying == 1
-        double A[nn][nn];
-        double B[nn][mm_];
-        double AB[nn][nm];
-        double Q[nn];
-        double R[mm_];
-        double QRi[nm];
-        double Ri[mm_] = {0.0}; // 1./(diag(R)) Needed for calculation of Alpha's and Beta's online
-        double Qi[nn] = {0.0}; // 1./(diag(Q)) Needed for calculation of Alpha's and Beta's online
-        double Alpha[NN-1][nn][nn] = {{{0.0}}};
-        double Beta[NN][nn][nn] = {{{0.0}}};
-        double inv_Beta[nn][nn] = {{0.0}}; // Inverse of only the current beta is stored
-    #endif
     double z[NN-1][nm] = {{0.0}}; // Primal decision variables
     double z_0[mm_] = {0.0};
     double z_N[nn] = {0.0};
@@ -123,7 +152,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
             QRi[i] = -Qi[i];
         }
         else{
-            QRi[i] = -Ri[i];
+            QRi[i] = -Ri[i-nn];
         }
     }
     #endif
@@ -140,7 +169,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
                             Beta[h][i][j] += B[i][m]*Ri[m]*B[j][m];
                         }
                         
-                        Beta[h][i][j] += Q_rho_i[i];
+                        Beta[h][i][j] += Qi[i];
 
                         if(i>0){
                             for(unsigned int l = 0 ; l <= i-1 ; l++){
@@ -182,7 +211,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
                             Beta[h][i][j] += B[i][m]*Ri[m]*B[j][m];
                         }
 
-                        Beta[h][i][j] += Q_rho_i[i];
+                        Beta[h][i][j] += Qi[i];
 
                         for(unsigned int k = 0 ; k < nn ; k++){
                             Beta[h][i][j] -= Alpha[h-1][k][i]*Alpha[h-1][k][j];
@@ -309,7 +338,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
             for (unsigned int i=0 ; i<nn ; i++){
                 for (unsigned int j=0 ; j<nn ; j++){
                     for (unsigned int k=0 ; k<=i ; k++){
-                        Alpha[h][i][j] -= inv_Beta[k][i] * A[j][k] * Q_rho_i[k];
+                        Alpha[h][i][j] -= inv_Beta[k][i] * A[j][k] * Qi[k];
                     }
                 }
             }
@@ -355,6 +384,36 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
     for(unsigned int j = 0; j < mm_; j++){
         q[j+nn] = R[j]*ur[j];
     }
+
+    // Measure time
+    #ifdef MEASURE_TIME
+
+    #if WIN32
+    QueryPerformanceCounter(&post_update); // Get time after the update    
+    t_update_time = 1000000000ULL * (post_update.QuadPart - start.QuadPart) / frequency.QuadPart;
+    #else // If Linux
+    clock_gettime(CLOCK_MONOTONIC_RAW, &post_update);
+    #endif
+
+    #ifdef CONF_MATLAB
+    
+    #if WIN32
+    *update_time = t_update_time/(double)1e+9;
+    #else // If Linux
+    *update_time = (double) ( (post_update.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_update.tv_nsec - start.tv_nsec) / 1000000.0 );
+    #endif
+
+    #else
+
+    #if WIN32
+    sol->update_time = t_update_time/(double)1e+9;
+    #else // If Linux
+    sol->update_time = (double) ( (post_update.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_update.tv_nsec - start.tv_nsec) / 1000000.0 );
+    #endif
+
+    #endif
+
+    #endif
 
     // Initial steps 
 
@@ -457,6 +516,36 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
         }
 
     }
+
+    // Measure time
+    #ifdef MEASURE_TIME
+    
+    #if WIN32
+    QueryPerformanceCounter(&post_solve); // Get time after solving
+    t_solve_time = 1000000000ULL * (post_solve.QuadPart - post_update.QuadPart) / frequency.QuadPart;
+    #else // If Linux
+    clock_gettime(CLOCK_MONOTONIC_RAW, &post_solve);
+    #endif
+    
+    #ifdef CONF_MATLAB
+    
+    #if WIN32
+    *solve_time = t_solve_time/(double)1e+9;
+    #else // If Linux
+    *solve_time = (double) ( (post_solve.tv_sec - post_update.tv_sec) * 1000.0 ) + (double) ( (post_solve.tv_nsec - post_update.tv_nsec) / 1000000.0 );
+    #endif
+
+    #else
+    
+    #if WIN32
+    sol->solve_time = t_solve_time/(double)1e+9;
+    #else // If Linux
+    sol->solve_time = (double) ( (post_solve.tv_sec - post_update.tv_sec) * 1000.0 ) + (double) ( (post_solve.tv_nsec - post_update.tv_nsec) / 1000000.0 );
+    #endif
+    
+    #endif
+    
+    #endif
 
     // Control action
     #if in_engineering == 1
@@ -627,6 +716,42 @@ void compute_z_lambda_laxMPC_FISTA(double *z_0, double z[][nm], double *z_N, dou
 
 }
 
+        // Measure time
+    #ifdef MEASURE_TIME
+    
+    #if WIN32
+    QueryPerformanceCounter(&post_polish); // Get time after polishing
+    t_run_time = 1000000000ULL * (post_polish.QuadPart - start.QuadPart) / frequency.QuadPart;
+    t_polish_time = 1000000000ULL * (post_polish.QuadPart - post_solve.QuadPart) / frequency.QuadPart;
+    #else // If Linux
+    clock_gettime(CLOCK_MONOTONIC_RAW, &post_polish);
+    #endif
+
+    #ifdef CONF_MATLAB
+
+    #if WIN32
+    *run_time =  t_run_time/(double)1e+9;
+    *polish_time = t_polish_time/(double)1e+9;
+    #else // If Linux
+    *run_time =  (double) ( (post_polish.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - start.tv_nsec) / 1000000.0 );
+    *polish_time = (double) ( (post_polish.tv_sec - post_solve.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - post_solve.tv_nsec) / 1000000.0 );
+    #endif
+
+    #else
+
+    #if WIN32
+    sol->run_time = t_run_time/(double)1e+9;
+    sol->polish_time = t_polish_time/(double)1e+9;
+    #else // If Linux
+    sol->run_time = (double) ( (post_polish.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - start.tv_nsec) / 1000000.0 );
+    sol->polish_time = (double) ( (post_polish.tv_sec - post_solve.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - post_solve.tv_nsec) / 1000000.0 );
+    #endif
+
+    #endif
+    
+    #endif
+
+
 /* compute_residual_laxMPC_FISTA
 *
 */
@@ -730,6 +855,7 @@ void solve_W_matrix_form(double mu[][nn]){
             }
             mu[0][j] = Beta[0][j][j]*mu[0][j];
         }
+
 
 }
 
