@@ -18,6 +18,9 @@
 
 #include <stdio.h>
 
+// Constant variables
+$INSERT_CONSTANTS$
+
 #ifdef CONF_MATLAB
 
 #if time_varying == 0
@@ -61,7 +64,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
         double inv_Beta[nn][nn] = {{0.0}}; // Inverse of only the current beta is stored
     #endif
     double z[NN-1][nm] = {{0.0}}; // Primal decision variables
-    double z_0[mm] = {0.0};
+    double z_0[mm_] = {0.0};
     double z_N[nn] = {0.0};
     double y[NN][nn] = {{0.0}}; // Linearization point
     double lambda[NN][nn] = {{0.0}}; // Dual variables
@@ -75,16 +78,13 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
     double res = 0.0; // For storing the absolute value of each element of the residual vector
     unsigned int res_flag = 0; // Flag used to determine if the exit condition is satisfied
 
-    // Constant variables
-    $INSERT_CONSTANTS$
-
     // Obtain variables in scaled units
     #if in_engineering == 1
     for(unsigned int i = 0; i < nn; i++){
         x0[i] = scaling_x[i]*( pointer_x0[i] - OpPoint_x[i] );
         xr[i] = scaling_x[i]*( pointer_xr[i] - OpPoint_x[i] );
     }
-    for(unsigned int i = 0; i < mm; i++){
+    for(unsigned int i = 0; i < mm_; i++){
         ur[i] = scaling_u[i]*( pointer_ur[i] - OpPoint_u[i] );
     }
     #endif
@@ -93,7 +93,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
         x0[i] = pointer_x0[i];
         xr[i] = pointer_xr[i];
     }
-    for(unsigned int i = 0; i < mm; i++){
+    for(unsigned int i = 0; i < mm_; i++){
         ur[i] = pointer_ur[i];
     }
     #endif
@@ -228,10 +228,10 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
 
                     if(i==j){
                         for(unsigned int n=0 ; n<nn ; n++){
-                            Beta[h][i][j] += A[i][n] * Q_rho_i[n] * A[j][n];                         
+                            Beta[h][i][j] += A[i][n] * Qi[n] * A[j][n];                         
                         }
                         for (unsigned int m=0 ; m<mm_ ; m++){
-                            Beta[h][i][j] += B[i][m] * R_rho_i[m] * B[j][m];
+                            Beta[h][i][j] += B[i][m] * Ri[m] * B[j][m];
                         }
 
                         Beta[h][i][j] -= Ti[i]; // Here the sign should be +=, but Ti is multiplied by -1 in the computation of the ingredients
@@ -252,13 +252,13 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
 
                     else if(j>i){
                         for(unsigned int n=0 ; n<nn ; n++){
-                            Beta[h][i][j] += A[i][n] * Q_rho_i[n] * A[j][n];
+                            Beta[h][i][j] += A[i][n] * Qi[n] * A[j][n];
                         }
                         for(unsigned int m=0 ; m<mm_ ; m++){
-                            Beta[h][i][j] += B[i][m] * R_rho_i[m] * B[j][m];
+                            Beta[h][i][j] += B[i][m] * Ri[m] * B[j][m];
                         }
 
-//                         Beta[h][i][j] -= T_rho_i[i][j]; // Uncomment this when T is not only diagonal
+//                         Beta[h][i][j] -= Ti[i][j]; // This doesn't proceed since T is diagonal in our FISTA
 
                         for(unsigned int k=0 ; k<nn ; k++){
                             Beta[h][i][j] -= Alpha[h-1][k][i] * Alpha[h-1][k][j];
@@ -326,19 +326,17 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
         }
         
     }
+    // End of calculation of Alpha's and Beta's
+    
+    // Inverting Q and R, needed for the rest of the program
+    for(unsigned int i=0 ; i<nn ; i++){
+        Q[i] = -Q[i];
+    }
+    for(unsigned int i=0 ; i<mm_ ; i++){
+        R[i] = -R[i];
+    }
 
     #endif
-
-
-    // Fin de cálculo de Alpha's y Beta's
-//   DESCOMENTAR, TAMBIÉN HACE FALTA 
-//     Inverting Q and R, needed for the rest of the program
-//     for(unsigned int i=0 ; i<nn ; i++){
-//         Q[i] = -Q[i];
-//     }
-//     for(unsigned int i=0 ; i<mm_ ; i++){
-//         R[i] = -R[i];
-//     }
 
 
     // Update first nn elements of beq
@@ -349,12 +347,12 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
         }
     }
 
-    // Update the reference
+     // Update the reference
     for(unsigned int j = 0; j < nn; j++){
         q[j] = Q[j]*xr[j];
-        qT[j] = T[j]*xr[j]; // Revisar si esto hay que dejarlo así, o si necesitamos T completa (matriz diagonal)
+        qT[j] = T[j]*xr[j];
     }
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         q[j+nn] = R[j]*ur[j];
     }
 
@@ -462,12 +460,12 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
 
     // Control action
     #if in_engineering == 1
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         u_opt[j] = z_0[j]*scaling_i_u[j] + OpPoint_u[j];
     }
     #endif
     #if in_engineering == 0
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         u_opt[j] = z_0[j];
     }
     #endif
@@ -488,7 +486,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
 
     // First mm variables
     int count = -1;
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         count++;
         z_opt[count] = z_0[j];
     }
@@ -521,7 +519,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
 
     // First mm variables
     int count = -1;
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         count++;
         sol->z[count] = z_0[j];
     }
@@ -562,7 +560,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
 void compute_z_lambda_laxMPC_FISTA(double *z_0, double z[][nm], double *z_N, double lambda[][nn], double *q, double *qT){
 
     // Compute first mm elements
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
 
         // Compute the q - G'*lambda part
         z_0[j] = q[j+nn];
@@ -616,7 +614,7 @@ void compute_z_lambda_laxMPC_FISTA(double *z_0, double z[][nm], double *z_N, dou
         z_N[j] = qT[j] + lambda[NN-1][j];
 
         // Compute the solution of the QP
-        z_N[j] = z_N[j]*Ti[j]; // Multiply by the inverse of the Hessian
+        z_N[j] = z_N[j]*Ti[j]; // Multiply by the inverse of the Hessian //REVISAR QUÉ HAY QUE HACER AQUÍ SI T NO ES DIAGONAL
         #ifdef VAR_BOUNDS
         z_N[j] = (z_N[j] > LBN[j]) ? z_N[j] : LBN[j]; // maximum between v and the lower bound
         z_N[j] = (z_N[j] > UBN[j]) ? UBN[j] : z_N[j]; // minimum between v and the upper bound
@@ -638,7 +636,7 @@ void compute_residual_vector_laxMPC_FISTA(double res_vec[][nn], double *z_0, dou
     // Compute the first nn elements
     for(unsigned int j = 0; j < nn; j++){
             res_vec[0][j] = b[j] + z[0][j];
-        for(unsigned int i = 0; i < mm; i++){
+        for(unsigned int i = 0; i < mm_; i++){
             res_vec[0][j] = res_vec[0][j] - AB[j][i+nn]*z_0[i];
         }
     }
