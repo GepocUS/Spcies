@@ -638,6 +638,44 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
 
     #endif
 
+
+    // Measure time
+    #ifdef MEASURE_TIME
+    
+    #if WIN32
+    QueryPerformanceCounter(&post_polish); // Get time after polishing
+    t_run_time = 1000000000ULL * (post_polish.QuadPart - start.QuadPart) / frequency.QuadPart;
+    t_polish_time = 1000000000ULL * (post_polish.QuadPart - post_solve.QuadPart) / frequency.QuadPart;
+    #else // If Linux
+    clock_gettime(CLOCK_MONOTONIC_RAW, &post_polish);
+    #endif
+
+    #ifdef CONF_MATLAB
+
+    #if WIN32
+    *run_time =  t_run_time/(double)1e+9;
+    *polish_time = t_polish_time/(double)1e+9;
+    #else // If Linux
+    *run_time =  (double) ( (post_polish.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - start.tv_nsec) / 1000000.0 );
+    *polish_time = (double) ( (post_polish.tv_sec - post_solve.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - post_solve.tv_nsec) / 1000000.0 );
+    #endif
+
+    #else
+
+    #if WIN32
+    sol->run_time = t_run_time/(double)1e+9;
+    sol->polish_time = t_polish_time/(double)1e+9;
+    #else // If Linux
+    sol->run_time = (double) ( (post_polish.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - start.tv_nsec) / 1000000.0 );
+    sol->polish_time = (double) ( (post_polish.tv_sec - post_solve.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - post_solve.tv_nsec) / 1000000.0 );
+    #endif
+
+    #endif
+    
+    #endif
+
+
+
 }
 
 /* compute_z_lambda_laxMPC_FISTA()
@@ -713,41 +751,6 @@ void compute_z_lambda_laxMPC_FISTA(double *z_0, double z[][nm], double *z_N, dou
     }
 
 }
-
-        // Measure time
-    #ifdef MEASURE_TIME
-    
-    #if WIN32
-    QueryPerformanceCounter(&post_polish); // Get time after polishing
-    t_run_time = 1000000000ULL * (post_polish.QuadPart - start.QuadPart) / frequency.QuadPart;
-    t_polish_time = 1000000000ULL * (post_polish.QuadPart - post_solve.QuadPart) / frequency.QuadPart;
-    #else // If Linux
-    clock_gettime(CLOCK_MONOTONIC_RAW, &post_polish);
-    #endif
-
-    #ifdef CONF_MATLAB
-
-    #if WIN32
-    *run_time =  t_run_time/(double)1e+9;
-    *polish_time = t_polish_time/(double)1e+9;
-    #else // If Linux
-    *run_time =  (double) ( (post_polish.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - start.tv_nsec) / 1000000.0 );
-    *polish_time = (double) ( (post_polish.tv_sec - post_solve.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - post_solve.tv_nsec) / 1000000.0 );
-    #endif
-
-    #else
-
-    #if WIN32
-    sol->run_time = t_run_time/(double)1e+9;
-    sol->polish_time = t_polish_time/(double)1e+9;
-    #else // If Linux
-    sol->run_time = (double) ( (post_polish.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - start.tv_nsec) / 1000000.0 );
-    sol->polish_time = (double) ( (post_polish.tv_sec - post_solve.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - post_solve.tv_nsec) / 1000000.0 );
-    #endif
-
-    #endif
-    
-    #endif
 
 
 /* compute_residual_laxMPC_FISTA
