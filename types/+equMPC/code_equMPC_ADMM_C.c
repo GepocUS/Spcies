@@ -165,6 +165,9 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
     // Here goes the calculation of alpha's and beta's
     #if time_varying == 1
+
+    memset(Beta,0,sizeof(Beta));
+    memset(Alpha,0,sizeof(Alpha));
     
     for(unsigned int h = 0; h < NN ; h++){
         for(unsigned int i = 0 ; i < nn ; i++){
@@ -317,14 +320,7 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // Calculation of Alpha's
         if (h < NN-1){
             // Calculation of the inverse of the current Beta, needed for current Alpha
-//             memset(inv_Beta, 0, sizeof(inv_Beta)); // Reset of inv_Beta when a new Beta is calculated
-            
-            for(unsigned int i=0 ; i<nn ; i++){
-                for(unsigned int j=0 ; j<nn ; j++){
-                    inv_Beta[i][j] = 0;
-                }
-            }
-
+            memset(inv_Beta, 0, sizeof(inv_Beta)); // Reset of inv_Beta when a new Beta is calculated
 
             for (int i=nn-1 ; i>=0 ; i--){
                 for (unsigned int j=0 ; j<nn ; j++){

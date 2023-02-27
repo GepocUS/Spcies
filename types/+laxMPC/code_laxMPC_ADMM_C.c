@@ -175,6 +175,10 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     #endif
     
     #if time_varying == 1
+
+    memset(Beta, 0, sizeof(Beta));
+    memset(Alpha, 0, sizeof(Alpha));
+
 //     for (unsigned o = 0 ; o<20000 ; o++){ // Prueba para ver qué pasa con el update time. Problema: Disminuye el solve_time si lo pongo cuando time_varying esta a true. Preguntar.
     // For the case of time_varying==true, now that all elements are caught,
     // alpha's and beta's can be obtained from explicit formulas
@@ -331,14 +335,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         // Calculation of Alpha's
         if (h < NN-1){
             // Calculation of the inverse of the current Beta, needed for current Alpha
-//             memset(inv_Beta, 0, sizeof(inv_Beta)); // Reset of inv_Beta when a new Beta is calculated
-            
-            for(unsigned int i=0 ; i<nn ; i++){
-                for(unsigned int j=0 ; j<nn ; j++){
-                    inv_Beta[i][j] = 0;
-                }
-            }
-
+            memset(inv_Beta, 0, sizeof(inv_Beta)); // Reset of inv_Beta when a new Beta is calculated
 
             for (int i=nn-1 ; i>=0 ; i--){
                 for (unsigned int j=0 ; j<nn ; j++){

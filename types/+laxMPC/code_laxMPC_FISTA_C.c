@@ -37,9 +37,9 @@ $INSERT_CONSTANTS$
     static double Q[nn];
     static double R[mm_];
     static double QRi[nm];
-    static double Ri[mm_]; // 1./(diag(R)) Needed for calculation of Alpha's and Beta's online
-    static double Qi[nn]; // 1./(diag(Q)) Needed for calculation of Alpha's and Beta's online
-    static double Alpha[NN-1][nn][nn] = {{{0.0}}};
+    static double R_i[mm_]; // 1./(diag(R)) Needed for calculation of Alpha's and Beta's online
+    static double Q_i[nn]; // 1./(diag(Q)) Needed for calculation of Alpha's and Beta's online
+    static double Alpha[NN-1][nn][nn] = {{{0.0}}}; // Static because they need to go into functions which use their value
     static double Beta[NN][nn][nn] = {{{0.0}}};
     static double inv_Beta[nn][nn] = {{0.0}}; // Inverse of only the current beta is stored
 #endif
@@ -130,7 +130,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
     #if time_varying == 1
     for(unsigned int i = 0 ; i<nn ; i++){
         Q[i] = pointer_Q[i];
-        Qi[i] = 1/(Q[i]);
+        Q_i[i] = 1/(Q[i]);
         for(unsigned int j = 0; j < nn; j++){
             A[i][j] = pointer_A[i+j*nn];
             // Constructing AB: Part of A
@@ -139,7 +139,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
         for(unsigned int j=0; j < mm_; j++){
             if (i==0){
                 R[j] = pointer_R[j];
-                Ri[j] = 1/(R[j]);
+                R_i[j] = 1/(R[j]);
             }
             B[i][j] = pointer_B[i+j*nn];
             // Constructing AB: Part of B
@@ -149,16 +149,20 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
     // Constructing QRi
     for(unsigned int i = 0 ; i<nn+mm_ ; i++){
         if (i<nn){
-            QRi[i] = -Qi[i];
+            QRi[i] = -Q_i[i];
         }
         else{
-            QRi[i] = -Ri[i-nn];
+            QRi[i] = -R_i[i-nn];
         }
     }
     #endif
 
     // Cálculo de alphas y betas
     #if time_varying == 1
+    
+    memset(Beta, 0, sizeof(Beta)); // These two lines solve problems because now Alpha and Beta are static, and otherwise they remember their last value, what leads to errors
+    memset(Alpha, 0, sizeof(Alpha)); // Without this, that happens even though in every call they are declared as zeros.
+    
     for(unsigned int h = 0; h < NN ; h++){
         for(unsigned int i = 0 ; i < nn ; i++){
             for(unsigned int j = 0 ; j < nn ; j++){
@@ -166,10 +170,10 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
                     if (i==j){
 
                         for (unsigned int m = 0 ; m < mm_ ; m++){
-                            Beta[h][i][j] += B[i][m]*Ri[m]*B[j][m];
+                            Beta[h][i][j] += B[i][m]*R_i[m]*B[j][m];
                         }
                         
-                        Beta[h][i][j] += Qi[i];
+                        Beta[h][i][j] += Q_i[i];
 
                         if(i>0){
                             for(unsigned int l = 0 ; l <= i-1 ; l++){
@@ -179,13 +183,13 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
                         }
 
                         Beta[h][i][j] = sqrt(Beta[h][i][j]);
-
+                        
                     }
 
                     else if (j>i){
 
                         for (unsigned int m = 0 ; m<mm_ ; m++){
-                            Beta[h][i][j] += B[i][m]*Ri[m]*B[j][m];
+                            Beta[h][i][j] += B[i][m]*R_i[m]*B[j][m];
                         }
 
                         if(i>0){
@@ -204,14 +208,14 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
                 else if (h<NN-1){ //Beta{1} to Beta{N-1}
                     if(i==j){
                         for(unsigned int n = 0 ; n < nn ; n++){
-                            Beta[h][i][j] += A[i][n]*Qi[n]*A[j][n];
+                            Beta[h][i][j] += A[i][n]*Q_i[n]*A[j][n];
                         }
 
                         for(unsigned int m = 0 ; m < mm_ ; m++){
-                            Beta[h][i][j] += B[i][m]*Ri[m]*B[j][m];
+                            Beta[h][i][j] += B[i][m]*R_i[m]*B[j][m];
                         }
 
-                        Beta[h][i][j] += Qi[i];
+                        Beta[h][i][j] += Q_i[i];
 
                         for(unsigned int k = 0 ; k < nn ; k++){
                             Beta[h][i][j] -= Alpha[h-1][k][i]*Alpha[h-1][k][j];
@@ -230,11 +234,11 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
                     else if (j>i){
                         
                         for(unsigned int n = 0 ; n < nn ; n++){
-                            Beta[h][i][j] += A[i][n]*Qi[n]*A[j][n];
+                            Beta[h][i][j] += A[i][n]*Q_i[n]*A[j][n];
                         }
 
                         for(unsigned int m = 0 ; m < mm_ ; m++){
-                            Beta[h][i][j] += B[i][m]*Ri[m]*B[j][m];
+                            Beta[h][i][j] += B[i][m]*R_i[m]*B[j][m];
                         }
 
                         for(unsigned int k = 0 ; k < nn ; k++){
@@ -257,10 +261,10 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
 
                     if(i==j){
                         for(unsigned int n=0 ; n<nn ; n++){
-                            Beta[h][i][j] += A[i][n] * Qi[n] * A[j][n];                         
+                            Beta[h][i][j] += A[i][n] * Q_i[n] * A[j][n];                         
                         }
                         for (unsigned int m=0 ; m<mm_ ; m++){
-                            Beta[h][i][j] += B[i][m] * Ri[m] * B[j][m];
+                            Beta[h][i][j] += B[i][m] * R_i[m] * B[j][m];
                         }
 
                         Beta[h][i][j] -= Ti[i]; // Here the sign should be +=, but Ti is multiplied by -1 in the computation of the ingredients
@@ -281,10 +285,10 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
 
                     else if(j>i){
                         for(unsigned int n=0 ; n<nn ; n++){
-                            Beta[h][i][j] += A[i][n] * Qi[n] * A[j][n];
+                            Beta[h][i][j] += A[i][n] * Q_i[n] * A[j][n];
                         }
                         for(unsigned int m=0 ; m<mm_ ; m++){
-                            Beta[h][i][j] += B[i][m] * Ri[m] * B[j][m];
+                            Beta[h][i][j] += B[i][m] * R_i[m] * B[j][m];
                         }
 
 //                         Beta[h][i][j] -= Ti[i][j]; // This doesn't proceed since T is diagonal in our FISTA
@@ -312,14 +316,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
         // Calculation of Alpha's
         if (h < NN-1){
             // Calculation of the inverse of the current Beta, needed for current Alpha
-//             memset(inv_Beta, 0, sizeof(inv_Beta)); // Reset of inv_Beta when a new Beta is calculated
-            
-            for(unsigned int i=0 ; i<nn ; i++){
-                for(unsigned int j=0 ; j<nn ; j++){
-                    inv_Beta[i][j] = 0;
-                }
-            }
-
+            memset(inv_Beta, 0, sizeof(inv_Beta)); // Reset of inv_Beta when a new Beta is calculated
 
             for (int i=nn-1 ; i>=0 ; i--){
                 for (unsigned int j=0 ; j<nn ; j++){
@@ -338,7 +335,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
             for (unsigned int i=0 ; i<nn ; i++){
                 for (unsigned int j=0 ; j<nn ; j++){
                     for (unsigned int k=0 ; k<=i ; k++){
-                        Alpha[h][i][j] -= inv_Beta[k][i] * A[j][k] * Qi[k];
+                        Alpha[h][i][j] -= inv_Beta[k][i] * A[j][k] * Q_i[k];
                     }
                 }
             }
@@ -587,6 +584,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
             z_opt[count] = z[l][j];
         }
     }
+
 
     // Last nn elements
     for(unsigned int j = 0; j < nn; j++){
