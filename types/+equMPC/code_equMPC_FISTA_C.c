@@ -19,18 +19,68 @@
 
 #include <stdio.h>
 
+#ifdef MEASURE_TIME
+
+#if WIN32
+#include <Windows.h>
+#else // If Linux
+#include <time.h>
+#endif
+
+#endif
+
 // Constant variables
 $INSERT_CONSTANTS$
+#if time_varying == 1
+    static double A[nn][nn];
+    static double B[nn][mm_];
+    static double AB[nn][nm];
+    static double Q[nn];
+    static double R[mm_];
+    static double QRi[nm];
+    static double R_i[mm_]; // 1./(diag(R)) Needed for calculation of Alpha's and Beta's online
+    static double Q_i[nn]; // 1./(diag(Q)) Needed for calculation of Alpha's and Beta's online
+    static double Alpha[NN-1][nn][nn] = {{{0.0}}}; // Static because they need to go into functions which use their value
+    static double Beta[NN][nn][nn] = {{{0.0}}};
+    static double inv_Beta[nn][nn] = {{0.0}}; // Inverse of only the current beta is stored
+#endif
 
 #ifdef CONF_MATLAB
 
-void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt){
+#if time_varying == 0
+void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
+#else
+void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
+#endif
 
 #else
 
+#if time_varying == 0
 void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, int *pointer_k, int *e_flag, sol_equMPC_FISTA *sol){
+#else
+void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, int *pointer_k, int *e_flag, sol_equMPC_FISTA *sol){
+#endif
 
 #endif
+
+    #ifdef MEASURE_TIME
+
+    #if WIN32
+    static LARGE_INTEGER frequency, start, post_update, post_solve, post_polish;
+    __int64 t_update_time, t_solve_time, t_polish_time, t_run_time; // Time in nano-seconds
+
+    if (frequency.QuadPart == 0){
+    QueryPerformanceFrequency(&frequency);}
+
+    QueryPerformanceCounter(&start); // Get time at the start
+
+    #else // If Linux
+    // Initialize time variables
+    struct timespec start, post_update, post_solve, post_polish;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+    #endif
+
+    #endif
 
     // Initialize FISTA variables
     int done = 0; // Flag used to determine when the algorithm should exit
@@ -42,9 +92,9 @@ void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
     #endif
     double x0[nn] = {0.0}; // Current system state
     double xr[nn] = {0.0}; // State reference
-    double ur[mm] = {0.0}; // Control input reference
+    double ur[mm_] = {0.0}; // Control input reference
     double z[NN-1][nm] = {{0.0}}; // Primal decision variables
-    double z_0[mm] = {0.0};
+    double z_0[mm_] = {0.0};
     double y[NN][nn] = {{0.0}}; // Linearization point
     double lambda[NN][nn] = {{0.0}}; // Dual variables
     double lambda1[NN][nn] = {{0.0}}; // Dual variables in the previous iteration
@@ -62,7 +112,7 @@ void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
         x0[i] = scaling_x[i]*( pointer_x0[i] - OpPoint_x[i] );
         xr[i] = scaling_x[i]*( pointer_xr[i] - OpPoint_x[i] );
     }
-    for(unsigned int i = 0; i < mm; i++){
+    for(unsigned int i = 0; i < mm_; i++){
         ur[i] = scaling_u[i]*( pointer_ur[i] - OpPoint_u[i] );
     }
     #endif
@@ -71,10 +121,243 @@ void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
         x0[i] = pointer_x0[i];
         xr[i] = pointer_xr[i];
     }
-    for(unsigned int i = 0; i < mm; i++){
+    for(unsigned int i = 0; i < mm_; i++){
         ur[i] = pointer_ur[i];
     }
     #endif
+
+    #if time_varying == 1
+    for(unsigned int i = 0 ; i<nn ; i++){
+        Q[i] = pointer_Q[i];
+        Q_i[i] = 1/(Q[i]);
+        for(unsigned int j = 0; j < nn; j++){
+            A[i][j] = pointer_A[i+j*nn];
+            // Constructing AB: Part of A
+            AB[i][j] = A[i][j];
+        }
+        for(unsigned int j=0; j < mm_; j++){
+            if (i==0){
+                R[j] = pointer_R[j];
+                R_i[j] = 1/(R[j]);
+            }
+            B[i][j] = pointer_B[i+j*nn];
+            // Constructing AB: Part of B
+            AB[i][nn+j] = B[i][j];
+        }
+    }
+    // Constructing QRi
+    for(unsigned int i = 0 ; i<nn+mm_ ; i++){
+        if (i<nn){
+            QRi[i] = -Q_i[i];
+        }
+        else{
+            QRi[i] = -R_i[i-nn];
+        }
+    }
+    #endif
+
+    // Calculation of Alpha's and Beta's
+    #if time_varying == 1
+    
+    memset(Beta, 0, sizeof(Beta)); // These two lines solve problems because now Alpha and Beta are static, and otherwise they remember their last value, what leads to errors
+    memset(Alpha, 0, sizeof(Alpha)); // Without this, that happens even though in every call they are declared as zeros.
+    
+    for(unsigned int h = 0; h < NN ; h++){
+        for(unsigned int i = 0 ; i < nn ; i++){
+            for(unsigned int j = 0 ; j < nn ; j++){
+                if (h==0){ //Beta{0}
+                    if (i==j){
+
+                        for (unsigned int m = 0 ; m < mm_ ; m++){
+                            Beta[h][i][j] += B[i][m]*R_i[m]*B[j][m];
+                        }
+                        
+                        Beta[h][i][j] += Q_i[i];
+
+                        if(i>0){
+                            for(unsigned int l = 0 ; l <= i-1 ; l++){
+                                Beta[h][i][j] -= Beta[h][l][i]*Beta[h][l][i];
+                            }
+                            
+                        }
+
+                        Beta[h][i][j] = sqrt(Beta[h][i][j]);
+                        
+                    }
+
+                    else if (j>i){
+
+                        for (unsigned int m = 0 ; m<mm_ ; m++){
+                            Beta[h][i][j] += B[i][m]*R_i[m]*B[j][m];
+                        }
+
+                        if(i>0){
+                            for(unsigned int l = 0 ; l <= i-1 ; l++){
+                                Beta[h][i][j] -= Beta[h][l][i]*Beta[h][l][j];
+                            }
+                            
+                        }
+
+                        Beta[h][i][j] = Beta[h][i][j]/Beta[h][i][i];
+
+                    }
+                    
+                }
+
+                else if (h<NN-1){ //Beta{1} to Beta{N-1}
+                    if(i==j){
+                        for(unsigned int n = 0 ; n < nn ; n++){
+                            Beta[h][i][j] += A[i][n]*Q_i[n]*A[j][n];
+                        }
+
+                        for(unsigned int m = 0 ; m < mm_ ; m++){
+                            Beta[h][i][j] += B[i][m]*R_i[m]*B[j][m];
+                        }
+
+                        Beta[h][i][j] += Q_i[i];
+
+                        for(unsigned int k = 0 ; k < nn ; k++){
+                            Beta[h][i][j] -= Alpha[h-1][k][i]*Alpha[h-1][k][j];
+                        }
+                        
+                        if(i>0){
+                            for(unsigned int l = 0 ; l<=i-1 ; l++){
+                                Beta[h][i][j] -= Beta[h][l][i]*Beta[h][l][i];
+                            }
+                        }
+                        
+                        Beta[h][i][j] = sqrt(Beta[h][i][j]);
+
+                    }
+
+                    else if (j>i){
+                        
+                        for(unsigned int n = 0 ; n < nn ; n++){
+                            Beta[h][i][j] += A[i][n]*Q_i[n]*A[j][n];
+                        }
+
+                        for(unsigned int m = 0 ; m < mm_ ; m++){
+                            Beta[h][i][j] += B[i][m]*R_i[m]*B[j][m];
+                        }
+
+                        for(unsigned int k = 0 ; k < nn ; k++){
+                            Beta[h][i][j] -= Alpha[h-1][k][i]*Alpha[h-1][k][j];
+                        }
+
+                        if(i>0){
+                            for(unsigned int l = 0 ; l<=i-1 ; l++){
+                                Beta[h][i][j] -= Beta[h][l][i]*Beta[h][l][j];
+                            }
+                        }
+
+                        Beta[h][i][j] = Beta[h][i][j]/Beta[h][i][i];
+
+                    }
+
+                }
+
+                else{ //Beta{N}
+
+                    if(i==j){
+                        for(unsigned int n=0 ; n<nn ; n++){
+                            Beta[h][i][j] += A[i][n] * Q_i[n] * A[j][n];                         
+                        }
+                        for (unsigned int m=0 ; m<mm_ ; m++){
+                            Beta[h][i][j] += B[i][m] * R_i[m] * B[j][m];
+                        }
+
+                        for(unsigned int k=0 ; k<nn ; k++){
+                            Beta[h][i][j] -= Alpha[h-1][k][i]*Alpha[h-1][k][j];
+                        }
+
+                        if(i>0){
+                            for(unsigned int l=0 ; l<=i-1 ; l++){
+                                Beta[h][i][j] -= Beta[h][l][i] * Beta[h][l][i];
+                            }
+                        }
+
+                        Beta[h][i][j] = sqrt(Beta[h][i][j]);
+
+                    }
+
+                    else if(j>i){
+                        for(unsigned int n=0 ; n<nn ; n++){
+                            Beta[h][i][j] += A[i][n] * Q_i[n] * A[j][n];
+                        }
+                        for(unsigned int m=0 ; m<mm_ ; m++){
+                            Beta[h][i][j] += B[i][m] * R_i[m] * B[j][m];
+                        }
+
+                        for(unsigned int k=0 ; k<nn ; k++){
+                            Beta[h][i][j] -= Alpha[h-1][k][i] * Alpha[h-1][k][j];
+                        }
+
+                        if(i>0){
+                            for(unsigned int l=0 ; l<=i-1 ; l++){
+                                Beta[h][i][j] -= Beta[h][l][i] * Beta[h][l][j];
+                            }
+                        }
+
+                        Beta[h][i][j] = Beta[h][i][j]/Beta[h][i][i];
+
+                    }
+                    
+                }
+                  
+
+            }
+        }
+
+        // Calculation of Alpha's
+        if (h < NN-1){
+            // Calculation of the inverse of the current Beta, needed for current Alpha
+            memset(inv_Beta, 0, sizeof(inv_Beta)); // Reset of inv_Beta when a new Beta is calculated
+
+            for (int i=nn-1 ; i>=0 ; i--){
+                for (unsigned int j=0 ; j<nn ; j++){
+                    if(i==j){
+                        inv_Beta[i][i] = 1/Beta[h][i][i]; // Calculation of diagonal elements
+                    }
+                    else if (j>i){
+                        for(unsigned int k = i+1 ; k<=j ; k++){
+                            inv_Beta[i][j] += Beta[h][i][k]*inv_Beta[k][j];
+                        }
+                        inv_Beta[i][j] = -1/Beta[h][i][i]*inv_Beta[i][j];
+                    }
+                }
+            }
+
+            for (unsigned int i=0 ; i<nn ; i++){
+                for (unsigned int j=0 ; j<nn ; j++){
+                    for (unsigned int k=0 ; k<=i ; k++){
+                        Alpha[h][i][j] -= inv_Beta[k][i] * A[j][k] * Q_i[k];
+                    }
+                }
+            }
+
+    
+        }
+
+    }
+
+    for (unsigned int h=0 ; h<NN ; h++){
+
+        for (unsigned int i=0 ; i<nn ; i++){
+            Beta[h][i][i] = 1/Beta[h][i][i]; // We need to make the component-wise inversion of the diagonal elements of Beta's
+        }
+        
+    }
+    // End of calculation of Alpha's and Beta's
+    
+    // Inverting Q and R, needed for the rest of the program
+    for(unsigned int i=0 ; i<nn ; i++){
+        Q[i] = -Q[i];
+    }
+    for(unsigned int i=0 ; i<mm_ ; i++){
+        R[i] = -R[i];
+    }
+    #endif
+
  
     // Update first nn elements of beq
     for(unsigned int j = 0; j < nn; j++){
@@ -88,9 +371,39 @@ void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
     for(unsigned int j = 0; j < nn; j++){
         q[j] = Q[j]*xr[j];
     }
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         q[j+nn] = R[j]*ur[j];
     }
+
+    // Measure time
+    #ifdef MEASURE_TIME
+
+    #if WIN32
+    QueryPerformanceCounter(&post_update); // Get time after the update    
+    t_update_time = 1000000000ULL * (post_update.QuadPart - start.QuadPart) / frequency.QuadPart;
+    #else // If Linux
+    clock_gettime(CLOCK_MONOTONIC_RAW, &post_update);
+    #endif
+
+    #ifdef CONF_MATLAB
+    
+    #if WIN32
+    *update_time = t_update_time/(double)1e+9;
+    #else // If Linux
+    *update_time = (double) ( (post_update.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_update.tv_nsec - start.tv_nsec) / 1000000.0 );
+    #endif
+
+    #else
+
+    #if WIN32
+    sol->update_time = t_update_time/(double)1e+9;
+    #else // If Linux
+    sol->update_time = (double) ( (post_update.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_update.tv_nsec - start.tv_nsec) / 1000000.0 );
+    #endif
+
+    #endif
+
+    #endif
 
     // Initial steps 
 
@@ -194,14 +507,44 @@ void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
 
     }
 
+    // Measure time
+    #ifdef MEASURE_TIME
+    
+    #if WIN32
+    QueryPerformanceCounter(&post_solve); // Get time after solving
+    t_solve_time = 1000000000ULL * (post_solve.QuadPart - post_update.QuadPart) / frequency.QuadPart;
+    #else // If Linux
+    clock_gettime(CLOCK_MONOTONIC_RAW, &post_solve);
+    #endif
+    
+    #ifdef CONF_MATLAB
+    
+    #if WIN32
+    *solve_time = t_solve_time/(double)1e+9;
+    #else // If Linux
+    *solve_time = (double) ( (post_solve.tv_sec - post_update.tv_sec) * 1000.0 ) + (double) ( (post_solve.tv_nsec - post_update.tv_nsec) / 1000000.0 );
+    #endif
+
+    #else
+    
+    #if WIN32
+    sol->solve_time = t_solve_time/(double)1e+9;
+    #else // If Linux
+    sol->solve_time = (double) ( (post_solve.tv_sec - post_update.tv_sec) * 1000.0 ) + (double) ( (post_solve.tv_nsec - post_update.tv_nsec) / 1000000.0 );
+    #endif
+    
+    #endif
+    
+    #endif
+
     // Control action
     #if in_engineering == 1
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         u_opt[j] = z_0[j]*scaling_i_u[j] + OpPoint_u[j];
     }
     #endif
     #if in_engineering == 0
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         u_opt[j] = z_0[j];
     }
     #endif
@@ -222,7 +565,7 @@ void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
 
     // First mm variables
     int count = -1;
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         count++;
         z_opt[count] = z_0[j];
     }
@@ -249,7 +592,7 @@ void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
 
     // First mm variables
     int count = -1;
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
         count++;
         sol->z[count] = z_0[j];
     }
@@ -275,6 +618,42 @@ void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
 
     #endif
 
+
+    // Measure time
+    #ifdef MEASURE_TIME
+    
+    #if WIN32
+    QueryPerformanceCounter(&post_polish); // Get time after polishing
+    t_run_time = 1000000000ULL * (post_polish.QuadPart - start.QuadPart) / frequency.QuadPart;
+    t_polish_time = 1000000000ULL * (post_polish.QuadPart - post_solve.QuadPart) / frequency.QuadPart;
+    #else // If Linux
+    clock_gettime(CLOCK_MONOTONIC_RAW, &post_polish);
+    #endif
+
+    #ifdef CONF_MATLAB
+
+    #if WIN32
+    *run_time =  t_run_time/(double)1e+9;
+    *polish_time = t_polish_time/(double)1e+9;
+    #else // If Linux
+    *run_time =  (double) ( (post_polish.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - start.tv_nsec) / 1000000.0 );
+    *polish_time = (double) ( (post_polish.tv_sec - post_solve.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - post_solve.tv_nsec) / 1000000.0 );
+    #endif
+
+    #else
+
+    #if WIN32
+    sol->run_time = t_run_time/(double)1e+9;
+    sol->polish_time = t_polish_time/(double)1e+9;
+    #else // If Linux
+    sol->run_time = (double) ( (post_polish.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - start.tv_nsec) / 1000000.0 );
+    sol->polish_time = (double) ( (post_polish.tv_sec - post_solve.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - post_solve.tv_nsec) / 1000000.0 );
+    #endif
+
+    #endif
+    
+    #endif
+
 }
 
 /* compute_z_lambda_equMPC_FISTA()
@@ -284,7 +663,7 @@ void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
 void compute_z_lambda_equMPC_FISTA(double *z_0, double z[][nm], double lambda[][nn], double *q){
 
     // Compute first mm elements
-    for(unsigned int j = 0; j < mm; j++){
+    for(unsigned int j = 0; j < mm_; j++){
 
         // Compute the q - G'*lambda part
         z_0[j] = q[j+nn];
@@ -355,7 +734,7 @@ void compute_residual_vector_equMPC_FISTA(double res_vec[][nn], double *z_0, dou
     // Compute the first nn elements
     for(unsigned int j = 0; j < nn; j++){
             res_vec[0][j] = b[j] + z[0][j];
-        for(unsigned int i = 0; i < mm; i++){
+        for(unsigned int i = 0; i < mm_; i++){
             res_vec[0][j] = res_vec[0][j] - AB[j][i+nn]*z_0[i];
         }
     }

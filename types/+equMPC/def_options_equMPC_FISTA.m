@@ -19,5 +19,6 @@ function def_options = def_options_equMPC_FISTA()
     def_options.k_max = 1000;
     def_options.in_engineering = false;
     def_options.debug = false;
+    def_options.time_varying = false;
     
 end
