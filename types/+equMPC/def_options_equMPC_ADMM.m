@@ -15,12 +15,12 @@
 
 function def_options = def_options_equMPC_ADMM()
 
-    def_options.rho = 1e-2;
-    def_options.tol = 1e-4;
-    def_options.k_max = 1000;
-    def_options.in_engineering = false;
-    def_options.debug = false;
+    def_options.rho = 1e-2; % ADMM penalty parameter
+    def_options.tol = 1e-4; % Tolerance of the optimization algorithm for the exit condition
+    def_options.k_max = 1000; % Maximum number of iterations allowed for the optimization algorithm
+    def_options.in_engineering = false; % Selects whether the input variables are incremental or in engineering units
+    def_options.debug = false; % If true, a structure with selected information about the optimization problem result is returned 
     def_options.force_vector_rho = false; % If true, forces the penalty parameter rho to be defined as a vector
-    def_options.time_varying = false;
+    def_options.time_varying = false; % When true, the generated MPC solver function accepts A, B, Q and R matrices as input parameters
     
 end

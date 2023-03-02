@@ -64,8 +64,6 @@ sys = struct('A', sysD.A, 'B', sysD.B, 'LBx', LBx, 'UBx', UBx, 'LBu', LBu, 'UBu'
 %% STEP 2: Design the MPC controller.
 % We need to determine the values of the ingredients of the MPC controller.
 
-% Q = blkdiag(15*eye(p), 1*eye(p)); % Remember that Q and R must be positive definite
-% R = 0.1*eye(m);
 Q = blkdiag(15*eye(p), 1*eye(p)); % Remember that Q and R must be positive definite
 R = 0.1*eye(m);
 [~, T] = dlqr(sys.A, sys.B, Q, R); % This is the typical choice of T in MPC
@@ -91,15 +89,12 @@ param = struct('Q', Q, 'R', R, 'T', T, 'N', N);
 solver_options.rho = 15; % Value of the penalty parameter of the ADMM algorithm
 solver_options.k_max = 5000; % Maximum number of iterations of the solver
 solver_options.tol = 1e-3; % Exit tolerance of the solver
-solver_options.time_varying = true;
-solver_options.debug = true;
 
 % Next, we can set some of the options of the toolbox, such as the name of the
 % MEX file that will be generated, or the directory where the solver is saved.
 options.save_name = 'lax_solver';
 options.directory = '';
 options.time = true; % This option tells Spcies to measure the time internally.
-
 
 % If an empty field is provided (as in options.directory = ''), then
 % it is given its default value.
@@ -139,11 +134,6 @@ spcies_gen_controller('sys', sys, 'param', param, 'solver_options', solver_optio
 %% STEP 4: Use the MEX file.
 % To show how to use the generated MEX file, we will perform a closed-loop test.
 
-% For having more reliable result, we are running the basic_tutorial
-% multiple times
-num_simulations = 1;
-% num_simulations = 1;
-
 % First, we set the conditions of the test
 num_iter = 50; % Number of sample times
 x0 = zeros(n, 1); % Initial condition
@@ -154,78 +144,35 @@ xr = (sys.A - eye(n))\(-sys.B*ur); % We compute a state reference xr that is a s
 % Let us define variables to store the results of the test
 hX = zeros(n, num_iter); % Evolution of the state
 hU = zeros(m, num_iter); % Control actions applied
-
-h_update = zeros(num_simulations, num_iter);
-h_solve = zeros(num_simulations, num_iter);
-h_polish = zeros(num_simulations, num_iter);
-h_run_time = zeros(num_simulations, num_iter);
-
-
-
 hT = zeros(1, num_iter); % Computation time of the solver
 hK = zeros(1, num_iter); % Number of iterations of the solver
 hE = zeros(1, num_iter); % Exit flag of the solver at each iteration
 
 % We now start the simulation
+x = x0; % Set the state to the initial state
 
-
-% for j=1:num_simulations
-
-    x = x0; % Set the state to the initial state
-    for i = 1:num_iter
-       
-        
-        % Call the laxMPC solver.
-        % The solver requires the current state 'x', and the reference
-        % 'xr' and 'ur'. It returns the control action to be applied
-        % to the system 'u', the number of iterations and an exit
-        % flag (1: solution found, -1: maximum iterations).
-        % The name of the function must match the string in 'save_name'.
+for i = 1:num_iter
     
-        % The info output is a structure that contains usefull information,
-        % such as the optimal solution of the MPC's optimization problem and
-        % the computation times of the solver.
-
-        % Testbench para el articulo de alphas y betas
-
-%         Q = blkdiag(0.01*15*eye(p), 1*eye(p)); % Remember that Q and R must be positive definite
-%         R = 1*1*eye(m);
-
-%         if i>=18
-%             Q = blkdiag(100*15*eye(p), 1*eye(p)); % Remember that Q and R must be positive definite
-%             R = 0.01*1*eye(m);
-%         end
+    % Call the laxMPC solver.
+    % The solver requires the current state 'x', and the reference
+    % 'xr' and 'ur'. It returns the control action to be applied
+    % to the system 'u', the number of iterations and an exit
+    % flag (1: solution found, -1: maximum iterations).
+    % The name of the function must match the string in 'save_name'.
+    % The info output is a structure that contains usefull information,
+    % such as the optimal solution of the MPC's optimization problem and
+    % the computation times of the solver.
+    [u, hK(i), hE(i), info] = lax_solver(x, xr, ur);
+    hT(i) = info.run_time;
     
-        if ~solver_options.time_varying
-            [u, hK(i), hE(i), info] = lax_solver(x, xr, ur);
-        else
-            
-            [u, hK(i), hE(i), info] = lax_solver(x, xr, ur, sys.A, sys.B, diag(Q), diag(R));
-        end
-
+    % Simulate the system
+    x = sys.A*x + sys.B*u;
     
-        hT(i) = info.run_time;
+    % Save the values of x and u
+    hX(:, i) = x;
+    hU(:, i) = u;
     
-%         h_update(j,i) = info.update_time;
-%     
-%         h_solve(j,i) = info.solve_time;
-%     
-%         h_polish(j,i) = info.polish_time;
-%     
-%         h_run_time(j,i) = info.run_time;
-    
-    
-    %     hT(i) = info.update_time;
-        
-        % Simulate the system
-        x = sys.A*x + sys.B*u;
-        
-        % Save the values of x and u
-        hX(:, i) = x;
-        hU(:, i) = u;
-        
-    end
-% end
+end
 
 % We can now plot the results
 figure(1); clf(1);
@@ -263,28 +210,3 @@ bar(0:num_iter-1, hK);
 xlabel('Sample time');
 ylabel('Number of iterations');
 grid on;
-
-%% Average time to calculate Alpha and Beta: Only interesting for us the update time!!
-% sum(hT)/length(hT)
-% avg_run_time_for_simulation = [];
-% avg_solve_time_for_simulation = [];
-% avg_update_time_for_simulation = [];
-% 
-% for j=1:num_simulations
-%     
-%     avg_run_time_for_simulation(j,1) = sum(h_run_time(j,:))/num_iter;
-%     avg_solve_time_for_simulation(j,1) = sum(h_solve(j,:))/num_iter;
-%     avg_update_time_for_simulation(j,1) = sum(h_update(j,:))/num_iter;
-% 
-% end
-% 
-% avg_run_time = sum(avg_run_time_for_simulation)/num_simulations;
-% avg_solve_time = sum(avg_solve_time_for_simulation)/num_simulations;
-% avg_update_time = sum(avg_update_time_for_simulation)/num_simulations;
-% 
-% avg_polish_time = avg_run_time - (avg_update_time + avg_solve_time);
-% Polish time is always very low. It goes under our possibilities of
-% measuring. We can measure as low as 100e-7 second, so this way we can
-% measure the average polish time maybe more precisely.
-% close all;
-

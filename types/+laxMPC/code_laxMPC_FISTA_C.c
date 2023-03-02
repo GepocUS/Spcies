@@ -31,16 +31,16 @@
 // Constant variables
 $INSERT_CONSTANTS$
 #if time_varying == 1
-    static double A[nn][nn];
-    static double B[nn][mm_];
+    static double A[nn][nn]; // Matrix A of the linear state-space system model
+    static double B[nn][mm_]; // Matrix B of the linear state-space system model
     static double AB[nn][nm];
-    static double Q[nn];
-    static double R[mm_];
+    static double Q[nn]; // Weight matrix for the states
+    static double R[mm_]; // Weight matrix for the inputs
     static double QRi[nm];
     static double R_i[mm_]; // 1./(diag(R)) Needed for calculation of Alpha's and Beta's online
     static double Q_i[nn]; // 1./(diag(Q)) Needed for calculation of Alpha's and Beta's online
-    static double Alpha[NN-1][nn][nn] = {{{0.0}}}; // Static because they need to go into functions which use their value
-    static double Beta[NN][nn][nn] = {{{0.0}}};
+    static double Alpha[NN-1][nn][nn] = {{{0.0}}}; // Variables used for solving the equality constrained QP
+    static double Beta[NN][nn][nn] = {{{0.0}}}; // Static because they need to go into functions which use their value
     static double inv_Beta[nn][nn] = {{0.0}}; // Inverse of only the current beta is stored
 #endif
 
@@ -348,7 +348,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
     for (unsigned int h=0 ; h<NN ; h++){
 
         for (unsigned int i=0 ; i<nn ; i++){
-            Beta[h][i][i] = 1/Beta[h][i][i]; // We need to make the component-wise inversion of the diagonal elements of Beta's
+            Beta[h][i][i] = 1/Beta[h][i][i]; // Need to make the component-wise inversion of the diagonal elements of Beta's
         }
         
     }

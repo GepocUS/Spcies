@@ -24,9 +24,7 @@
 %   - force_vector_rho: Some solvers use a penalty parameter named rho.
 %               This penalty is usually a scalar, but this boolean
 %               option forces the use of an array if set to true.
-%   - time_varying: Boolean that determines if the model of the system
-%               might change during the execution of the control loop.
-%   - time: If set to true the solvers returns timing information.
+%   - time: If set to true the solvers return timing information.
 %
 % OUTPUTS:
 %   - def_opt: Structure containing the default options of the toolbox.

@@ -9,10 +9,10 @@ typedef struct {
     double z[NN*nm]; // Optimal z
     double v[NN*nm]; // Optimal v
     double lambda[NN*nm]; // Optimal lambda
-    double update_time;
-    double solve_time;
-    double polish_time;
-    double run_time;
+    double update_time; // Time taken for the update of the ingredients of the optimization solver
+    double solve_time; // Time spent in solving the optimization problem
+    double polish_time; // Time taken for extra stuff
+    double run_time; // Time taken in the execution of the whole MPC solver function, equal to the sum of all other times
 } solution;
 
 #ifdef CONF_MATLAB
