@@ -19,6 +19,6 @@ function def_options = def_options_equMPC_FISTA()
     def_options.k_max = 1000; % Maximum number of iterations allowed for the optimization algorithm
     def_options.in_engineering = false; % Selects whether the input variables are incremental or in engineering units
     def_options.debug = false; % If true, a structure with selected information about the optimization problem result is returned
-    def_options.time_varying = false;  %When true, the generated MPC solver function accepts A, B, Q and R matrices as input parameters
+    def_options.time_varying = false;  % When true, the generated MPC solver function accepts A, B, Q and R matrices as input parameters
     
 end
