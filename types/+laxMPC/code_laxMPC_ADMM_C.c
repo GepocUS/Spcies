@@ -78,19 +78,19 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     double xr[nn]; // State reference
     double ur[mm_]; // Control input reference
     #if time_varying == 1
-        double A[nn][nn];
-        double B[nn][mm_];
+        double A[nn][nn]; // Matrix A of the linear state-space system model
+        double B[nn][mm_]; // Matrix B of the linear state-space system model
         double AB[nn][nm];
-        double Q[nn];
-        double R[mm_];
-//         double T[nn][nn];
-        double Hi[NN-1][nm]; // Falta calcularles en línea el valor a estos tres
+        double Q[nn]; // Weight matrix for the states
+        double R[mm_]; // Weight matrix for the inputs
+//         double T[nn][nn]; // Doesn't apply for now
+        double Hi[NN-1][nm]; // Inverse of the Hessian H
         double Hi_0[mm_];
         double Hi_N[nn][nn];
-        double R_rho_i[mm_] = {0.0}; // 1./(R+rho*eye(mm))
+        double R_rho_i[mm_] = {0.0}; // 1./(R+rho*eye(mm)) // Needed for calculating Alpha and Beta online
         double Q_rho_i[nn] = {0.0}; // 1./(Q+rho*eye(nn))
-        double Alpha[NN-1][nn][nn] = {{{0.0}}};
-        double Beta[NN][nn][nn] = {{{0.0}}};
+        double Alpha[NN-1][nn][nn] = {{{0.0}}}; // Variables used for solving the equality constrained QP
+        double Beta[NN][nn][nn] = {{{0.0}}}; // Variables used for solving the equality constrained QP
         double inv_Beta[nn][nn] = {{0.0}}; // Inverse of only the current beta is stored
     #endif
     double v[NN-1][nm] = {{0.0}}; // Decision variables v
@@ -179,9 +179,6 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     memset(Beta, 0, sizeof(Beta));
     memset(Alpha, 0, sizeof(Alpha));
 
-//     for (unsigned o = 0 ; o<20000 ; o++){ // Prueba para ver qué pasa con el update time. Problema: Disminuye el solve_time si lo pongo cuando time_varying esta a true. Preguntar.
-    // For the case of time_varying==true, now that all elements are caught,
-    // alpha's and beta's can be obtained from explicit formulas
     for(unsigned int h = 0; h < NN ; h++){
         for(unsigned int i = 0 ; i < nn ; i++){
             for(unsigned int j = 0 ; j < nn ; j++){
@@ -371,7 +368,6 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         }
         
     }
-//     }
     // end of calculation of alpha's and beta's
 
     // Inverting Q and R, needed for the rest of the program
