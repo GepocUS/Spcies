@@ -64,6 +64,8 @@ sys = struct('A', sysD.A, 'B', sysD.B, 'LBx', LBx, 'UBx', UBx, 'LBu', LBu, 'UBu'
 %% STEP 2: Design the MPC controller.
 % We need to determine the values of the ingredients of the MPC controller.
 
+% Q = blkdiag(15*eye(p), 1*eye(p)); % Remember that Q and R must be positive definite
+% R = 0.1*eye(m);
 Q = blkdiag(15*eye(p), 1*eye(p)); % Remember that Q and R must be positive definite
 R = 0.1*eye(m);
 [~, T] = dlqr(sys.A, sys.B, Q, R); % This is the typical choice of T in MPC
@@ -90,7 +92,7 @@ solver_options.rho = 15; % Value of the penalty parameter of the ADMM algorithm
 solver_options.k_max = 5000; % Maximum number of iterations of the solver
 solver_options.tol = 1e-3; % Exit tolerance of the solver
 solver_options.time_varying = true;
-solver_options.debug = false;
+solver_options.debug = true;
 
 % Next, we can set some of the options of the toolbox, such as the name of the
 % MEX file that will be generated, or the directory where the solver is saved.
@@ -139,7 +141,8 @@ spcies_gen_controller('sys', sys, 'param', param, 'solver_options', solver_optio
 
 % For having more reliable result, we are running the basic_tutorial
 % multiple times
-num_simulations = 100;
+num_simulations = 1;
+% num_simulations = 1;
 
 % First, we set the conditions of the test
 num_iter = 50; % Number of sample times
@@ -166,7 +169,7 @@ hE = zeros(1, num_iter); % Exit flag of the solver at each iteration
 % We now start the simulation
 
 
-for j=1:num_simulations
+% for j=1:num_simulations
 
     x = x0; % Set the state to the initial state
     for i = 1:num_iter
@@ -182,22 +185,34 @@ for j=1:num_simulations
         % The info output is a structure that contains usefull information,
         % such as the optimal solution of the MPC's optimization problem and
         % the computation times of the solver.
+
+        % Testbench para el articulo de alphas y betas
+
+%         Q = blkdiag(0.01*15*eye(p), 1*eye(p)); % Remember that Q and R must be positive definite
+%         R = 1*1*eye(m);
+
+%         if i>=18
+%             Q = blkdiag(100*15*eye(p), 1*eye(p)); % Remember that Q and R must be positive definite
+%             R = 0.01*1*eye(m);
+%         end
     
         if ~solver_options.time_varying
             [u, hK(i), hE(i), info] = lax_solver(x, xr, ur);
         else
+            
             [u, hK(i), hE(i), info] = lax_solver(x, xr, ur, sys.A, sys.B, diag(Q), diag(R));
         end
+
     
-    %     hT(i) = info.solve_time;
+        hT(i) = info.run_time;
     
-        h_update(j,i) = info.update_time;
-    
-        h_solve(j,i) = info.solve_time;
-    
-        h_polish(j,i) = info.polish_time;
-    
-        h_run_time(j,i) = info.run_time;
+%         h_update(j,i) = info.update_time;
+%     
+%         h_solve(j,i) = info.solve_time;
+%     
+%         h_polish(j,i) = info.polish_time;
+%     
+%         h_run_time(j,i) = info.run_time;
     
     
     %     hT(i) = info.update_time;
@@ -210,7 +225,7 @@ for j=1:num_simulations
         hU(:, i) = u;
         
     end
-end
+% end
 
 % We can now plot the results
 figure(1); clf(1);
@@ -251,23 +266,23 @@ grid on;
 
 %% Average time to calculate Alpha and Beta: Only interesting for us the update time!!
 % sum(hT)/length(hT)
-avg_run_time_for_simulation = [];
-avg_solve_time_for_simulation = [];
-avg_update_time_for_simulation = [];
-
-for j=1:num_simulations
-    
-    avg_run_time_for_simulation(j,1) = sum(h_run_time(j,:))/num_iter;
-    avg_solve_time_for_simulation(j,1) = sum(h_solve(j,:))/num_iter;
-    avg_update_time_for_simulation(j,1) = sum(h_update(j,:))/num_iter;
-
-end
-
-avg_run_time = sum(avg_run_time_for_simulation)/num_simulations;
-avg_solve_time = sum(avg_solve_time_for_simulation)/num_simulations;
-avg_update_time = sum(avg_update_time_for_simulation)/num_simulations;
-
-avg_polish_time = avg_run_time - (avg_update_time + avg_solve_time);
+% avg_run_time_for_simulation = [];
+% avg_solve_time_for_simulation = [];
+% avg_update_time_for_simulation = [];
+% 
+% for j=1:num_simulations
+%     
+%     avg_run_time_for_simulation(j,1) = sum(h_run_time(j,:))/num_iter;
+%     avg_solve_time_for_simulation(j,1) = sum(h_solve(j,:))/num_iter;
+%     avg_update_time_for_simulation(j,1) = sum(h_update(j,:))/num_iter;
+% 
+% end
+% 
+% avg_run_time = sum(avg_run_time_for_simulation)/num_simulations;
+% avg_solve_time = sum(avg_solve_time_for_simulation)/num_simulations;
+% avg_update_time = sum(avg_update_time_for_simulation)/num_simulations;
+% 
+% avg_polish_time = avg_run_time - (avg_update_time + avg_solve_time);
 % Polish time is always very low. It goes under our possibilities of
 % measuring. We can measure as low as 100e-7 second, so this way we can
 % measure the average polish time maybe more precisely.
