@@ -91,7 +91,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:R",
                           "R must be a diagonal vector of mm elements");
     }
-    #endif
+    
 
     // Check that LB is of the correct dimension
     if( !mxIsDouble(prhs[7]) || mxGetNumberOfElements(prhs[7]) != nm ){
@@ -104,6 +104,21 @@ void mexFunction(int nlhs, mxArray *plhs[],
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:x0",
                           "UB must be of dimension nm");
     }
+
+    #else
+
+    if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != nm ){
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:LB",
+                          "LB must be of dimension nm");
+    }
+    
+    // Check that UB is of the correct dimension
+    if( !mxIsDouble(prhs[4]) || mxGetNumberOfElements(prhs[4]) != nm ){
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:UB",
+                          "UB must be of dimension nm");
+    }
+
+    #endif
 
     // Read input data
     #if MX_HAS_INTERLEAVED_COMPLEX
@@ -160,6 +175,20 @@ void mexFunction(int nlhs, mxArray *plhs[],
     UB = mxGetDoubles(prhs[8]);
     #else
     UB = mxGetPr(prhs[8]);
+    #endif
+
+    #else
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    LB = mxGetDoubles(prhs[3]);
+    #else
+    LB = mxGetPr(prhs[3]);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    UB = mxGetDoubles(prhs[4]);
+    #else
+    UB = mxGetPr(prhs[4]);
     #endif
 
     #endif
