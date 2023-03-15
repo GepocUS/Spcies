@@ -71,21 +71,25 @@ void mexFunction(int nlhs, mxArray *plhs[],
     }
 
     #if time_varying == 1
+    // Check that A is of the correct dimension
     if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != nn*nn ){
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:A",
                           "A must be of dimension nn by nn");
     }
     
+    // Check that B is of the correct dimension
     if( !mxIsDouble(prhs[4]) || mxGetNumberOfElements(prhs[4]) != nn*mm_ ){
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:B",
                           "B must be of dimension nn by mm");
     }
 
+    // Check that Q is of the correct dimension
     if( !mxIsDouble(prhs[5]) || mxGetNumberOfElements(prhs[5]) != nn ){
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:Q",
                           "Q must be a diagonal vector of nn elements");
     }
     
+    // Check that R is of the correct dimension
     if( !mxIsDouble(prhs[6]) || mxGetNumberOfElements(prhs[6]) != mm_ ){
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:R",
                           "R must be a diagonal vector of mm elements");
