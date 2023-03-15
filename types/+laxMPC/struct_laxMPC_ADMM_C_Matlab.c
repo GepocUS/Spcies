@@ -100,19 +100,34 @@ void mexFunction(int nlhs, mxArray *plhs[],
 //                           "T must be of dimension nn by nn");
 //     }
 
-    #endif
-
     // Check that LB is of the correct dimension
     if( !mxIsDouble(prhs[7]) || mxGetNumberOfElements(prhs[7]) != nm ){
-        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:x0",
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:LB",
                           "LB must be of dimension nm");
     }
     
     // Check that UB is of the correct dimension
     if( !mxIsDouble(prhs[8]) || mxGetNumberOfElements(prhs[8]) != nm ){
-        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:x0",
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:UB",
                           "UB must be of dimension nm");
     }
+
+    #else
+
+    if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != nm ){
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:LB",
+                          "LB must be of dimension nm");
+    }
+    
+    // Check that UB is of the correct dimension
+    if( !mxIsDouble(prhs[4]) || mxGetNumberOfElements(prhs[4]) != nm ){
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:UB",
+                          "UB must be of dimension nm");
+    }
+
+    #endif
+
+    
 
     // Read input data
     #if MX_HAS_INTERLEAVED_COMPLEX
@@ -177,7 +192,24 @@ void mexFunction(int nlhs, mxArray *plhs[],
     UB = mxGetPr(prhs[8]);
     #endif
 
+    #else
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    LB = mxGetDoubles(prhs[3]);
+    #else
+    LB = mxGetPr(prhs[3]);
     #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    UB = mxGetDoubles(prhs[4]);
+    #else
+    UB = mxGetPr(prhs[4]);
+    #endif
+
+
+    #endif
+
+    
 
     // Prepare output data
     plhs[0] = mxCreateDoubleMatrix(mm_, 1, mxREAL); // u_opt
