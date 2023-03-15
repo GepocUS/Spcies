@@ -43,21 +43,23 @@ $INSERT_CONSTANTS$
     static double Beta[NN][nn][nn] = {{{0.0}}}; // Static because they need to go into functions which use their value
     static double inv_Beta[nn][nn] = {{0.0}}; // Inverse of only the current beta is stored
 #endif
+    double LB[nm]; // Lower bound for box constraints 
+    double UB[nm]; // Upper bound for box constraints
 
 #ifdef CONF_MATLAB
 
 #if time_varying == 0
-void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
+void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_LB, double *pointer_UB, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
 #else
-void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
+void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *pointer_LB, double *pointer_UB, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
 #endif
 
 #else
 
 #if time_varying == 0
-void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, int *pointer_k, int *e_flag, sol_laxMPC_FISTA *sol){
+void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_LB, double *pointer_UB, double *u_opt, int *pointer_k, int *e_flag, sol_laxMPC_FISTA *sol){
 #else
-void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, int *pointer_k, int *e_flag, sol_laxMPC_FISTA *sol){
+void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *pointer_LB, double *pointer_UB, double *u_opt, int *pointer_k, int *e_flag, sol_laxMPC_FISTA *sol){
 #endif
 
 #endif
@@ -121,9 +123,13 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
     for(unsigned int i = 0; i < nn; i++){
         x0[i] = pointer_x0[i];
         xr[i] = pointer_xr[i];
+        LB[i] = pointer_LB[i];
+        UB[i] = pointer_UB[i];
     }
     for(unsigned int i = 0; i < mm_; i++){
         ur[i] = pointer_ur[i];
+        LB[i+nn] = pointer_LB[i+nn];
+        UB[i+nn] = pointer_UB[i+nn];
     }
     #endif
 

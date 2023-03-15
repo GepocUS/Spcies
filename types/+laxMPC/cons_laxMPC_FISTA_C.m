@@ -95,19 +95,19 @@ function constructor = cons_laxMPC_FISTA_C(recipe)
     
     % Constants
     constCell = [];
-    if size(vars.LB, 2) > 1
-        % Different constraints for each prediction step
-        constCell = add_line(constCell, 'LB0', vars.LB(n+1:end, 1), 1, precision, var_options);
-        constCell = add_line(constCell, 'UB0', vars.UB(n+1:end, 1), 1, precision, var_options);
-        constCell = add_line(constCell, 'LB', vars.LB(:, 2:end-1)', 1, precision, var_options);
-        constCell = add_line(constCell, 'UB', vars.UB(:, 2:end-1)', 1, precision, var_options);
-        constCell = add_line(constCell, 'LBN', vars.LB(1:n, end)', 1, precision, var_options);
-        constCell = add_line(constCell, 'UBN', vars.UB(1:n, end)', 1, precision, var_options);
-        defCell = add_line(defCell, 'VAR_BOUNDS', 1, 1, 'int', 'define');
-    else
-        constCell = add_line(constCell, 'LB', vars.LB, 1, precision, var_options);
-        constCell = add_line(constCell, 'UB', vars.UB, 1, precision, var_options);
-    end
+%     if size(vars.LB, 2) > 1
+%         % Different constraints for each prediction step
+%         constCell = add_line(constCell, 'LB0', vars.LB(n+1:end, 1), 1, precision, var_options);
+%         constCell = add_line(constCell, 'UB0', vars.UB(n+1:end, 1), 1, precision, var_options);
+%         constCell = add_line(constCell, 'LB', vars.LB(:, 2:end-1)', 1, precision, var_options);
+%         constCell = add_line(constCell, 'UB', vars.UB(:, 2:end-1)', 1, precision, var_options);
+%         constCell = add_line(constCell, 'LBN', vars.LB(1:n, end)', 1, precision, var_options);
+%         constCell = add_line(constCell, 'UBN', vars.UB(1:n, end)', 1, precision, var_options);
+%         defCell = add_line(defCell, 'VAR_BOUNDS', 1, 1, 'int', 'define');
+%     else
+%         constCell = add_line(constCell, 'LB', vars.LB, 1, precision, var_options);
+%         constCell = add_line(constCell, 'UB', vars.UB, 1, precision, var_options);
+%     end
     if ~solver_options.time_varying
         constCell = add_line(constCell, 'AB', vars.AB, 1, precision, var_options);
         constCell = add_line(constCell, 'Alpha', vars.Alpha, 1, precision, var_options);

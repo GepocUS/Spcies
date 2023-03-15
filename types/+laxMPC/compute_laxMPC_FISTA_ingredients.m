@@ -97,8 +97,8 @@ function vars = compute_laxMPC_FISTA_ingredients(controller, options, spcies_opt
         vars.QRi = -[1./diag(Q); 1./diag(R)];
     end
     
-    vars.UB = UB;
-    vars.LB = LB;
+%     vars.UB = UB;
+%     vars.LB = LB;
     
     % Scaling vectors and operating point
     if isa(controller, 'LaxMPC')
