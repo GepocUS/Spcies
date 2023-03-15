@@ -31,19 +31,19 @@
 #ifdef CONF_MATLAB
 
 #if time_varying == 0
-void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
+void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_LB, double *pointer_UB, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
 #else
 // void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *pointer_T, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt){
-void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
+void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *pointer_LB, double *pointer_UB,double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
 #endif
 
 #else
     
 #if time_varying == 0
-void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, int *pointer_k, int *e_flag, solution *sol){
+void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_LB, double *pointer_UB, double *u_opt, int *pointer_k, int *e_flag, solution *sol){
 #else
 // void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *pointer_T, double *u_opt, int *pointer_k, int *e_flag, solution *sol){
-void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, int *pointer_k, int *e_flag, solution *sol){
+void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *pointer_LB, double *pointer_UB, double *u_opt, int *pointer_k, int *e_flag, solution *sol){
 #endif
 
 #endif
@@ -113,6 +113,8 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     double b[nn] = {0.0}; // First nn components of vector b (the rest are known to be zero)
     double q[nm] = {0.0};
     double qT[nn] = {0.0};
+    double LB[nm]; // Lower bound for box constraints 
+    double UB[nm]; // Upper bound for box constraints
     
     // Constant variables
     $INSERT_CONSTANTS$
@@ -131,9 +133,13 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     for(unsigned int i = 0; i < nn; i++){
         x0[i] = pointer_x0[i];
         xr[i] = pointer_xr[i];
+        LB[i] = pointer_LB[i];
+        UB[i] = pointer_UB[i];
     }
     for(unsigned int i = 0; i < mm_; i++){
         ur[i] = pointer_ur[i];
+        LB[i+nn] = pointer_LB[i+nn];
+        UB[i+nn] = pointer_UB[i+nn];
     }
     #endif
 

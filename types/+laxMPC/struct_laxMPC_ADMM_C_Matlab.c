@@ -20,6 +20,8 @@ void mexFunction(int nlhs, mxArray *plhs[],
     double *R;
 //     double *T;
     #endif
+    double *LB;
+    double *UB;
     double *u_opt; // Local u_opt
     double *k; // Local k
     double *e_flag; // Local e_flag
@@ -35,12 +37,12 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     // Check number of inputs
     #if time_varying == 1
-    if(nrhs != 7){
+    if(nrhs != 9){
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:number",
                           "Not enough inputs");
     }
     #else
-    if(nrhs != 3){
+    if(nrhs != 5){
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:number",
                           "Not enough inputs");
     }
@@ -96,6 +98,18 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     #endif
 
+    // Check that LB is of the correct dimension
+    if( !mxIsDouble(prhs[7]) || mxGetNumberOfElements(prhs[7]) != nm ){
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:x0",
+                          "LB must be of dimension nm");
+    }
+    
+    // Check that UB is of the correct dimension
+    if( !mxIsDouble(prhs[8]) || mxGetNumberOfElements(prhs[8]) != nm ){
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:x0",
+                          "UB must be of dimension nm");
+    }
+
     // Read input data
     #if MX_HAS_INTERLEAVED_COMPLEX
     x0 = mxGetDoubles(prhs[0]);
@@ -146,6 +160,18 @@ void mexFunction(int nlhs, mxArray *plhs[],
 //     #else
 //     T = mxGetPr(prhs[7]);
 //     #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    LB = mxGetDoubles(prhs[7]);
+    #else
+    LB = mxGetPr(prhs[7]);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    UB = mxGetDoubles(prhs[8]);
+    #else
+    UB = mxGetPr(prhs[8]);
+    #endif
 
     #endif
 
@@ -237,9 +263,9 @@ void mexFunction(int nlhs, mxArray *plhs[],
     // Call solver
     #if time_varying == 1
 //     laxMPC_ADMM(x0, xr, ur, A, B, Q, R, T, u_opt, k, e_flag, z_opt, v_opt, lambda_opt);
-    laxMPC_ADMM(x0, xr, ur, A, B, Q, R, u_opt, k, e_flag, z_opt, v_opt, lambda_opt, update_time_sol, solve_time_sol, polish_time_sol, run_time_sol);
+    laxMPC_ADMM(x0, xr, ur, A, B, Q, R, LB, UB, u_opt, k, e_flag, z_opt, v_opt, lambda_opt, update_time_sol, solve_time_sol, polish_time_sol, run_time_sol);
     #else
-    laxMPC_ADMM(x0, xr, ur, u_opt, k, e_flag, z_opt, v_opt, lambda_opt, update_time_sol, solve_time_sol, polish_time_sol, run_time_sol);
+    laxMPC_ADMM(x0, xr, ur, LB, UB, u_opt, k, e_flag, z_opt, v_opt, lambda_opt, update_time_sol, solve_time_sol, polish_time_sol, run_time_sol);
     #endif
 }
 
