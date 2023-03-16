@@ -19,6 +19,8 @@ void mexFunction(int nlhs, mxArray *plhs[],
     double *Q;
     double *R;
     #endif
+    double *LB;
+    double *UB;
     double *u_opt; // Local u_opt
     double *k; // Local k
     double *e_flag; // Local e_flag
@@ -33,12 +35,12 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     // Check number of inputs
     #if time_varying == 1
-    if(nrhs != 7){
+    if(nrhs != 9){
         mexErrMsgIdAndTxt("Spcies:equMPC:nrhs:number",
                           "Not enough inputs");
     }
     #else
-    if(nrhs != 3){
+    if(nrhs != 5){
         mexErrMsgIdAndTxt("Spcies:equMPC:nrhs:number",
                           "Not enough inputs");
     }
@@ -86,6 +88,16 @@ void mexFunction(int nlhs, mxArray *plhs[],
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:R",
                           "R must be a diagonal vector of mm elements");
     }
+
+    if( !mxIsDouble(prhs[7]) || mxGetNumberOfElements(prhs[7]) != nm ){
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:LB",
+                          "LB must be a diagonal vector of nm elements");
+    }
+
+    if( !mxIsDouble(prhs[8]) || mxGetNumberOfElements(prhs[8]) != nm ){
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:UB",
+                          "UB must be a diagonal vector of nm elements");
+    }
     #endif
 
     // Read input data
@@ -131,6 +143,32 @@ void mexFunction(int nlhs, mxArray *plhs[],
     R = mxGetDoubles(prhs[6]);
     #else
     R = mxGetPr(prhs[6]);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    LB = mxGetDouble(phrs[7]);
+    #else
+    LB = mxGetPr(prhs[7]);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    UB = mxGetDouble(phrs[8]);
+    #else
+    UB = mxGetPr(prhs[8]);
+    #endif
+
+    #else
+    
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    LB = mxGetDouble(phrs[3]);
+    #else
+    LB = mxGetPr(prhs[3]);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    UB = mxGetDouble(phrs[4]);
+    #else
+    UB = mxGetPr(prhs[4]);
     #endif
 
     #endif
@@ -214,9 +252,9 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     // Call solver
     #if time_varying == 1
-    equMPC_FISTA(x0, xr, ur, A, B, Q, R, u_opt, k, e_flag, z_opt, lambda_opt, update_time_sol, solve_time_sol, polish_time_sol, run_time_sol);
+    equMPC_FISTA(x0, xr, ur, A, B, Q, R, LB, UB, u_opt, k, e_flag, z_opt, lambda_opt, update_time_sol, solve_time_sol, polish_time_sol, run_time_sol);
     #else
-    equMPC_FISTA(x0, xr, ur, u_opt, k, e_flag, z_opt, lambda_opt, update_time_sol, solve_time_sol, polish_time_sol, run_time_sol);
+    equMPC_FISTA(x0, xr, ur, LB, UB, u_opt, k, e_flag, z_opt, lambda_opt, update_time_sol, solve_time_sol, polish_time_sol, run_time_sol);
     #endif
 }
 

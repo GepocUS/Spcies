@@ -45,20 +45,23 @@ $INSERT_CONSTANTS$
     static double inv_Beta[nn][nn] = {{0.0}}; // Inverse of only the current beta is stored
 #endif
 
+ static double LB[nm];
+ static double UB[nm];
+
 #ifdef CONF_MATLAB
 
 #if time_varying == 0
-void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
+void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_LB, double *pointer_UB, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
 #else
-void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
+void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *pointer_LB, double *pointer_UB, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time){
 #endif
 
 #else
 
 #if time_varying == 0
-void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, int *pointer_k, int *e_flag, sol_equMPC_FISTA *sol){
+void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_LB, double *pointer_UB, double *u_opt, int *pointer_k, int *e_flag, sol_equMPC_FISTA *sol){
 #else
-void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, int *pointer_k, int *e_flag, sol_equMPC_FISTA *sol){
+void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *pointer_LB, double *pointer_UB, double *u_opt, int *pointer_k, int *e_flag, sol_equMPC_FISTA *sol){
 #endif
 
 #endif
@@ -105,24 +108,32 @@ void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
     double q[nm] = {0.0}; // For storing the components of q related to Q and R
     double res = 0.0; // For storing the absolute value of each element of the residual vector
     unsigned int res_flag = 0; // Flag used to determine if the exit condition is satisfied
+   
+
 
     // Obtain variables in scaled units
     #if in_engineering == 1
     for(unsigned int i = 0; i < nn; i++){
         x0[i] = scaling_x[i]*( pointer_x0[i] - OpPoint_x[i] );
         xr[i] = scaling_x[i]*( pointer_xr[i] - OpPoint_x[i] );
+        // TODO: Get LB and UB when in_engineering == 1
     }
     for(unsigned int i = 0; i < mm_; i++){
         ur[i] = scaling_u[i]*( pointer_ur[i] - OpPoint_u[i] );
+        // TODO: Get LB and UB when in_engineering == 1
     }
     #endif
     #if in_engineering == 0
     for(unsigned int i = 0; i < nn; i++){
         x0[i] = pointer_x0[i];
         xr[i] = pointer_xr[i];
+        LB[i] = pointer_LB[i];
+        UB[i] = pointer_UB[i];
     }
     for(unsigned int i = 0; i < mm_; i++){
         ur[i] = pointer_ur[i];
+        LB[i+nn] = pointer_LB[i+nn];
+        UB[i+nn] = pointer_UB[i+nn];
     }
     #endif
 
