@@ -86,10 +86,11 @@ function vars = compute_equMPC_ADMM_ingredients(controller, options, spcies_opti
     Aeq = Aeq(:,1:end-n);
     
     %% Compute matrix W
-    Hinv = inv(Hhat);
-    W = Aeq*Hinv*Aeq';
-    Wc = chol(W);
-    
+    if ~options.time_varying
+        Hinv = inv(Hhat);
+        W = Aeq*Hinv*Aeq';
+        Wc = chol(W);
+    end
     %% Compute the tightened constraints
     if isa(controller, 'EqualityMPC')
         LB = [controller.model.LBx; controller.model.LBu];
@@ -103,13 +104,15 @@ function vars = compute_equMPC_ADMM_ingredients(controller, options, spcies_opti
     vars.n = n;
     vars.m = m;
     vars.N = N;
-    vars.Hi_0 = diag(Hinv(1:m, 1:m));
-    vars.Hi = reshape(diag(Hinv(m+(1:(N-1)*(n+m)),m+(1:(N-1)*(n+m)))), n+m, N-1)';
-    vars.AB = [A B];
+    if ~options.time_varying
+        vars.Hi_0 = diag(Hinv(1:m, 1:m));
+        vars.Hi = reshape(diag(Hinv(m+(1:(N-1)*(n+m)),m+(1:(N-1)*(n+m)))), n+m, N-1)';
+        vars.AB = [A B];
+        vars.Q = -diag(Q);
+        vars.R = -diag(R);
+    end
     vars.UB = UB;
     vars.LB = LB;
-    vars.Q = -diag(Q);
-    vars.R = -diag(R);
     
     % rho
     if (vars.rho_is_scalar)
@@ -160,14 +163,17 @@ function vars = compute_equMPC_ADMM_ingredients(controller, options, spcies_opti
     % Alpha and Beta
     vars.Beta = zeros(n,n,N);
     vars.Alpha = zeros(n,n,N-1);
-    for i = 1:N
-        vars.Beta(:,:,i) = Wc((i-1)*n+(1:n),(i-1)*n+(1:n));
-        for j = 1:n
-            vars.Beta(j,j,i) = 1/vars.Beta(j,j,i);
+
+    if ~options.time_varying
+        for i = 1:N
+            vars.Beta(:,:,i) = Wc((i-1)*n+(1:n),(i-1)*n+(1:n));
+            for j = 1:n
+                vars.Beta(j,j,i) = 1/vars.Beta(j,j,i);
+            end
         end
-    end
-    for i = 1:N-1
-        vars.Alpha(:,:,i) = Wc((i-1)*n+(1:n),i*n+(1:n));
+        for i = 1:N-1
+            vars.Alpha(:,:,i) = Wc((i-1)*n+(1:n),i*n+(1:n));
+        end
     end
     
 end

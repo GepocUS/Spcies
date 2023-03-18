@@ -24,7 +24,7 @@
 %   - force_vector_rho: Some solvers use a penalty parameter named rho.
 %               This penalty is usually a scalar, but this boolean
 %               option forces the use of an array if set to true.
-%   - time: If set to true the solvers returns timing information.
+%   - time: If set to true the solvers return timing information.
 %
 % OUTPUTS:
 %   - def_opt: Structure containing the default options of the toolbox.

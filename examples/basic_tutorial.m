@@ -210,4 +210,3 @@ bar(0:num_iter-1, hK);
 xlabel('Sample time');
 ylabel('Number of iterations');
 grid on;
-

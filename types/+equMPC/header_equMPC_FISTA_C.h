@@ -4,17 +4,29 @@
 $INSERT_DEFINES$
 
 typedef struct {
-    double z[(NN-1)*nm+mm]; // Optimal z
+    double z[(NN-1)*nm+mm_]; // Optimal z
     double lambda[NN*nn]; // Optimal lambda
+    double update_time; // Time taken for the update of the ingredients of the optimization solver
+    double solve_time; // Time spent in solving the optimization problem
+    double polish_time; // Time taken for extra stuff
+    double run_time; // Time taken in the execution of the whole MPC solver function, equal to the sum of all other times
 } sol_equMPC_FISTA;
 
 #ifdef CONF_MATLAB
 
-void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt);
+#if time_varying == 0
+void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time);
+#else
+void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *lambda_opt, double *update_time, double *solve_time, double *polish_time, double *run_time);
+#endif
 
 #else
 
+#if time_varying == 0
 void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, int *pointer_k, int *e_flag, sol_equMPC_FISTA *sol);
+#else
+void equMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *pointer_A, double *pointer_B, double *pointer_Q, double *pointer_R, double *u_opt, int *pointer_k, int *e_flag, sol_equMPC_FISTA *sol);
+#endif
 
 #endif
 

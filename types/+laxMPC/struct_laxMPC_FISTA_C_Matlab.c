@@ -13,19 +13,36 @@ void mexFunction(int nlhs, mxArray *plhs[],
     double *x0; // Local x0
     double *xr; // Local xr
     double *ur; // Local ur
+    #if time_varying == 1
+    double *A;
+    double *B;
+    double *Q;
+    double *R;
+    #endif
     double *u_opt; // Local u_opt
     double *k; // Local k
     double *e_flag; // Local e_flag
     double *z_opt; // Local z_opt
     double *lambda_opt; // Local lambda_opt
+    double *update_time_sol; // Local update_time
+    double *solve_time_sol; // Local solve_time
+    double *polish_time_sol; // Local polish_time
+    double *run_time_sol; // Local run_time
 
     // Check inputs and outputs
 
     // Check number of inputs
+    #if time_varying == 1
+    if(nrhs != 7){
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:number",
+                          "Not enough inputs");
+    }
+    #else
     if(nrhs != 3){
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:number",
                           "Not enough inputs");
     }
+    #endif
 
     // Check number of outputs
     if(nlhs == 0){
@@ -44,10 +61,31 @@ void mexFunction(int nlhs, mxArray *plhs[],
                           "xr must be of dimension nn");
     }
     // Check that ur is of the correct dimension
-    if( !mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != mm ){
+    if( !mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != mm_ ){
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:ur",
                           "ur must be of dimension mm");
     }
+    #if time_varying == 1
+    if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != nn*nn ){
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:A",
+                          "A must be of dimension nn by nn");
+    }
+    
+    if( !mxIsDouble(prhs[4]) || mxGetNumberOfElements(prhs[4]) != nn*mm_ ){
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:B",
+                          "B must be of dimension nn by mm");
+    }
+
+    if( !mxIsDouble(prhs[5]) || mxGetNumberOfElements(prhs[5]) != nn ){
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:Q",
+                          "Q must be a diagonal vector of nn elements");
+    }
+    
+    if( !mxIsDouble(prhs[6]) || mxGetNumberOfElements(prhs[6]) != mm_ ){
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:R",
+                          "R must be a diagonal vector of mm elements");
+    }
+    #endif
 
     // Read input data
     #if MX_HAS_INTERLEAVED_COMPLEX
@@ -68,13 +106,41 @@ void mexFunction(int nlhs, mxArray *plhs[],
     ur = mxGetPr(prhs[2]);
     #endif
 
+    #if time_varying == 1
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    A = mxGetDoubles(prhs[3]);
+    #else
+    A = mxGetPr(prhs[3]);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    B = mxGetDoubles(prhs[4]);
+    #else
+    B = mxGetPr(prhs[4]);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    Q = mxGetDoubles(prhs[5]);
+    #else
+    Q = mxGetPr(prhs[5]);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    R = mxGetDoubles(prhs[6]);
+    #else
+    R = mxGetPr(prhs[6]);
+    #endif
+
+    #endif
+
     // Prepare output data
-    plhs[0] = mxCreateDoubleMatrix(mm, 1, mxREAL); // u_opt
+    plhs[0] = mxCreateDoubleMatrix(mm_, 1, mxREAL); // u_opt
     plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL); // k
     plhs[2] = mxCreateDoubleMatrix(1, 1, mxREAL); // e_flag
 
-    const char *field_names[] = {"z", "lambda"};
-    plhs[3] = mxCreateStructMatrix(1, 1, 2, field_names);
+    const char *field_names[] = {"z", "lambda", "update_time", "solve_time", "polish_time", "run_time"};
+    plhs[3] = mxCreateStructMatrix(1, 1, 6, field_names);
 
     #if MX_HAS_INTERLEAVED_COMPLEX
     u_opt = mxGetDoubles(plhs[0]);
@@ -94,9 +160,13 @@ void mexFunction(int nlhs, mxArray *plhs[],
     e_flag = mxGetData(plhs[2]);
     #endif
 
-    mxArray *z, *lambda;
+    mxArray *z, *lambda, *update_time, *solve_time, *polish_time, *run_time;
     z = mxCreateDoubleMatrix(NN*nm, 1, mxREAL);
     lambda = mxCreateDoubleMatrix(NN*nn, 1, mxREAL);
+    update_time = mxCreateDoubleMatrix(1, 1, mxREAL);
+    solve_time = mxCreateDoubleMatrix(1, 1, mxREAL);
+    polish_time = mxCreateDoubleMatrix(1, 1, mxREAL);
+    run_time = mxCreateDoubleMatrix(1, 1, mxREAL);
 
     #if MX_HAS_INTERLEAVED_COMPLEX
     z_opt = mxGetDoubles(z);
@@ -110,11 +180,43 @@ void mexFunction(int nlhs, mxArray *plhs[],
     lambda_opt = mxGetData(lambda);
     #endif
 
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    update_time_sol = mxGetDoubles(update_time);
+    #else
+    update_time_sol = mxGetData(update_time);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    solve_time_sol = mxGetDoubles(solve_time);
+    #else
+    solve_time_sol = mxGetData(solve_time);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    polish_time_sol = mxGetDoubles(polish_time);
+    #else
+    polish_time_sol = mxGetData(polish_time);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    run_time_sol = mxGetDoubles(run_time);
+    #else
+    run_time_sol = mxGetData(run_time);
+    #endif
+
     mxSetField(plhs[3], 0, "z", z);
     mxSetField(plhs[3], 0, "lambda", lambda);
+    mxSetField(plhs[3], 0, "update_time", update_time);
+    mxSetField(plhs[3], 0, "solve_time", solve_time);
+    mxSetField(plhs[3], 0, "polish_time", polish_time);
+    mxSetField(plhs[3], 0, "run_time", run_time);
 
     // Call solver
-    laxMPC_FISTA(x0, xr, ur, u_opt, k, e_flag, z_opt, lambda_opt);
+    #if time_varying == 1
+    laxMPC_FISTA(x0, xr, ur, A, B, Q, R, u_opt, k, e_flag, z_opt, lambda_opt, update_time_sol, solve_time_sol, polish_time_sol, run_time_sol);
+    #else
+    laxMPC_FISTA(x0, xr, ur, u_opt, k, e_flag, z_opt, lambda_opt, update_time_sol, solve_time_sol, polish_time_sol, run_time_sol);
+    #endif
 
 }
 
