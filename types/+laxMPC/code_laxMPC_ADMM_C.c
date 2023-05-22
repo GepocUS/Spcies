@@ -89,6 +89,8 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         double Hi_N[nn][nn];
         double R_rho_i[mm_] = {0.0}; // 1./(R+rho*eye(mm)) // Needed for calculating Alpha and Beta online
         double Q_rho_i[nn] = {0.0}; // 1./(Q+rho*eye(nn))
+        double AQiAt[nn][nn] = {0.0}; // A*inv(Q)*A'
+        double BRiBt[nn][nn] = {0.0}; // B*inv(R)*B'
         double Alpha[NN-1][nn][nn] = {{{0.0}}}; // Variables used for solving the equality constrained QP
         double Beta[NN][nn][nn] = {{{0.0}}}; // Variables used for solving the equality constrained QP
         double inv_Beta[nn][nn] = {{0.0}}; // Inverse of only the current beta is stored
@@ -184,10 +186,10 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
     memset(Beta, 0, sizeof(Beta));
     memset(Alpha, 0, sizeof(Alpha));
+    memset(BRiBt, 0, sizeof(BRiBt));
+    memset(AQiAt, 0, sizeof(AQiAt));
 
     // Nuevo
-    double AQiAt[nn][nn] = {0.0};
-    double BRiBt[nn][nn] = {0.0};
 
     for(unsigned int i = 0 ; i<nn ; i++){
         for(unsigned int j=0 ; j<nn ; j++){
@@ -200,43 +202,74 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         }
     }
 
-    for(unsigned int h = 0; h < NN ; h++){
-        for(unsigned int i = 0 ; i < nn ; i++){
-            for(unsigned int j = 0 ; j < nn ; j++){
-                if (h==0){ //Beta{0}
-                    if (i==j){
-                    
-                    Beta[h][i][j] = BRiBt[i][j] + Q_rho_i[i];
 
-                    if(i>0){
-                        for(unsigned int l = 0 ; l <= i-1 ; l++){
-                            Beta[h][i][j] -= Beta[h][l][i]*Beta[h][l][i];
-                        }
+    //Beta{0}
+    for(unsigned int i = 0 ; i < nn ; i++){
+        for(unsigned int j = 0 ; j < nn ; j++){
+            if (i==j){
+                Beta[0][i][j] = BRiBt[i][j] + Q_rho_i[i];
+
+                if(i>0){
+                    for(unsigned int l = 0 ; l <= i-1 ; l++){
+                        Beta[0][i][j] -= Beta[0][l][i]*Beta[0][l][i];
+                    }
                             
-                    }
-
-                    Beta[h][i][j] = sqrt(Beta[h][i][j]);
-
-                    }
-
-                    else if (j>i){
-
-                        Beta[h][i][j] = BRiBt[i][j];
-
-                        if(i>0){
-                            for(unsigned int l = 0 ; l <= i-1 ; l++){
-                                Beta[h][i][j] -= Beta[h][l][i]*Beta[h][l][j];
-                            }
-                            
-                        }
-
-                        Beta[h][i][j] = Beta[h][i][j]/Beta[h][i][i];
-
-                    }
-                    
                 }
 
-                else if (h<NN-1){ //Beta{1} to Beta{N-1}
+                Beta[0][i][j] = sqrt(Beta[0][i][j]);
+
+                }
+
+            else if (j>i){
+
+                Beta[0][i][j] = BRiBt[i][j];
+
+                if(i>0){
+                    for(unsigned int l = 0 ; l <= i-1 ; l++){
+                        Beta[0][i][j] -= Beta[0][l][i]*Beta[0][l][j];
+                    }
+                            
+                }
+
+                Beta[0][i][j] = Beta[0][i][j]/Beta[0][i][i];
+
+            }
+        }
+    }
+
+    // Inverse of Beta{0}
+    memset(inv_Beta, 0, sizeof(inv_Beta)); // Reset of inv_Beta when a new Beta is calculated
+
+    for (int i=nn-1 ; i>=0 ; i--){
+        for (unsigned int j=0 ; j<nn ; j++){
+            if(i==j){
+                inv_Beta[i][i] = 1/Beta[0][i][i]; // Calculation of diagonal elements
+            }
+            else if (j>i){
+                for(unsigned int k = i+1 ; k<=j ; k++){
+                    inv_Beta[i][j] += Beta[0][i][k]*inv_Beta[k][j];
+            }
+                inv_Beta[i][j] = -1/Beta[0][i][i]*inv_Beta[i][j];
+            }
+        }
+    }
+
+    // Alpha{0}
+    for (unsigned int i=0 ; i<nn ; i++){
+        for (unsigned int j=0 ; j<nn ; j++){
+            for (unsigned int k=0 ; k<=i ; k++){
+                Alpha[0][i][j] -= inv_Beta[k][i] * A[j][k] * Q_rho_i[k];
+            }
+        }
+    }
+
+
+    // Beta{1} to beta{N-1}
+    for(unsigned int h = 1; h < NN ; h++){
+        for(unsigned int i = 0 ; i < nn ; i++){
+            for(unsigned int j = 0 ; j < nn ; j++){
+
+                if (h<NN-1){ //Beta{1} to Beta{N-2}
                     if(i==j){
 
                         Beta[h][i][j] = AQiAt[i][j] + BRiBt[i][j] + Q_rho_i[i];
@@ -275,7 +308,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
                 }
 
-                else{ //Beta{N}
+                else{ //Beta{N-1}
 
                     if(i==j){
                         Beta[h][i][j] = AQiAt[i][j] + BRiBt[i][j] + T_rho_i[i][j];
@@ -317,7 +350,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
             }
         }
 
-        // Calculation of Alpha's
+        // Calculation of Alpha{1} to Alpha{N-2}
         if (h < NN-1){
             // Calculation of the inverse of the current Beta, needed for current Alpha
             memset(inv_Beta, 0, sizeof(inv_Beta)); // Reset of inv_Beta when a new Beta is calculated
