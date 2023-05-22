@@ -200,34 +200,21 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
     //Beta{0}
     for(unsigned int i = 0 ; i < nn ; i++){
-        for(unsigned int j = 0 ; j < nn ; j++){
+        for(unsigned int j = i ; j < nn ; j++){
+            
+            Beta[0][i][j] = BRiBt[i][j];
+
+            if(i>0){
+                for(unsigned int l = 0 ; l <= i-1 ; l++){
+                    Beta[0][i][j] -= Beta[0][l][i]*Beta[0][l][j];
+                }               
+            }
             if (i==j){
-                Beta[0][i][j] = BRiBt[i][j] + Q_rho_i[i];
-
-                if(i>0){
-                    for(unsigned int l = 0 ; l <= i-1 ; l++){
-                        Beta[0][i][j] -= Beta[0][l][i]*Beta[0][l][i];
-                    }
-                            
-                }
-
+                Beta[0][i][j] += Q_rho_i[i];
                 Beta[0][i][j] = sqrt(Beta[0][i][j]);
-
-                }
-
-            else if (j>i){
-
-                Beta[0][i][j] = BRiBt[i][j];
-
-                if(i>0){
-                    for(unsigned int l = 0 ; l <= i-1 ; l++){
-                        Beta[0][i][j] -= Beta[0][l][i]*Beta[0][l][j];
-                    }
-                            
-                }
-
+            }
+            else{ 
                 Beta[0][i][j] = Beta[0][i][j]/Beta[0][i][i];
-
             }
         }
     }
