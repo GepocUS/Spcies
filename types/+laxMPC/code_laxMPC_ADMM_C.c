@@ -149,10 +149,10 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         Q_rho_i[i] = 1/(Q[i]+rho);
         for(unsigned int j = 0; j < nn; j++){
             A[i][j] = pointer_A[i+j*nn];
-//             T[i][j] = pointer_T[i+j*nn];
-            Hi_N[i][j] = T_rho_i[i][j];
             // Constructing AB: Part of A
             AB[i][j] = A[i][j];
+//             T[i][j] = pointer_T[i+j*nn];
+            Hi_N[i][j] = T_rho_i[i][j];
         }
         for(unsigned int j=0; j < mm_; j++){
             if (i==0){
@@ -160,8 +160,8 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
                 R_rho_i[j] = 1/(R[j]+rho);
                 Hi_0[j] = R_rho_i[j];
             }
-            B[i][j] = pointer_B[i+j*nn];
             // Constructing AB: Part of B
+            B[i][j] = pointer_B[i+j*nn];
             AB[i][nn+j] = B[i][j];
         }
 
@@ -185,34 +185,43 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     memset(Beta, 0, sizeof(Beta));
     memset(Alpha, 0, sizeof(Alpha));
 
+    // Nuevo
+    double AQiAt[nn][nn] = {0.0};
+    double BRiBt[nn][nn] = {0.0};
+
+    for(unsigned int i = 0 ; i<nn ; i++){
+        for(unsigned int j=0 ; j<nn ; j++){
+            for(unsigned int k=0 ; k<nn ; k++){
+                AQiAt[i][j] += A[i][k]*Q_rho_i[k]*A[j][k];
+            }
+            for (unsigned int m = 0 ; m < mm_ ; m++){
+                BRiBt[i][j] += B[i][m]*R_rho_i[m]*B[j][m];
+            }
+        }
+    }
+
     for(unsigned int h = 0; h < NN ; h++){
         for(unsigned int i = 0 ; i < nn ; i++){
             for(unsigned int j = 0 ; j < nn ; j++){
                 if (h==0){ //Beta{0}
                     if (i==j){
+                    
+                    Beta[h][i][j] = BRiBt[i][j] + Q_rho_i[i];
 
-                        for (unsigned int m = 0 ; m < mm_ ; m++){
-                            Beta[h][i][j] += B[i][m]*R_rho_i[m]*B[j][m];
+                    if(i>0){
+                        for(unsigned int l = 0 ; l <= i-1 ; l++){
+                            Beta[h][i][j] -= Beta[h][l][i]*Beta[h][l][i];
                         }
-                        
-                        Beta[h][i][j] += Q_rho_i[i];
-
-                        if(i>0){
-                            for(unsigned int l = 0 ; l <= i-1 ; l++){
-                                Beta[h][i][j] -= Beta[h][l][i]*Beta[h][l][i];
-                            }
                             
-                        }
+                    }
 
-                        Beta[h][i][j] = sqrt(Beta[h][i][j]);
+                    Beta[h][i][j] = sqrt(Beta[h][i][j]);
 
                     }
 
                     else if (j>i){
 
-                        for (unsigned int m = 0 ; m<mm_ ; m++){
-                            Beta[h][i][j] += B[i][m]*R_rho_i[m]*B[j][m];
-                        }
+                        Beta[h][i][j] = BRiBt[i][j];
 
                         if(i>0){
                             for(unsigned int l = 0 ; l <= i-1 ; l++){
@@ -229,15 +238,8 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
                 else if (h<NN-1){ //Beta{1} to Beta{N-1}
                     if(i==j){
-                        for(unsigned int n = 0 ; n < nn ; n++){
-                            Beta[h][i][j] += A[i][n]*Q_rho_i[n]*A[j][n];
-                        }
 
-                        for(unsigned int m = 0 ; m < mm_ ; m++){
-                            Beta[h][i][j] += B[i][m]*R_rho_i[m]*B[j][m];
-                        }
-
-                        Beta[h][i][j] += Q_rho_i[i];
+                        Beta[h][i][j] = AQiAt[i][j] + BRiBt[i][j] + Q_rho_i[i];
 
                         for(unsigned int k = 0 ; k < nn ; k++){
                             Beta[h][i][j] -= Alpha[h-1][k][i]*Alpha[h-1][k][j];
@@ -255,13 +257,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
 
                     else if (j>i){
                         
-                        for(unsigned int n = 0 ; n < nn ; n++){
-                            Beta[h][i][j] += A[i][n]*Q_rho_i[n]*A[j][n];
-                        }
-
-                        for(unsigned int m = 0 ; m < mm_ ; m++){
-                            Beta[h][i][j] += B[i][m]*R_rho_i[m]*B[j][m];
-                        }
+                        Beta[h][i][j] = AQiAt[i][j] + BRiBt[i][j];
 
                         for(unsigned int k = 0 ; k < nn ; k++){
                             Beta[h][i][j] -= Alpha[h-1][k][i]*Alpha[h-1][k][j];
@@ -282,14 +278,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
                 else{ //Beta{N}
 
                     if(i==j){
-                        for(unsigned int n=0 ; n<nn ; n++){
-                            Beta[h][i][j] += A[i][n] * Q_rho_i[n] * A[j][n];                         
-                        }
-                        for (unsigned int m=0 ; m<mm_ ; m++){
-                            Beta[h][i][j] += B[i][m] * R_rho_i[m] * B[j][m];
-                        }
-
-                        Beta[h][i][j] += T_rho_i[i][j];
+                        Beta[h][i][j] = AQiAt[i][j] + BRiBt[i][j] + T_rho_i[i][j];
 
                         for(unsigned int k=0 ; k<nn ; k++){
                             Beta[h][i][j] -= Alpha[h-1][k][i]*Alpha[h-1][k][j];
@@ -306,14 +295,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
                     }
 
                     else if(j>i){
-                        for(unsigned int n=0 ; n<nn ; n++){
-                            Beta[h][i][j] += A[i][n] * Q_rho_i[n] * A[j][n];
-                        }
-                        for(unsigned int m=0 ; m<mm_ ; m++){
-                            Beta[h][i][j] += B[i][m] * R_rho_i[m] * B[j][m];
-                        }
-
-                        Beta[h][i][j] += T_rho_i[i][j];
+                        Beta[h][i][j] = AQiAt[i][j] + BRiBt[i][j] + T_rho_i[i][j];
 
                         for(unsigned int k=0 ; k<nn ; k++){
                             Beta[h][i][j] -= Alpha[h-1][k][i] * Alpha[h-1][k][j];
