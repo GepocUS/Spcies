@@ -87,8 +87,8 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         double Hi_N[nn][nn];
         double R_rho_i[mm_] = {0.0}; // 1./(R+rho*eye(mm)) // Needed for calculating Alpha and Beta online
         double Q_rho_i[nn] = {0.0}; // 1./(Q+rho*eye(nn))
-        double AQiAt[nn][nn] = {0.0}; // A*inv(Q+rho*I)*A'
-        double BRiBt[nn][nn] = {0.0}; // B*inv(R+rho*I)*B'
+        double AQiAt[nn][nn] = {{0.0}}; // A*inv(Q+rho*I)*A'
+        double BRiBt[nn][nn] = {{0.0}}; // B*inv(R+rho*I)*B'
         double Alpha[NN-1][nn][nn] = {{{0.0}}}; // Variables used for solving the equality constrained QP
         double Beta[NN][nn][nn] = {{{0.0}}}; // Variables used for solving the equality constrained QP
         double inv_Beta[nn][nn] = {{0.0}}; // Inverse of only the current beta is stored
