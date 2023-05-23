@@ -78,8 +78,6 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     double xr[nn]; // State reference
     double ur[mm_]; // Control input reference
     #if time_varying == 1
-        double A[nn][nn]; // Matrix A of the linear state-space system model
-        double B[nn][mm_]; // Matrix B of the linear state-space system model
         double AB[nn][nm];
         double Q[nn]; // Weight matrix for the states
         double R[mm_]; // Weight matrix for the inputs
@@ -150,9 +148,8 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         Q[i] = pointer_Q[i];
         Q_rho_i[i] = 1/(Q[i]+rho);
         for(unsigned int j = 0; j < nn; j++){
-            A[i][j] = pointer_A[i+j*nn];
             // Constructing AB: Part of A
-            AB[i][j] = A[i][j];
+            AB[i][j] = pointer_A[i+j*nn];
 //             T[i][j] = pointer_T[i+j*nn];
             Hi_N[i][j] = T_rho_i[i][j];
         }
@@ -163,8 +160,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
                 Hi_0[j] = R_rho_i[j];
             }
             // Constructing AB: Part of B
-            B[i][j] = pointer_B[i+j*nn];
-            AB[i][nn+j] = B[i][j];
+            AB[i][nn+j] = pointer_B[i+j*nn];
         }
 
     }
@@ -189,10 +185,10 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     for(unsigned int i = 0 ; i<nn ; i++){
         for(unsigned int j=0 ; j<nn ; j++){
             for(unsigned int k=0 ; k<nn ; k++){
-                AQiAt[i][j] += A[i][k]*Q_rho_i[k]*A[j][k];
+                AQiAt[i][j] += pointer_A[i+k*nn]*Q_rho_i[k]*pointer_A[j+k*nn];
             }
             for (unsigned int m = 0 ; m < mm_ ; m++){
-                BRiBt[i][j] += B[i][m]*R_rho_i[m]*B[j][m];
+                BRiBt[i][j] += pointer_B[i+m*nn]*R_rho_i[m]*pointer_B[j+m*nn];
             }
         }
     }
@@ -239,7 +235,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     for (unsigned int i=0 ; i<nn ; i++){
         for (unsigned int j=0 ; j<nn ; j++){
             for (unsigned int k=0 ; k<=i ; k++){
-                Alpha[0][i][j] -= inv_Beta[k][i] * A[j][k] * Q_rho_i[k];
+                Alpha[0][i][j] -= inv_Beta[k][i] * pointer_A[j+k*nn] * Q_rho_i[k];
             }
         }
     }
@@ -292,7 +288,7 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         for (unsigned int i=0 ; i<nn ; i++){
             for (unsigned int j=0 ; j<nn ; j++){
                 for (unsigned int k=0 ; k<=i ; k++){
-                    Alpha[h][i][j] -= inv_Beta[k][i] * A[j][k] * Q_rho_i[k];
+                    Alpha[h][i][j] -= inv_Beta[k][i] * pointer_A[j+k*nn] * Q_rho_i[k];
                 }
             }
         }
@@ -800,10 +796,10 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     }
 
     // All other elements except the last nn
-    for(unsigned int l = 0; l < NN-1; l++){
-        for(unsigned int j = 0; j < nm; j++){
+    for(unsigned int l = 0; l < nn; l++){
+        for(unsigned int j = 0; j < nn; j++){
             count++;
-            z_opt[count] = z[l][j];
+            z_opt[count] = Beta[NN-1][l][j];
             v_opt[count] = v[l][j];
             lambda_opt[count] = lambda[l][j];
         }
