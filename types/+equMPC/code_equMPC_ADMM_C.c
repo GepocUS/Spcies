@@ -76,8 +76,6 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     double xr[nn]; // State reference
     double ur[mm_]; // Control input reference
     #if time_varying == 1
-        double A[nn][nn];
-        double B[nn][mm_];
         double AB[nn][nm];
         double Q[nn];
         double R[mm_];
@@ -143,9 +141,8 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         Q[i] = pointer_Q[i];
         Q_rho_i[i] = 1/(Q[i]+rho);
         for(unsigned int j = 0; j < nn; j++){
-            A[i][j] = pointer_A[i+j*nn];
             // Constructing AB: Part of A
-            AB[i][j] = A[i][j];
+            AB[i][j] = pointer_A[i+j*nn];
         }
         for(unsigned int j=0; j < mm_; j++){
             if (i==0){
@@ -153,9 +150,8 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
                 R_rho_i[j] = 1/(R[j]+rho);
                 Hi_0[j] = R_rho_i[j];
             }
-            B[i][j] = pointer_B[i+j*nn];
             // Constructing AB: Part of B
-            AB[i][nn+j] = B[i][j];
+            AB[i][nn+j] = pointer_B[i+j*nn];
         }
 
     }
@@ -280,7 +276,7 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         for (unsigned int i=0 ; i<nn ; i++){
             for (unsigned int j=0 ; j<nn ; j++){
                 for (unsigned int k=0 ; k<=i ; k++){
-                    Alpha[h][i][j] -= inv_Beta[k][i] * A[j][k] * Q_rho_i[k];
+                    Alpha[h][i][j] -= inv_Beta[k][i] * pointer_A[j+k*nn] * Q_rho_i[k];
                 }
             }
         }
