@@ -178,9 +178,8 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     }
     #endif
     
+    // Computation of Alpha and Beta
     #if time_varying == 1
-
-    // Nuevo
 
     for(unsigned int i = 0 ; i<nn ; i++){
         for(unsigned int j=0 ; j<nn ; j++){
@@ -326,7 +325,6 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         }
     }
 
-
     for (unsigned int h=0 ; h<NN ; h++){
 
         for (unsigned int i=0 ; i<nn ; i++){
@@ -334,7 +332,8 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         }
         
     }
-    // end of calculation of alpha's and beta's
+    // End of computation of Alpha and Beta
+
 
     // Inverting Q and R, needed for the rest of the program
     for(unsigned int i=0 ; i<nn ; i++){
@@ -344,7 +343,8 @@ void laxMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         R[i] = -R[i];
     }
 
-    #endif    
+    #endif
+        
 
     // Update first nn elements of beq
     for(unsigned int j = 0; j < nn; j++){

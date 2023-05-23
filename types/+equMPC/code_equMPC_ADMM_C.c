@@ -170,7 +170,7 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     #endif
 
 
-    // Here goes the calculation of alpha's and beta's
+    // Computation of Alpha and Beta
     #if time_varying == 1
 
     for(unsigned int i = 0 ; i<nn ; i++){
@@ -284,7 +284,6 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
     }
 
     //Beta{N-1}
-
     for(unsigned int i = 0 ; i < nn ; i++){
         for(unsigned int j = i ; j < nn ; j++){
             Beta[NN-1][i][j] = AQiAt[i][j] + BRiBt[i][j];
@@ -317,7 +316,8 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         
     }
 
-    // End of calculation of Alpha's and Beta's
+    // End of computation of Alpha and Beta
+
 
     // Inverting Q and R, needed for the rest of the program
     for(unsigned int i=0 ; i<nn ; i++){
@@ -327,7 +327,6 @@ void equMPC_ADMM(double *pointer_x0, double *pointer_xr, double *pointer_ur, dou
         R[i] = -R[i];
     }
     #endif
-
 
  
     // Update first nn elements of beq

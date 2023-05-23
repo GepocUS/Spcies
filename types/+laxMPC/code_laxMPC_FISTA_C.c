@@ -161,7 +161,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
     }
     #endif
 
-    // Cálculo de alphas y betas
+    // Computation of Alpha and Beta
     #if time_varying == 1
 
     memset(Beta, 0, sizeof(Beta)); // These two lines solve problems because now Alpha and Beta are static, and otherwise they remember their last value, what leads to errors
@@ -169,7 +169,6 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
     memset(AQiAt, 0, sizeof(AQiAt));
     memset(BRiBt, 0, sizeof(BRiBt));
 
-    // Nuevo
     for(unsigned int i = 0 ; i<nn ; i++){
         for(unsigned int j=0 ; j<nn ; j++){
             for(unsigned int k=0 ; k<nn ; k++){
@@ -272,7 +271,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
                 }
             }
         }
-
+        // Calculation of current Alpha
         for (unsigned int i=0 ; i<nn ; i++){
             for (unsigned int j=0 ; j<nn ; j++){
                 for (unsigned int k=0 ; k<=i ; k++){
@@ -282,9 +281,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
         }
     }        
 
-
     //Beta{N-1}
-
     for(unsigned int i = 0 ; i < nn ; i++){
         for(unsigned int j = i ; j < nn ; j++){
 
@@ -320,7 +317,8 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
         }
         
     }
-    // End of calculation of Alpha's and Beta's
+    // End of computation of Alpha and Beta
+    
     
     // Inverting Q and R, needed for the rest of the program
     for(unsigned int i=0 ; i<nn ; i++){
