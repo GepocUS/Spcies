@@ -31,8 +31,6 @@
 // Constant variables
 $INSERT_CONSTANTS$
 #if time_varying == 1
-    static double A[nn][nn]; // Matrix A of the linear state-space system model
-    static double B[nn][mm_]; // Matrix B of the linear state-space system model
     static double AB[nn][nm];
     static double Q[nn]; // Weight matrix for the states
     static double R[mm_]; // Weight matrix for the inputs
@@ -140,18 +138,16 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
         Q[i] = pointer_Q[i];
         Q_i[i] = 1/(Q[i]);
         for(unsigned int j = 0; j < nn; j++){
-            A[i][j] = pointer_A[i+j*nn];
             // Constructing AB: Part of A
-            AB[i][j] = A[i][j];
+            AB[i][j] = pointer_A[i+j*nn];
         }
         for(unsigned int j=0; j < mm_; j++){
             if (i==0){
                 R[j] = pointer_R[j];
                 R_i[j] = 1/(R[j]);
             }
-            B[i][j] = pointer_B[i+j*nn];
             // Constructing AB: Part of B
-            AB[i][nn+j] = B[i][j];
+            AB[i][nn+j] = pointer_B[i+j*nn];
         }
     }
     // Constructing QRi
@@ -280,7 +276,7 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
         for (unsigned int i=0 ; i<nn ; i++){
             for (unsigned int j=0 ; j<nn ; j++){
                 for (unsigned int k=0 ; k<=i ; k++){
-                    Alpha[h][i][j] -= inv_Beta[k][i] * A[j][k] * Q_i[k];
+                    Alpha[h][i][j] -= inv_Beta[k][i] * pointer_A[j+k*nn] * Q_i[k];
                 }
             }
         }
