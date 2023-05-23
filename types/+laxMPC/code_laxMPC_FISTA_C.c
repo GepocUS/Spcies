@@ -546,10 +546,10 @@ void laxMPC_FISTA(double *pointer_x0, double *pointer_xr, double *pointer_ur, do
     }
 
     // All other elements except the last nn
-    for(unsigned int l = 0; l < nn; l++){
-        for(unsigned int j = 0; j < nn; j++){
+    for(unsigned int l = 0; l < NN-1; l++){
+        for(unsigned int j = 0; j < nm; j++){
             count++;
-            z_opt[count] = Beta[NN-1][l][j];
+            z_opt[count] = z[l][j];
         }
     }
 
