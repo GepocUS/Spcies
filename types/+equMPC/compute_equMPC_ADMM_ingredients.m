@@ -111,8 +111,8 @@ function vars = compute_equMPC_ADMM_ingredients(controller, options, spcies_opti
         vars.Q = -diag(Q);
         vars.R = -diag(R);
     end
-    vars.UB = UB;
-    vars.LB = LB;
+%     vars.UB = UB;
+%     vars.LB = LB;
     
     % rho
     if (vars.rho_is_scalar)

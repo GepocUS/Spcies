@@ -91,8 +91,8 @@ function vars = compute_equMPC_FISTA_ingredients(controller, options, spcies_opt
         vars.R = -diag(R);
         vars.QRi = -[1./diag(Q); 1./diag(R)];
     end
-    vars.UB = UB;
-    vars.LB = LB;
+%     vars.UB = UB;
+%     vars.LB = LB;
 
     % Scaling vectors and operating point
     if isa(controller, 'EqualityMPC')

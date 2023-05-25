@@ -19,6 +19,8 @@ void mexFunction(int nlhs, mxArray *plhs[],
     double *Q;
     double *R;
     #endif
+    double *LB;
+    double *UB;
     double *u_opt; // Local u_opt
     double *k; // Local k
     double *e_flag; // Local e_flag
@@ -33,12 +35,12 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     // Check number of inputs
     #if time_varying == 1
-    if(nrhs != 7){
+    if(nrhs != 9){
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:number",
                           "Not enough inputs");
     }
     #else
-    if(nrhs != 3){
+    if(nrhs != 5){
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:number",
                           "Not enough inputs");
     }
@@ -66,25 +68,56 @@ void mexFunction(int nlhs, mxArray *plhs[],
                           "ur must be of dimension mm");
     }
     #if time_varying == 1
+    // Check that A is of the correct dimension
     if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != nn*nn ){
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:A",
                           "A must be of dimension nn by nn");
     }
     
+    // Check that B is of the correct dimension
     if( !mxIsDouble(prhs[4]) || mxGetNumberOfElements(prhs[4]) != nn*mm_ ){
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:B",
                           "B must be of dimension nn by mm");
     }
-
+    
+    // Check that Q is of the correct dimension
     if( !mxIsDouble(prhs[5]) || mxGetNumberOfElements(prhs[5]) != nn ){
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:Q",
                           "Q must be a diagonal vector of nn elements");
     }
     
+    // Check that R is of the correct dimension
     if( !mxIsDouble(prhs[6]) || mxGetNumberOfElements(prhs[6]) != mm_ ){
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:R",
                           "R must be a diagonal vector of mm elements");
     }
+    
+
+    // Check that LB is of the correct dimension
+    if( !mxIsDouble(prhs[7]) || mxGetNumberOfElements(prhs[7]) != nm ){
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:x0",
+                          "LB must be of dimension nm");
+    }
+    
+    // Check that UB is of the correct dimension
+    if( !mxIsDouble(prhs[8]) || mxGetNumberOfElements(prhs[8]) != nm ){
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:x0",
+                          "UB must be of dimension nm");
+    }
+
+    #else
+
+    if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != nm ){
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:LB",
+                          "LB must be of dimension nm");
+    }
+    
+    // Check that UB is of the correct dimension
+    if( !mxIsDouble(prhs[4]) || mxGetNumberOfElements(prhs[4]) != nm ){
+        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:UB",
+                          "UB must be of dimension nm");
+    }
+
     #endif
 
     // Read input data
@@ -130,6 +163,32 @@ void mexFunction(int nlhs, mxArray *plhs[],
     R = mxGetDoubles(prhs[6]);
     #else
     R = mxGetPr(prhs[6]);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    LB = mxGetDoubles(prhs[7]);
+    #else
+    LB = mxGetPr(prhs[7]);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    UB = mxGetDoubles(prhs[8]);
+    #else
+    UB = mxGetPr(prhs[8]);
+    #endif
+
+    #else
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    LB = mxGetDoubles(prhs[3]);
+    #else
+    LB = mxGetPr(prhs[3]);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    UB = mxGetDoubles(prhs[4]);
+    #else
+    UB = mxGetPr(prhs[4]);
     #endif
 
     #endif
@@ -213,9 +272,9 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     // Call solver
     #if time_varying == 1
-    laxMPC_FISTA(x0, xr, ur, A, B, Q, R, u_opt, k, e_flag, z_opt, lambda_opt, update_time_sol, solve_time_sol, polish_time_sol, run_time_sol);
+    laxMPC_FISTA(x0, xr, ur, A, B, Q, R, LB, UB, u_opt, k, e_flag, z_opt, lambda_opt, update_time_sol, solve_time_sol, polish_time_sol, run_time_sol);
     #else
-    laxMPC_FISTA(x0, xr, ur, u_opt, k, e_flag, z_opt, lambda_opt, update_time_sol, solve_time_sol, polish_time_sol, run_time_sol);
+    laxMPC_FISTA(x0, xr, ur, LB, UB, u_opt, k, e_flag, z_opt, lambda_opt, update_time_sol, solve_time_sol, polish_time_sol, run_time_sol);
     #endif
 
 }
