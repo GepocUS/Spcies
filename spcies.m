@@ -71,6 +71,7 @@ switch varargin{1}
         addpath([root_path '/generated_solvers/']);
         addpath([root_path '/tests/']);
         savepath
+        disp("Spcies: successfully installed");
     
     % spcies('uninstall')
     %
@@ -89,6 +90,7 @@ switch varargin{1}
         rmpath([root_path '/tests/']);
         warning('on','MATLAB:rmpath:DirNotFound')
         savepath
+        disp("Spcies: successfully uninstalled");
     
     % spcies('test')
     %
