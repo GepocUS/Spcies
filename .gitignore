@@ -2,6 +2,7 @@
 *.swp
 *.pdf
 *.asv
+*.out
 /old/*
 /development/*
 dev_*
@@ -10,3 +11,5 @@ dev_*
 **/personal/*
 **/+personal/*
 .vscode
+/examples/cl_in_C/myMPCsolver.c
+/examples/cl_in_C/myMPCsolver.h
