@@ -18,14 +18,14 @@
 %          - .A: matrix A of the state space model.
 %          - .B: matrix B of the state space model.
 %          It can optionally also contain the following fields:
-%          - .xOptPoint: operating point for the system state.
-%          - .uOptPoint: operating point for the system input.
+%          - .x0: operating point for the system state.
+%          - .u0: operating point for the system input.
 %          - .LBx: Lower bound for the system state.
 %          - .UBx: Upper bound for the system state.
 %          - .LBu: Upper bound for the system input.
 %          - .UBu: Upper bound for the system input.
 %          - .Nx: Vector defining the scaling of the system state.
-%          - .nU: Vector defining the scaling of the system input.
+%          - .Nu: Vector defining the scaling of the system input.
 %   - param: Structure containing the ingredients of the MPC controller.
 %            Its fields will depend on the chosen MPC formulation.
 %            Please, refer to the documentation for additional help.
