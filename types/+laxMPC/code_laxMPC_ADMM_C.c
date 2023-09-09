@@ -154,6 +154,7 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
     // Constructing Hi
     for(unsigned int i=0 ; i<NN_-1 ; i++){
         for(unsigned int j=0 ; j<nm_ ; j++){
+        // FIX: This can be improved by using two loops
             if(j<nn_){
                 Hi[i][j] = Q_rho_i[j];
             }
@@ -167,6 +168,7 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
     // Computation of Alpha and Beta
     #if TIME_VARYING == 1
 
+    // FIX: We shouldn't be using A_in and B_in any more. Instead, we should use AB[][]
     for(unsigned int i = 0 ; i<nn_ ; i++){
         for(unsigned int j=0 ; j<nn_ ; j++){
             for(unsigned int k=0 ; k<nn_ ; k++){
