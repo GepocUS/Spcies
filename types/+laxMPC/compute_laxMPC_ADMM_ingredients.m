@@ -117,8 +117,8 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, options, spcies_opti
     else
         vars.T_rho_i = inv(T+rho*eye(n));
     end
-%     vars.UB = UB;
-%     vars.LB = LB;
+    vars.UB = UB;
+    vars.LB = LB;
     
     % rho
     if (vars.rho_is_scalar)
