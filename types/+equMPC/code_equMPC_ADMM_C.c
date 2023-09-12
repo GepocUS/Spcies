@@ -601,19 +601,11 @@ void equMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
 
         if(res_flag == 0){
             done = 1;
-            #ifdef CONF_MATLAB
-            e_flag[0] = 1.0;
-            #else
             *e_flag = 1;
-            #endif
         }
         else if( k >= k_max ){
             done = 1;
-            #ifdef CONF_MATLAB
-            e_flag[0] = -1.0;
-            #else
             *e_flag = -1;
-            #endif
         }
 
     }
@@ -672,7 +664,7 @@ void equMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
     #endif
 
     // Measure time
-    #ifdef MEASURE_TIME
+    #if MEASURE_TIME == 1
     
     #if WIN32
     QueryPerformanceCounter(&post_polish); // Get time after polishing
