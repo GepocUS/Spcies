@@ -18,14 +18,14 @@ void laxMPC_FISTA(double *x0_in, double *xr_in, double *ur_in, double *A_in, dou
 void laxMPC_FISTA(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int *k_in, int *e_flag, sol_laxMPC_FISTA *sol);
 #endif
 
-void compute_z_lambda_laxMPC_FISTA(double *z_0, double z[][nm_], double *z_N, double lambda[][nn_], double *q, double *qp, const double *QRi, const double *Ti, const double (*AB)[nm_], const double *LB, const double *UB);
+void compute_z_lambda_laxMPC_FISTA(double *z_0, double (*z)[nm_], double *z_N, double (*lambda)[nn_], double *q, double *qp, const double *QRi, const double *Ti, const double (*AB)[nm_], const double *LB, const double *UB);
 
-void compute_residual_vector_laxMPC_FISTA(double res_vec[][nn_], double *z_0, double z[][nm_], double *z_N, double *b, const double (*AB)[nm_]);
+void compute_residual_vector_laxMPC_FISTA(double (*res_vec)[nn_], double *z_0, double (*z)[nm_], double *z_N, double *b, const double (*AB)[nm_]);
 
 #if TIME_VARYING  == 1
-void solve_W_matrix_form(double mu[][nn_], double (*Alpha)[nn_][nn_], double (*Beta)[nn_][nn_]);
+void solve_W_matrix_form(double (*mu)[nn_], double (*Alpha)[nn_][nn_], double (*Beta)[nn_][nn_]);
 #else
-void solve_W_matrix_form(double mu[][nn_], const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_][nn_]);
+void solve_W_matrix_form(double (*mu)[nn_], const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_][nn_]);
 #endif
 
 #endif

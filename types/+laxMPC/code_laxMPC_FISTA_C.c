@@ -534,7 +534,7 @@ void laxMPC_FISTA(double *x0_in, double *xr_in, double *ur_in, double *u_opt, in
 *
 */
 
-void compute_z_lambda_laxMPC_FISTA(double *z_0, double z[][nm_], double *z_N, double lambda[][nn_], double *q, double *qT, const double *QRi, const double *Ti, const double (*AB)[nm_], const double *LB, const double *UB){
+void compute_z_lambda_laxMPC_FISTA(double *z_0, double (*z)[nm_], double *z_N, double (*lambda)[nn_], double *q, double *qT, const double *QRi, const double *Ti, const double (*AB)[nm_], const double *LB, const double *UB){
 
     // Compute first mm elements
     for(unsigned int j = 0; j < mm_; j++){
@@ -609,7 +609,7 @@ void compute_z_lambda_laxMPC_FISTA(double *z_0, double z[][nm_], double *z_N, do
 *
 */
 
-void compute_residual_vector_laxMPC_FISTA(double res_vec[][nn_], double *z_0, double z[][nm_], double *z_N, double *b, const double (*AB)[nm_]){
+void compute_residual_vector_laxMPC_FISTA(double (*res_vec)[nn_], double *z_0, double (*z)[nm_], double *z_N, double *b, const double (*AB)[nm_]){
 
     // Compute the first nn_ elements
     for(unsigned int j = 0; j < nn_; j++){
@@ -640,9 +640,9 @@ void compute_residual_vector_laxMPC_FISTA(double res_vec[][nn_], double *z_0, do
 }
 
 #if TIME_VARYING  == 1
-void solve_W_matrix_form(double mu[][nn_], double (*Alpha)[nn_][nn_], double (*Beta)[nn_][nn_]) {
+void solve_W_matrix_form(double (*mu)[nn_], double (*Alpha)[nn_][nn_], double (*Beta)[nn_][nn_]) {
 #else
-void solve_W_matrix_form(double mu[][nn_], const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_][nn_]) {
+void solve_W_matrix_form(double (*mu)[nn_], const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_][nn_]) {
 #endif
 
 // FORWARD SUBSTITUTION
