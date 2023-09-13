@@ -52,6 +52,11 @@ function constructor = cons_equMPC_FISTA_C(recipe)
     
     %% Compute the ingredients of the controller
     vars = equMPC.compute_equMPC_FISTA_ingredients(recipe.controller, solver_options, recipe.options);
+
+    % Check that the options are allowed
+    if solver_options.time_varying && size(vars.LB, 2) > 1
+        error("EquMPC FISTA time varying solver only allows fixed bounds along the prediction horizon");
+    end
     
     %% Set save_name to type if none is provided
     if isempty(recipe.options.save_name)
@@ -77,14 +82,14 @@ function constructor = cons_equMPC_FISTA_C(recipe)
     
     % Defines
     defCell = [];
-    defCell = add_line(defCell, 'nn', n, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'nn_', n, 1, 'uint', 'define');
     defCell = add_line(defCell, 'mm_', m, 1, 'uint', 'define');
-    defCell = add_line(defCell, 'nm', n+m, 1, 'uint', 'define');
-    defCell = add_line(defCell, 'NN', N, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'nm_', n+m, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'NN_', N, 1, 'uint', 'define');
     defCell = add_line(defCell, 'k_max', solver_options.k_max, 1, 'uint', 'define');
     defCell = add_line(defCell, 'tol', solver_options.tol, 1, 'float', 'define');
     defCell = add_line(defCell, 'in_engineering', solver_options.in_engineering, 1, 'int', 'define');
-    defCell = add_line(defCell, 'time_varying', solver_options.time_varying, 1, 'int', 'define');
+    defCell= add_line(defCell, 'TIME_VARYING', solver_options.time_varying, 1, 'int', 'define');
     if solver_options.debug
         defCell = add_line(defCell, 'DEBUG', 1, 1, 'bool', 'define');
     end
@@ -94,17 +99,19 @@ function constructor = cons_equMPC_FISTA_C(recipe)
     
     % Constants
     constCell = [];
-%     if size(vars.LB, 2) > 1
-%         % Different constraints for each prediction step
-%         constCell = add_line(constCell, 'LB0', vars.LB(n+1:end, 1), 1, precision, var_options);
-%         constCell = add_line(constCell, 'UB0', vars.UB(n+1:end, 1), 1, precision, var_options);
-%         constCell = add_line(constCell, 'LB', vars.LB(:, 2:end)', 1, precision, var_options);
-%         constCell = add_line(constCell, 'UB', vars.UB(:, 2:end)', 1, precision, var_options);
-%         defCell = add_line(defCell, 'VAR_BOUNDS', 1, 1, 'int', 'define');
-%     else
-%         constCell = add_line(constCell, 'LB', vars.LB, 1, precision, var_options);
-%         constCell = add_line(constCell, 'UB', vars.UB, 1, precision, var_options);
-%     end
+    if size(vars.LB, 2) > 1
+        % Different constraints for each prediction step
+        constCell = add_line(constCell, 'LB0', vars.LB(n+1:end, 1), 1, precision, var_options);
+        constCell = add_line(constCell, 'UB0', vars.UB(n+1:end, 1), 1, precision, var_options);
+        constCell = add_line(constCell, 'LB', vars.LB(:, 2:end)', 1, precision, var_options);
+        constCell = add_line(constCell, 'UB', vars.UB(:, 2:end)', 1, precision, var_options);
+        defCell = add_line(defCell, 'VAR_BOUNDS', 1, 1, 'int', 'define');
+    else
+        if ~solver_options.time_varying
+            constCell = add_line(constCell, 'LB', vars.LB, 1, precision, var_options);
+            constCell = add_line(constCell, 'UB', vars.UB, 1, precision, var_options);
+        end
+    end
     if ~solver_options.time_varying
         constCell = add_line(constCell, 'AB', vars.AB, 1, precision, var_options);
         constCell = add_line(constCell, 'Alpha', vars.Alpha, 1, precision, var_options);
@@ -113,7 +120,6 @@ function constructor = cons_equMPC_FISTA_C(recipe)
         constCell = add_line(constCell, 'R', vars.R, 1, precision, var_options);
         constCell = add_line(constCell, 'QRi', vars.QRi, 1, precision, var_options);
     end
-    constCell = add_line(constCell, 'dummy', 5, 1, precision, var_options);
     if solver_options.in_engineering
         constCell = add_line(constCell, 'scaling_x', vars.scaling_x, 1, precision, var_options);
         constCell = add_line(constCell, 'scaling_u', vars.scaling_u, 1, precision, var_options);

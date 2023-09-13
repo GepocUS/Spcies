@@ -44,5 +44,10 @@ function text = declare_variables(data, options)
 
     end
     
+    % Check if it is empty and add at least one empty string if it is
+    if isempty(text)
+        text{1} = "";
+    end
+    
 end
 

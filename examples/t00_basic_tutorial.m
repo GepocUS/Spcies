@@ -92,7 +92,7 @@ solver_options.tol = 1e-3; % Exit tolerance of the solver
 
 % Next, we can set some of the options of the toolbox, such as the name of the
 % MEX file that will be generated, or the directory where the solver is saved.
-options.save_name = 'lax_solver';
+options.save_name = 'mpc_solver';
 options.directory = '';
 options.time = true; % This option tells Spcies to measure the time internally.
 
@@ -162,7 +162,7 @@ for i = 1:num_iter
     % The info output is a structure that contains usefull information,
     % such as the optimal solution of the MPC's optimization problem and
     % the computation times of the solver.
-    [u, hK(i), hE(i), info] = lax_solver(x, xr, ur);
+    [u, hK(i), hE(i), info] = mpc_solver(x, xr, ur);
     hT(i) = info.run_time;
     
     % Simulate the system
