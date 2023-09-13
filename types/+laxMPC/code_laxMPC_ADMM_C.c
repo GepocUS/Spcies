@@ -205,6 +205,7 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
     // ALpha{0}
     for(unsigned int i=0 ; i < nn_ ; i++){
         for(unsigned int j=0 ; j < nn_ ; j++){
+
             Alpha[0][i][j] = -Q_rho_i[i]*AB[j][i];
             
             if(i>0){
@@ -248,8 +249,10 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
             }
         }
         
+        //Alpha[h][][]
         for(unsigned int i=0 ; i < nn_ ; i++){
             for(unsigned int j=0 ; j < nn_ ; j++){
+
                 Alpha[h][i][j] = -Q_rho_i[i]*AB[j][i];
                 
                 if(i>0){
