@@ -69,7 +69,7 @@ void equMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
         double BRiBt[nn_][nn_] = {{0.0}}; // B*inv(R+rho*I)*B'
         double Alpha[NN_-1][nn_][nn_] = {{{0.0}}};
         double Beta[NN_][nn_][nn_] = {{{0.0}}};
-        double inv_Beta[nn_][nn_] = {{0.0}}; // Inverse of only the current beta is stored
+        double inv_Beta_diag[NN_][nn_] = {{0.0}};
         double LB[nm_]; // Lower bound for box constraints 
         double UB[nm_]; // Upper bound for box constraints
     #endif
@@ -186,34 +186,28 @@ void equMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
             if (i==j){
                 Beta[0][i][j] += Q_rho_i[i];
                 Beta[0][i][j] = sqrt(Beta[0][i][j]);
+                inv_Beta_diag[0][i] = 1/Beta[0][i][i];
             }
             else{
-                Beta[0][i][j] = Beta[0][i][j]/Beta[0][i][i];
+                Beta[0][i][j] = Beta[0][i][j]*inv_Beta_diag[0][i];
             }
         }
     }
 
-    // Inverse of Beta{0}
-    for (int i=nn_-1 ; i>=0 ; i--){
-        for (unsigned int j=0 ; j<nn_ ; j++){
-            if(i==j){
-                inv_Beta[i][i] = 1/Beta[0][i][i]; // Calculation of diagonal elements
-            }
-            else if (j>i){
-                for(unsigned int k = i+1 ; k<=j ; k++){
-                    inv_Beta[i][j] += Beta[0][i][k]*inv_Beta[k][j];
-            }
-                inv_Beta[i][j] = -1/Beta[0][i][i]*inv_Beta[i][j];
-            }
-        }
-    }
+    // ALpha{0}
+    for(unsigned int i=0 ; i < nn_ ; i++){
+        for(unsigned int j=0 ; j < nn_ ; j++){
 
-    // Alpha{0}
-    for (unsigned int i=0 ; i<nn_ ; i++){
-        for (unsigned int j=0 ; j<nn_ ; j++){
-            for (unsigned int k=0 ; k<=i ; k++){
-                Alpha[0][i][j] -= inv_Beta[k][i] * A_in[j+k*nn_] * Q_rho_i[k];
+            Alpha[0][i][j] = -Q_rho_i[i]*AB[j][i];
+            
+            if(i>0){
+                for(unsigned int l=0 ; l <= i-1 ; l++){
+                    Alpha[0][i][j] -= Beta[0][l][i] * Alpha[0][l][j];
+                }
             }
+
+            Alpha[0][i][j] = Alpha[0][i][j]*inv_Beta_diag[0][i];
+
         }
     }
 
@@ -221,6 +215,7 @@ void equMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
     for(unsigned int h = 1; h < NN_-1 ; h++){
         for(unsigned int i = 0 ; i < nn_ ; i++){
             for(unsigned int j = i ; j < nn_ ; j++){
+
                 Beta[h][i][j] = AQiAt[i][j] + BRiBt[i][j];
 
                 for(unsigned int k = 0 ; k < nn_ ; k++){
@@ -236,36 +231,28 @@ void equMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
                 if(i==j){
                     Beta[h][i][j] += Q_rho_i[i];   
                     Beta[h][i][j] = sqrt(Beta[h][i][j]);
+                    inv_Beta_diag[h][i] = 1/Beta[h][i][i];
                 }
                 else {
-                    Beta[h][i][j] = Beta[h][i][j]/Beta[h][i][i];
+                    Beta[h][i][j] = Beta[h][i][j]*inv_Beta_diag[h][i];
                 }
             }
         }
 
-        // Calculation of the inverse of the current Beta, needed for current Alpha
-        memset(inv_Beta, 0, sizeof(inv_Beta)); // Reset of inv_Beta when a new Beta is calculated
+        //Alpha[h][][]
+        for(unsigned int i=0 ; i < nn_ ; i++){
+            for(unsigned int j=0 ; j < nn_ ; j++){
 
-        for (int i=nn_-1 ; i>=0 ; i--){
-            for (unsigned int j=0 ; j<nn_ ; j++){
-                if(i==j){
-                    inv_Beta[i][i] = 1/Beta[h][i][i]; // Calculation of diagonal elements
-                }
-                else if (j>i){
-                    for(unsigned int k = i+1 ; k<=j ; k++){
-                        inv_Beta[i][j] += Beta[h][i][k]*inv_Beta[k][j];
+                Alpha[h][i][j] = -Q_rho_i[i]*AB[j][i];
+                
+                if(i>0){
+                    for(unsigned int l=0 ; l <= i-1 ; l++){
+                        Alpha[h][i][j] -= Beta[h][l][i] * Alpha[h][l][j];
                     }
-                    inv_Beta[i][j] = -1/Beta[h][i][i]*inv_Beta[i][j];
                 }
-            }
-        }
 
-        // Calculation of current Alpha
-        for (unsigned int i=0 ; i<nn_ ; i++){
-            for (unsigned int j=0 ; j<nn_ ; j++){
-                for (unsigned int k=0 ; k<=i ; k++){
-                    Alpha[h][i][j] -= inv_Beta[k][i] * A_in[j+k*nn_] * Q_rho_i[k];
-                }
+                Alpha[h][i][j] = Alpha[h][i][j]*inv_Beta_diag[h][i];
+
             }
         }
 
@@ -274,6 +261,7 @@ void equMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
     //Beta{N-1}
     for(unsigned int i = 0 ; i < nn_ ; i++){
         for(unsigned int j = i ; j < nn_ ; j++){
+
             Beta[NN_-1][i][j] = AQiAt[i][j] + BRiBt[i][j];
 
             for(unsigned int k=0 ; k<nn_ ; k++){
@@ -288,10 +276,11 @@ void equMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
 
             if(i==j){
                 Beta[NN_-1][i][j] = sqrt(Beta[NN_-1][i][j]);
+                inv_Beta_diag[NN_-1][i] = 1/Beta[NN_-1][i][i];
             }
 
             else{
-                Beta[NN_-1][i][j] = Beta[NN_-1][i][j]/Beta[NN_-1][i][i];
+                Beta[NN_-1][i][j] = Beta[NN_-1][i][j]*inv_Beta_diag[NN_-1][i];
             }
         }
     }    
@@ -299,7 +288,7 @@ void equMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
     for (unsigned int h=0 ; h<NN_ ; h++){
 
         for (unsigned int i=0 ; i<nn_ ; i++){
-            Beta[h][i][i] = 1/Beta[h][i][i]; // We need to make the component-wise inversion of the diagonal elements of Beta's
+            Beta[h][i][i] = inv_Beta_diag[h][i]; // We need to make the component-wise inversion of the diagonal elements of Beta's
         }
         
     }
