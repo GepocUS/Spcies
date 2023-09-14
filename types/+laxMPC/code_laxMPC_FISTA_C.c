@@ -68,7 +68,6 @@ void laxMPC_FISTA(double *x0_in, double *xr_in, double *ur_in, double *u_opt, in
     double BRiBt[nn_][nn_] = {{0.0}}; // B*inv(R+rho*I)*B'
     double Alpha[NN_-1][nn_][nn_] = {{{0.0}}}; // Variables used for solving the equality constrained QP
     double Beta[NN_][nn_][nn_] = {{{0.0}}}; // Static because they need to go into functions which use their value
-    double inv_Beta_diag[NN_][nn_] = {{0.0}}; // Diagonal elements of every Beta
     double LB[nm_]; // Lower bound for box constraints 
     double UB[nm_]; // Upper bound for box constraints
     #endif
@@ -185,12 +184,11 @@ void laxMPC_FISTA(double *x0_in, double *xr_in, double *ur_in, double *u_opt, in
                 }               
             }
             if (i==j){
-                Beta[0][i][j] += Q_i[i];
-                Beta[0][i][j] = sqrt(Beta[0][i][j]);
-                inv_Beta_diag[0][i] = 1/Beta[0][i][i];
+                Beta[0][i][i] += Q_i[i];
+                Beta[0][i][i] = 1/sqrt(Beta[0][i][i]);
             }
             else{ 
-                Beta[0][i][j] = Beta[0][i][j]*inv_Beta_diag[0][i];
+                Beta[0][i][j] = Beta[0][i][j]*Beta[0][i][i];
             }
         }
     }
@@ -207,7 +205,7 @@ void laxMPC_FISTA(double *x0_in, double *xr_in, double *ur_in, double *u_opt, in
                 }
             }
 
-            Alpha[0][i][j] = Alpha[0][i][j]*inv_Beta_diag[0][i];
+            Alpha[0][i][j] = Alpha[0][i][j]*Beta[0][i][i];
 
         }
     }
@@ -230,13 +228,12 @@ void laxMPC_FISTA(double *x0_in, double *xr_in, double *ur_in, double *u_opt, in
                 }
 
                 if (i==j){        
-                    Beta[h][i][j] += Q_i[i];
-                    Beta[h][i][j] = sqrt(Beta[h][i][j]);
-                    inv_Beta_diag[h][i] = 1/Beta[h][i][i];         
+                    Beta[h][i][i] += Q_i[i];
+                    Beta[h][i][i] = 1/sqrt(Beta[h][i][i]);       
                 }
 
                 else{
-                    Beta[h][i][j] = Beta[h][i][j]/Beta[h][i][i];
+                    Beta[h][i][j] = Beta[h][i][j]*Beta[h][i][i];
                 }
                     
             }
@@ -255,7 +252,7 @@ void laxMPC_FISTA(double *x0_in, double *xr_in, double *ur_in, double *u_opt, in
                     }
                 }
 
-                Alpha[h][i][j] = Alpha[h][i][j]*inv_Beta_diag[h][i];
+                Alpha[h][i][j] = Alpha[h][i][j]*Beta[h][i][i];
 
             }
         }
@@ -278,26 +275,17 @@ void laxMPC_FISTA(double *x0_in, double *xr_in, double *ur_in, double *u_opt, in
             }
 
             if(i==j){        
-                Beta[NN_-1][i][j] -= Ti[i]; // Here the sign should be +=, but Ti is multiplied by -1 in the computation of the ingredients                    
-                Beta[NN_-1][i][j] = sqrt(Beta[NN_-1][i][j]);
-                inv_Beta_diag[NN_-1][i] = 1/Beta[NN_-1][i][i];
+                Beta[NN_-1][i][i] -= Ti[i]; // Here the sign should be +=, but Ti is multiplied by -1 in the computation of the ingredients                    
+                Beta[NN_-1][i][i] = 1/sqrt(Beta[NN_-1][i][i]);
             }
 
             else{
                 // Here T doesn't apply since we consider it diagonal when using FISTA
-                Beta[NN_-1][i][j] = Beta[NN_-1][i][j]*inv_Beta_diag[NN_-1][i];
+                Beta[NN_-1][i][j] = Beta[NN_-1][i][j]*Beta[NN_-1][i][i];
             }
                             
         }
     }              
-
-    for (unsigned int h=0 ; h < NN_ ; h++){
-
-        for (unsigned int i=0 ; i<nn_ ; i++){
-            Beta[h][i][i] = inv_Beta_diag[h][i]; // Need to make the component-wise inversion of the diagonal elements of Beta's
-        }
-        
-    }
     // End of computation of Alpha and Beta
     
     // Multiply Q and R by -1, since this value is used the rest of the algorithm

@@ -70,7 +70,6 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
         double BRiBt[nn_][nn_] = {{0.0}}; // B*inv(R+rho*I)*B'
         double Alpha[NN_-1][nn_][nn_] = {{{0.0}}}; // Variables used for solving the equality constrained QP
         double Beta[NN_][nn_][nn_] = {{{0.0}}}; // Variables used for solving the equality constrained QP
-        double inv_Beta_diag[NN_][nn_] = {{0.0}}; // Diagonal elements of every Beta
         double LB[nm_]; // Lower bound for box constraints 
         double UB[nm_]; // Upper bound for box constraints
     #endif
@@ -192,12 +191,11 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
                 }               
             }
             if (i==j){
-                Beta[0][i][j] += Q_rho_i[i];
-                Beta[0][i][j] = sqrt(Beta[0][i][j]);
-                inv_Beta_diag[0][i] = 1/Beta[0][i][i];
+                Beta[0][i][i] += Q_rho_i[i];
+                Beta[0][i][i] = 1/sqrt(Beta[0][i][i]);
             }
             else{ 
-                Beta[0][i][j] = Beta[0][i][j]*inv_Beta_diag[0][i];
+                Beta[0][i][j] = Beta[0][i][j]*Beta[0][i][i];
             }
         }
     }
@@ -214,7 +212,7 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
                 }
             }
 
-            Alpha[0][i][j] = Alpha[0][i][j]*inv_Beta_diag[0][i];
+            Alpha[0][i][j] = Alpha[0][i][j]*Beta[0][i][i];
 
         }
     }
@@ -238,12 +236,11 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
                 }
                     
                 if(i==j){
-                    Beta[h][i][j] += Q_rho_i[i];   
-                    Beta[h][i][j] = sqrt(Beta[h][i][j]);
-                    inv_Beta_diag[h][i] = 1/Beta[h][i][i];
+                    Beta[h][i][i] += Q_rho_i[i];   
+                    Beta[h][i][i] = 1/sqrt(Beta[h][i][i]);
                 }
                 else {
-                    Beta[h][i][j] = Beta[h][i][j]*inv_Beta_diag[h][i];
+                    Beta[h][i][j] = Beta[h][i][j]*Beta[h][i][i];
                 }
             
             }
@@ -261,7 +258,7 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
                     }
                 }
 
-                Alpha[h][i][j] = Alpha[h][i][j]*inv_Beta_diag[h][i];
+                Alpha[h][i][j] = Alpha[h][i][j]*Beta[h][i][i];
 
             }
         }
@@ -288,23 +285,14 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
             Beta[NN_-1][i][j] += T_rho_i[i][j]; // When calculating Beta{N}, as T_rho_i is dense, we add it in every component instead of only in the diagonal as in Beta{0} to Beta{N-2}
 
             if(i==j){    
-                Beta[NN_-1][i][j] = sqrt(Beta[NN_-1][i][j]);
-                inv_Beta_diag[NN_-1][i] = 1/Beta[NN_-1][i][i];
+                Beta[NN_-1][i][i] = 1/sqrt(Beta[NN_-1][i][i]);
             }
 
             else{
-                Beta[NN_-1][i][j] = Beta[NN_-1][i][j]*inv_Beta_diag[NN_-1][i];
+                Beta[NN_-1][i][j] = Beta[NN_-1][i][j]*Beta[NN_-1][i][i];
             }
 
         }
-    }
-
-    for (unsigned int h=0 ; h < NN_ ; h++){
-
-        for (unsigned int i=0 ; i < nn_ ; i++){
-            Beta[h][i][i] = inv_Beta_diag[h][i]; // We need to make the component-wise inversion of the diagonal elements of Beta
-        }
-        
     }
     // End of computation of Alpha and Beta
 
