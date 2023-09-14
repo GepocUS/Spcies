@@ -69,7 +69,7 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
         double AQiAt[nn_][nn_] = {{0.0}}; // A*inv(Q+rho*I)*A'
         double BRiBt[nn_][nn_] = {{0.0}}; // B*inv(R+rho*I)*B'
         double Alpha[NN_-1][nn_][nn_] = {{{0.0}}}; // Variables used for solving the equality constrained QP
-        double Beta[NN_][nn_][nn_] = {{{0.0}}}; // Variables used for solving the equality constrained QP
+        double Beta[NN_][nn_][nn_] = {{{0.0}}}; // Variables used for solving the equality constrained QP. Note: Diagonal of Beta's are inverted
         double LB[nm_]; // Lower bound for box constraints 
         double UB[nm_]; // Upper bound for box constraints
     #endif
