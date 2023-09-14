@@ -67,8 +67,7 @@ void laxMPC_FISTA(double *x0_in, double *xr_in, double *ur_in, double *u_opt, in
     double AQiAt[nn_][nn_] = {{0.0}}; // A*inv(Q+rho*I)*A'
     double BRiBt[nn_][nn_] = {{0.0}}; // B*inv(R+rho*I)*B'
     double Alpha[NN_-1][nn_][nn_] = {{{0.0}}}; // Variables used for solving the equality constrained QP
-    double Beta[NN_][nn_][nn_] = {{{0.0}}}; // Static because they need to go into functions which use their value
-    double inv_Beta[nn_][nn_] = {{0.0}}; // Inverse of only the current beta is stored
+    double Beta[NN_][nn_][nn_] = {{{0.0}}}; // Variables used for solving the equality constrained QP. Note: Diagonal of Beta's are inverted
     double LB[nm_]; // Lower bound for box constraints 
     double UB[nm_]; // Upper bound for box constraints
     #endif
@@ -179,46 +178,35 @@ void laxMPC_FISTA(double *x0_in, double *xr_in, double *ur_in, double *u_opt, in
             
             Beta[0][i][j] = BRiBt[i][j];
 
-            if(i>0){
-                for(unsigned int l = 0 ; l <= i-1 ; l++){
-                    Beta[0][i][j] -= Beta[0][l][i]*Beta[0][l][j];
-                }               
-            }
+            for(unsigned int l = 1 ; l <= i ; l++){
+                Beta[0][i][j] -= Beta[0][l-1][i]*Beta[0][l-1][j];
+            }               
+
             if (i==j){
-                Beta[0][i][j] += Q_i[i];
-                Beta[0][i][j] = sqrt(Beta[0][i][j]);
+                Beta[0][i][i] += Q_i[i];
+                Beta[0][i][i] = 1/sqrt(Beta[0][i][i]);
             }
             else{ 
-                Beta[0][i][j] = Beta[0][i][j]/Beta[0][i][i];
-            }
-        }
-    }
-
-    // Inverse of Beta{0}
-    memset(inv_Beta, 0, sizeof(inv_Beta)); // Reset of inv_Beta when a new Beta is calculated
-    for (int i=nn_-1 ; i>=0 ; i--){
-        for (unsigned int j=0 ; j<nn_ ; j++){
-            if(i==j){
-                inv_Beta[i][i] = 1/Beta[0][i][i]; // Calculation of diagonal elements
-            }
-            else if (j>i){
-                for(unsigned int k = i+1 ; k<=j ; k++){
-                    inv_Beta[i][j] += Beta[0][i][k]*inv_Beta[k][j];
-            }
-                inv_Beta[i][j] = -1/Beta[0][i][i]*inv_Beta[i][j];
-            }
-        }
-    }
-
-    // Alpha{0}
-    for (unsigned int i=0 ; i<nn_ ; i++){
-        for (unsigned int j=0 ; j<nn_ ; j++){
-            for (unsigned int k=0 ; k<=i ; k++){
-                Alpha[0][i][j] -= inv_Beta[k][i] * A_in[j+k*nn_] * Q_i[k];
+                Beta[0][i][j] = Beta[0][i][j]*Beta[0][i][i];
             }
         }
     }
     
+    // Alpha{0}
+    for (unsigned int i=0 ; i < nn_ ; i++){
+        for (unsigned int j=0 ; j < nn_ ; j++){
+            
+            Alpha[0][i][j] = -Q_i[i]*AB[j][i];
+
+            for(unsigned int l=1 ; l <= i ; l++){
+                Alpha[0][i][j] -= Beta[0][l-1][i] * Alpha[0][l-1][j];
+            }
+
+            Alpha[0][i][j] = Alpha[0][i][j]*Beta[0][i][i];
+
+        }
+    }
+
     // Beta{1} to Beta{N-2}
     for(unsigned int h = 1; h < NN_-1 ; h++){
         for(unsigned int i = 0 ; i < nn_ ; i++){
@@ -230,47 +218,38 @@ void laxMPC_FISTA(double *x0_in, double *xr_in, double *ur_in, double *u_opt, in
                     Beta[h][i][j] -= Alpha[h-1][k][i]*Alpha[h-1][k][j];
                 }
                         
-                if(i>0){
-                    for(unsigned int l = 0 ; l <= i-1 ; l++){
-                        Beta[h][i][j] -= Beta[h][l][i]*Beta[h][l][j];
-                    }            
-                }
+                for(unsigned int l = 1 ; l <= i ; l++){
+                    Beta[h][i][j] -= Beta[h][l-1][i]*Beta[h][l-1][j];
+                }         
 
                 if (i==j){        
-                    Beta[h][i][j] += Q_i[i];
-                    Beta[h][i][j] = sqrt(Beta[h][i][j]);         
+                    Beta[h][i][i] += Q_i[i];
+                    Beta[h][i][i] = 1/sqrt(Beta[h][i][i]);       
                 }
 
                 else{
-                    Beta[h][i][j] = Beta[h][i][j]/Beta[h][i][i];
+                    Beta[h][i][j] = Beta[h][i][j]*Beta[h][i][i];
                 }
                     
             }
         }
-        // Calculation of the inverse of the current Beta, needed for current Alpha
-        memset(inv_Beta, 0, sizeof(inv_Beta)); // Reset of inv_Beta when a new Beta is calculated
-        
-        for (int i=nn_-1 ; i>=0 ; i--){
-            for (unsigned int j=0 ; j<nn_ ; j++){
-                if(i==j){
-                    inv_Beta[i][i] = 1/Beta[h][i][i]; // Calculation of diagonal elements
+
+        // Alpha[h][][]
+
+        for (unsigned int i=0 ; i < nn_ ; i++){
+            for (unsigned int j=0 ; j < nn_ ; j++){
+                
+                Alpha[h][i][j] = -Q_i[i]*AB[j][i];
+
+                for(unsigned int l=1 ; l <= i ; l++){
+                    Alpha[h][i][j] -= Beta[h][l-1][i] * Alpha[h][l-1][j];
                 }
-                else if (j>i){
-                    for(unsigned int k = i+1 ; k<=j ; k++){
-                        inv_Beta[i][j] += Beta[h][i][k]*inv_Beta[k][j];
-                    }
-                    inv_Beta[i][j] = -1/Beta[h][i][i]*inv_Beta[i][j];
-                }
+
+                Alpha[h][i][j] = Alpha[h][i][j]*Beta[h][i][i];
+
             }
         }
-        // Calculation of current Alpha
-        for (unsigned int i=0 ; i<nn_ ; i++){
-            for (unsigned int j=0 ; j<nn_ ; j++){
-                for (unsigned int k=0 ; k<=i ; k++){
-                    Alpha[h][i][j] -= inv_Beta[k][i] * A_in[j+k*nn_] * Q_i[k];
-                }
-            }
-        }
+
     }        
 
     //Beta{N-1}
@@ -282,32 +261,22 @@ void laxMPC_FISTA(double *x0_in, double *xr_in, double *ur_in, double *u_opt, in
                 Beta[NN_-1][i][j] -= Alpha[NN_-2][k][i]*Alpha[NN_-2][k][j];
             }
 
-            if(i>0){
-                for(unsigned int l=0 ; l<=i-1 ; l++){
-                    Beta[NN_-1][i][j] -= Beta[NN_-1][l][i] * Beta[NN_-1][l][j];
-                }
+            for(unsigned int l=1 ; l <= i ; l++){
+                Beta[NN_-1][i][j] -= Beta[NN_-1][l-1][i] * Beta[NN_-1][l-1][j];
             }
 
             if(i==j){        
-                Beta[NN_-1][i][j] -= Ti[i]; // Here the sign should be +=, but Ti is multiplied by -1 in the computation of the ingredients                    
-                Beta[NN_-1][i][j] = sqrt(Beta[NN_-1][i][j]);
+                Beta[NN_-1][i][i] -= Ti[i]; // Here the sign should be +=, but Ti is multiplied by -1 in the computation of the ingredients                    
+                Beta[NN_-1][i][i] = 1/sqrt(Beta[NN_-1][i][i]);
             }
 
             else{
                 // Here T doesn't apply since we consider it diagonal when using FISTA
-                Beta[NN_-1][i][j] = Beta[NN_-1][i][j]/Beta[NN_-1][i][i];
+                Beta[NN_-1][i][j] = Beta[NN_-1][i][j]*Beta[NN_-1][i][i];
             }
                             
         }
     }              
-
-    for (unsigned int h=0 ; h<NN_ ; h++){
-
-        for (unsigned int i=0 ; i<nn_ ; i++){
-            Beta[h][i][i] = 1/Beta[h][i][i]; // Need to make the component-wise inversion of the diagonal elements of Beta's
-        }
-        
-    }
     // End of computation of Alpha and Beta
     
     // Multiply Q and R by -1, since this value is used the rest of the algorithm
