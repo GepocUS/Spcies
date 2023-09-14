@@ -185,11 +185,10 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
             
             Beta[0][i][j] = BRiBt[i][j];
 
-            if(i>0){
-                for(unsigned int l = 0 ; l <= i-1 ; l++){
-                    Beta[0][i][j] -= Beta[0][l][i]*Beta[0][l][j];
-                }               
-            }
+            for(unsigned int l = 1 ; l <= i ; l++){
+                Beta[0][i][j] -= Beta[0][l-1][i]*Beta[0][l-1][j];
+            }               
+
             if (i==j){
                 Beta[0][i][i] += Q_rho_i[i];
                 Beta[0][i][i] = 1/sqrt(Beta[0][i][i]);
@@ -206,10 +205,8 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
 
             Alpha[0][i][j] = -Q_rho_i[i]*AB[j][i];
             
-            if(i>0){
-                for(unsigned int l=0 ; l <= i-1 ; l++){
-                    Alpha[0][i][j] -= Beta[0][l][i] * Alpha[0][l][j];
-                }
+            for(unsigned int l=1 ; l <= i ; l++){
+                Alpha[0][i][j] -= Beta[0][l-1][i] * Alpha[0][l-1][j];
             }
 
             Alpha[0][i][j] = Alpha[0][i][j]*Beta[0][i][i];
@@ -229,10 +226,8 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
                     Beta[h][i][j] -= Alpha[h-1][k][i]*Alpha[h-1][k][j];
                 }
                         
-                if(i>0){
-                    for(unsigned int l = 0 ; l <= i-1 ; l++){
-                        Beta[h][i][j] -= Beta[h][l][i]*Beta[h][l][j];
-                    }
+                for(unsigned int l = 1 ; l <= i ; l++){
+                    Beta[h][i][j] -= Beta[h][l-1][i]*Beta[h][l-1][j];
                 }
                     
                 if(i==j){
@@ -252,10 +247,8 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
 
                 Alpha[h][i][j] = -Q_rho_i[i]*AB[j][i];
                 
-                if(i>0){
-                    for(unsigned int l=0 ; l <= i-1 ; l++){
-                        Alpha[h][i][j] -= Beta[h][l][i] * Alpha[h][l][j];
-                    }
+                for(unsigned int l=1 ; l <= i ; l++){
+                    Alpha[h][i][j] -= Beta[h][l-1][i] * Alpha[h][l-1][j];
                 }
 
                 Alpha[h][i][j] = Alpha[h][i][j]*Beta[h][i][i];
@@ -276,10 +269,8 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
                 Beta[NN_-1][i][j] -= Alpha[NN_-2][k][i]*Alpha[NN_-2][k][j];
             }
                         
-            if(i>0){
-                for(unsigned int l = 0 ; l <= i-1 ; l++){
-                    Beta[NN_-1][i][j] -= Beta[NN_-1][l][i]*Beta[NN_-1][l][j];
-                }
+            for(unsigned int l = 1 ; l <= i ; l++){
+                Beta[NN_-1][i][j] -= Beta[NN_-1][l-1][i]*Beta[NN_-1][l-1][j];
             }
 
             Beta[NN_-1][i][j] += T_rho_i[i][j]; // When calculating Beta{N}, as T_rho_i is dense, we add it in every component instead of only in the diagonal as in Beta{0} to Beta{N-2}
