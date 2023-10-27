@@ -1,0 +1,174 @@
+#include "mex.h"
+#include "$C_CODE_NAME$.h"
+#include <math.h>
+#include <string.h>
+
+// Matlab MEX function
+
+void mexFunction(int nlhs, mxArray *plhs[],
+                 int nrhs, const mxArray *prhs[]){
+
+    // Variable declaration
+
+    double *x0; // Local x0
+    double *xre; // Local xre
+    double *xrs; // Local xrs
+    double *xrc; // Local xrc
+    double *ure; // Local ure
+    double *urs; // Local urs
+    double *urc; // Local urc
+    double *u_opt; // Local u_opt
+    double *k; // Local k
+    double *e_flag; // Local e_flag
+    double *z_opt; // Local z_opt
+    double *s_opt; // Local v_opt
+    double *lambda_opt; // Local lambda_opt
+
+    // Check inputs and outputs
+
+    // Check number of inputs
+    if(nrhs != 7){
+        mexErrMsgIdAndTxt("Spcies:HMPC:nrhs:number",
+                          "Not enough inputs");
+    }
+
+    // Check number of outputs
+    if(nlhs == 0){
+        mexErrMsgIdAndTxt("Spcies:HMPC:nlhs:number",
+                          "At least one output required");
+    }
+
+    // Check that x0 is of the correct dimension
+    if( !mxIsDouble(prhs[0]) || mxGetNumberOfElements(prhs[0]) != nn ){
+        mexErrMsgIdAndTxt("Spcies:HMPC:nrhs:x0",
+                          "x0 must be of dimension nn");
+    }
+    // Check that xre is of the correct dimension
+    if( !mxIsDouble(prhs[1]) || mxGetNumberOfElements(prhs[1]) != nn ){
+        mexErrMsgIdAndTxt("Spcies:HMPC:nrhs:xre",
+                          "xre must be of dimension nn");
+    }
+    // Check that xrs is of the correct dimension
+    if( !mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != nn ){
+        mexErrMsgIdAndTxt("Spcies:HMPC:nrhs:xrs",
+                          "xrs must be of dimension nn");
+    }
+    // Check that xrc is of the correct dimension
+    if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != nn ){
+        mexErrMsgIdAndTxt("Spcies:HMPC:nrhs:xrc",
+                          "xrc must be of dimension nn");
+    }
+    // Check that ure is of the correct dimension
+    if( !mxIsDouble(prhs[4]) || mxGetNumberOfElements(prhs[4]) != mm ){
+        mexErrMsgIdAndTxt("Spcies:HMPC:nrhs:ure",
+                          "ure must be of dimension mm");
+    }
+    // Check that urs is of the correct dimension
+    if( !mxIsDouble(prhs[5]) || mxGetNumberOfElements(prhs[5]) != mm ){
+        mexErrMsgIdAndTxt("Spcies:HMPC:nrhs:urs",
+                          "urs must be of dimension mm");
+    }
+    // Check that urc is of the correct dimension
+    if( !mxIsDouble(prhs[6]) || mxGetNumberOfElements(prhs[6]) != mm ){
+        mexErrMsgIdAndTxt("Spcies:HMPC:nrhs:urc",
+                          "urc must be of dimension mm");
+    }
+
+    // Read input data
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    x0 = mxGetDoubles(prhs[0]);
+    #else
+    x0 = mxGetPr(prhs[0]);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    xre = mxGetDoubles(prhs[1]);
+    #else
+    xre = mxGetPr(prhs[1]);
+    #endif
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    xrs = mxGetDoubles(prhs[2]);
+    #else
+    xrs = mxGetPr(prhs[2]);
+    #endif
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    xrc = mxGetDoubles(prhs[3]);
+    #else
+    xrc = mxGetPr(prhs[3]);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    ure = mxGetDoubles(prhs[4]);
+    #else
+    ure = mxGetPr(prhs[4]);
+    #endif
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    urs = mxGetDoubles(prhs[5]);
+    #else
+    urs = mxGetPr(prhs[5]);
+    #endif
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    urc = mxGetDoubles(prhs[6]);
+    #else
+    urc = mxGetPr(prhs[6]);
+    #endif
+
+    // Prepare output data
+    plhs[0] = mxCreateDoubleMatrix(mm, 1, mxREAL); // u_opt
+    plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL); // k
+    plhs[2] = mxCreateDoubleMatrix(1, 1, mxREAL); // e_flag
+
+    const char *field_names[] = {"z", "s", "lambda"};
+    plhs[3] = mxCreateStructMatrix(1, 1, 3, field_names);
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    u_opt = mxGetDoubles(plhs[0]);
+    #else
+    u_opt = mxGetData(plhs[0]);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    k = mxGetDoubles(plhs[1]);
+    #else
+    k = mxGetData(plhs[1]);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    e_flag = mxGetDoubles(plhs[2]);
+    #else
+    e_flag = mxGetData(plhs[2]);
+    #endif
+
+    mxArray *z, *s, *lambda;
+    z = mxCreateDoubleMatrix(dim, 1, mxREAL);
+    s = mxCreateDoubleMatrix(n_s, 1, mxREAL);
+    lambda = mxCreateDoubleMatrix(n_s, 1, mxREAL);
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    z_opt = mxGetDoubles(z);
+    #else
+    z_opt = mxGetData(z);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    s_opt = mxGetDoubles(s);
+    #else
+    s_opt = mxGetData(s);
+    #endif
+
+    #if MX_HAS_INTERLEAVED_COMPLEX
+    lambda_opt = mxGetDoubles(lambda);
+    #else
+    lambda_opt = mxGetData(lambda);
+    #endif
+
+    mxSetField(plhs[3], 0, "z", z);
+    mxSetField(plhs[3], 0, "s", s);
+    mxSetField(plhs[3], 0, "lambda", lambda);
+
+    // Call solver
+    HMPC_ADMM(x0, xre, xrs, xrc, ure, urs, urc, u_opt, k, e_flag, z_opt, s_opt, lambda_opt);
+
+}
+
+// This code is generated by the Spcies toolbox: https://github.com/GepocUS/Spcies
