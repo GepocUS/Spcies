@@ -75,20 +75,21 @@ function [vars, vars_nonsparse] = compute_MPCT_EADMM_ingredients(controller, opt
     
     %% Extract or compute rho
     if isfield(options, 'rho')
-        rho = options.rho;
-    else
-        rho_base = options.rho_base;
-        rho_mult = options.rho_mult;
-        rho = rho_base*ones((N+1)*(n+m) + n + 1*(n+m), 1);
-        % Penalize constraints related to x
-        rho(1:n) = 1*rho_mult*rho_base; % Initial constraint: x_0 = x. (6b)
-        rho(n+1:2*n) = 1*rho_mult*rho_base; % Initial z1 + z2 + z3 = 0. (6i) for i = 0
-        rho(end-2*(n+m)+1:end-n-m-m) = 1*rho_mult*rho_base; % Final  z1 + z2 + z3 = 0. (6i)  for i = N
-        rho(end-n-m+1:end-m) = 1*rho_mult*rho_base; % x_N = x_s. (6k)
-        % Penalize constraints related to u
-        rho(end-2*(n+m)+n+1:end-n-m) = rho_mult*rho_base; % Final  z1 + z2 + z3 = 0. (6j)  for i = N
-        rho(end-m+1:end) = rho_mult*rho_base; % u_N = u_s. (6l) 
+        options.rho_base = options.rho;
+        options.rho_mult = 1;
     end
+
+    rho_base = options.rho_base;
+    rho_mult = options.rho_mult;
+    rho = rho_base*ones((N+1)*(n+m) + n + 1*(n+m), 1);
+    % Penalize constraints related to x
+    rho(1:n) = 1*rho_mult*rho_base; % Initial constraint: x_0 = x. (6b)
+    rho(n+1:2*n) = 1*rho_mult*rho_base; % Initial z1 + z2 + z3 = 0. (6i) for i = 0
+    rho(end-2*(n+m)+1:end-n-m-m) = 1*rho_mult*rho_base; % Final  z1 + z2 + z3 = 0. (6i)  for i = N
+    rho(end-n-m+1:end-m) = 1*rho_mult*rho_base; % x_N = x_s. (6k)
+    % Penalize constraints related to u
+    rho(end-2*(n+m)+n+1:end-n-m) = rho_mult*rho_base; % Final  z1 + z2 + z3 = 0. (6j)  for i = N
+    rho(end-m+1:end) = rho_mult*rho_base; % u_N = u_s. (6l) 
     
     %% Matrices A1, A2 and A3
     
