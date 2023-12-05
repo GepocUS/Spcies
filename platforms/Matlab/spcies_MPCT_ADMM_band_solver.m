@@ -74,7 +74,7 @@
 %
 
 function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_band_solver(x0, xr, ur, varargin)
-    import personal.compute_MPCT_ADMM_band_ingredients
+    import MPCT.compute_MPCT_ADMM_band_ingredients
 
     %% Default values
     def_sys = []; % Default value for the sys argument
@@ -82,7 +82,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_band_solver(x0, xr, ur, varargi
     def_controller = []; % Default value for the controller argument
     def_genHist = 0; % Default amount of data generated for Hist
     def_verbose = 1; % Default amount of information displayed
-    def_options = personal.def_options_MPCT_ADMM_band();
+    def_options = MPCT.def_options_MPCT_ADMM_band();
 
     %% Parser
     par = inputParser;
