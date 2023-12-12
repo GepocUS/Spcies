@@ -181,15 +181,15 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_band_solver(x0, xr, ur, varargi
         % Compute p = q + lambda - rho*v
         p = q + lambda - var.rho*v;
 
-        % Compute Xhi from eq. (9a) using Alg. 2 from the article
+        % Compute xi from eq. (9a) using Alg. 2 from the article
         z1_a = var.Gamma_hat\p;
         z2_a = (eye(2*(n+m))+var.V_hat*var.Gamma_hat_inv*var.U_hat)\(var.V_hat*z1_a);
         z3_a = var.Gamma_hat\(var.U_hat*z2_a);
     
-        Xhi = z1_a - z3_a;
+        xi = z1_a - z3_a;
 
         % Compute mu from eq. (9b) using Alg. 2 from the article
-        z1_b = var.Gamma_tilde\-(var.G*Xhi+beq);
+        z1_b = var.Gamma_tilde\-(var.G*xi+beq);
         z2_b = (eye(2*(n+m))+var.V_tilde*var.Gamma_tilde_inv*var.U_tilde)\(var.V_tilde*z1_b);
         z3_b = var.Gamma_tilde\(var.U_tilde*z2_b);
     

@@ -232,17 +232,17 @@ function [vars] = compute_MPCT_ADMM_band_ingredients(controller, options, spcies
     end
 
     % Alpha and Beta
-    n_beta = m_z/n_x; % Number of Beta's is N+2
+    n_beta = m_z/n; % Number of Beta's is N+2
     n_alpha = n_beta-1; % Number of Alpha's is N+1
     
-    vars.Beta = zeros(n_x, n_x, n_beta);
-    vars.Alpha = zeros(n_x, n_x, n_alpha);
+    vars.Beta = zeros(n, n, n_beta);
+    vars.Alpha = zeros(n, n, n_alpha);
     
     % Extract Alpha's and Beta's from Gamma_tilde
-    for i = 1 : n_x : m_z
-        vars.Beta(:,:,(i-1)/n_x+1) = Gamma_tilde(i:i+n_x-1,i:i+n_x-1);
-        if((i-1)/n_x+1 <= n_alpha) % If we are in the last column, we do not add a new Alpha
-            vars.Alpha(:,:,(i-1)/n_x+1) = Gamma_tilde(i:i+n_x-1,i+n_x:i+2*n_x-1);
+    for i = 1 : n : m_z
+        vars.Beta(:,:,(i-1)/n+1) = Gamma_tilde(i:i+n-1,i:i+n-1);
+        if((i-1)/n+1 <= n_alpha) % If we are in the last column, we do not add a new Alpha
+            vars.Alpha(:,:,(i-1)/n+1) = Gamma_tilde(i:i+n-1,i+n:i+2*n-1);
         end
     end
     
