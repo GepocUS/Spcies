@@ -12,7 +12,7 @@
  *      -1: Algorithm did not converge within the maximum number of iterations. Returns current iterate.
  * The optimal decision variables and dual variables are returned in the solution structure sol.
  *
- * If CONF_MATLAB is defined, them the solver uses slightly different arguments for the mex file.
+ * If CONF_MATLAB is defined, then the solver uses slightly different arguments for the mex file.
  *
  */
 
