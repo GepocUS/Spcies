@@ -120,7 +120,7 @@ function [vars] = compute_MPCT_ADMM_band_ingredients(controller, options, spcies
     
     G(end-n+1:end,end-(n+m)+1:end) = [A-eye(n), B]; % Condition of (x_s,u_s) as an equilibrium point
 
-%     m_z = size(G,1); % Number of equality constraints
+    m_z = size(G,1); % Number of equality constraints
     n_z = size(H,1); % Number of decision variables
 
 %     beq = zeros(m_z,1);
@@ -228,6 +228,21 @@ function [vars] = compute_MPCT_ADMM_band_ingredients(controller, options, spcies
             vars.OpPoint_u = controller.sys.u0;
         else
             vars.OpPoint_u = zeros(m, 1);
+        end
+    end
+
+    % Alpha and Beta
+    n_beta = m_z/n_x; % Number of Beta's is N+2
+    n_alpha = n_beta-1; % Number of Alpha's is N+1
+    
+    vars.Beta = zeros(n_x, n_x, n_beta);
+    vars.Alpha = zeros(n_x, n_x, n_alpha);
+    
+    % Extract Alpha's and Beta's from Gamma_tilde
+    for i = 1 : n_x : m_z
+        vars.Beta(:,:,(i-1)/n_x+1) = Gamma_tilde(i:i+n_x-1,i:i+n_x-1);
+        if((i-1)/n_x+1 <= n_alpha) % If we are in the last column, we do not add a new Alpha
+            vars.Alpha(:,:,(i-1)/n_x+1) = Gamma_tilde(i:i+n_x-1,i+n_x:i+2*n_x-1);
         end
     end
     
