@@ -129,10 +129,9 @@ function [vars] = compute_MPCT_ADMM_band_ingredients(controller, options, spcies
     %% Ingredients necessary for low computational complexity
     
     Gamma_hat = band + rho * eye(n_z); % Band of P
-    Gamma_hat = diag(Gamma_hat); % We only take a vector with the diagonal elements
 %     dGamma_hat = decomposition(Gamma_hat,'diagonal'); % Decomposition object of Gamma_hat
 
-    Gamma_hat_inv = 1./Gamma_hat; % This avoids the inverse computation online
+    Gamma_hat_inv = inv(Gamma_hat); % This avoids the inverse computation online
 
     % Isolated vertical right-hand side of H
     Y = [-Q , zeros(n,m) ; zeros(m,n), -R]; 
@@ -148,14 +147,14 @@ function [vars] = compute_MPCT_ADMM_band_ingredients(controller, options, spcies
 
     % P = (Gamma_hat + U_hat*V_hat)
 
-    Gamma_tilde = G*diag(Gamma_hat_inv)*G';
+    Gamma_tilde = G*Gamma_hat_inv*G';
 %     dGamma_tilde = decomposition(Gamma_tilde,'banded'); % Decomposition object of Gamma_tilde
 
     Gamma_tilde_inv = inv(Gamma_tilde); % This avoids the inverse computation online
 
-    U_tilde = -G*diag(Gamma_hat_inv)*U_hat*inv(eye(2*MM)+V_hat*diag(Gamma_hat_inv)*U_hat);
+    U_tilde = -G*Gamma_hat_inv*U_hat*inv(eye(2*MM)+V_hat*Gamma_hat_inv*U_hat);
 
-    V_tilde = V_hat*diag(Gamma_hat_inv)*G';
+    V_tilde = V_hat*Gamma_hat_inv*G';
 
     % W = G*inv(H)*G' = Gamma_tilde + U_tilde * V_tilde
 
@@ -184,8 +183,8 @@ function [vars] = compute_MPCT_ADMM_band_ingredients(controller, options, spcies
     vars.T = T;
     vars.S = S;
     vars.G = G;
-    vars.Gamma_hat = Gamma_hat;
-    vars.Gamma_hat_inv = Gamma_hat_inv;
+    vars.Gamma_hat = diag(Gamma_hat); % Note: Gamma_hat is taken as a vector with the elements of the diagonal of the original Gamma_hat
+    vars.Gamma_hat_inv = diag(Gamma_hat_inv); % Same with its inverse
     vars.U_hat = U_hat;
     vars.V_hat = V_hat;
     vars.Gamma_tilde = Gamma_tilde;
