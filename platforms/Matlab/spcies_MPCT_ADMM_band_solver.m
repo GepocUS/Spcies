@@ -182,9 +182,9 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_band_solver(x0, xr, ur, varargi
         p = q + lambda - var.rho*v;
 
         % Compute xi from eq. (9a) using Alg. 2 from the article
-        z1_a = p./var.Gamma_hat;
-        z2_a = (eye(2*(n+m))+var.V_hat*diag(var.Gamma_hat_inv)*var.U_hat)\(var.V_hat*z1_a);
-        z3_a = (var.U_hat*z2_a)./var.Gamma_hat;
+        z1_a = var.Gamma_hat\p;
+        z2_a = (eye(2*(n+m))+var.V_hat*var.Gamma_hat_inv*var.U_hat)\(var.V_hat*z1_a);
+        z3_a = var.Gamma_hat\(var.U_hat*z2_a);
     
         xi = z1_a - z3_a;
 
@@ -196,9 +196,9 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_band_solver(x0, xr, ur, varargi
         mu = z1_b - z3_b;
 
         % Compute z^{k+1} from eq. (9c) using Alg. 2 from the article
-        z1_c = -(var.G'*mu+p)./var.Gamma_hat;
-        z2_c = (eye(2*(n+m))+var.V_hat*diag(var.Gamma_hat_inv)*var.U_hat)\(var.V_hat*z1_c);
-        z3_c = (var.U_hat*z2_c)./var.Gamma_hat;
+        z1_c = var.Gamma_hat\-(var.G'*mu+p);
+        z2_c = (eye(2*(n+m))+var.V_hat*var.Gamma_hat_inv*var.U_hat)\(var.V_hat*z1_c);
+        z3_c = var.Gamma_hat\(var.U_hat*z2_c);
 
         % Obtaining z^{k+1}
         z = z1_c - z3_c;
