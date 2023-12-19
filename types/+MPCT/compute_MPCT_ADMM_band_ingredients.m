@@ -128,7 +128,11 @@ function [vars] = compute_MPCT_ADMM_band_ingredients(controller, options, spcies
 
     %% Ingredients necessary for low computational complexity
     
-    Gamma_hat = band + rho * eye(n_z); % Band of P
+    if vars.rho_is_scalar
+        Gamma_hat = band + rho * eye(n_z); % Band of P
+    else
+        Gamma_hat = band + diag(rho);
+    end
 %     dGamma_hat = decomposition(Gamma_hat,'diagonal'); % Decomposition object of Gamma_hat
 
     Gamma_hat_inv = inv(Gamma_hat); % This avoids the inverse computation online
@@ -153,7 +157,7 @@ function [vars] = compute_MPCT_ADMM_band_ingredients(controller, options, spcies
     Gamma_tilde_inv = inv(Gamma_tilde); % This avoids the inverse computation online
 
     U_tilde = -G*Gamma_hat_inv*U_hat*inv(eye(2*MM)+V_hat*Gamma_hat_inv*U_hat);
-
+    
     V_tilde = V_hat*Gamma_hat_inv*G';
 
     % W = G*inv(H)*G' = Gamma_tilde + U_tilde * V_tilde
@@ -180,21 +184,33 @@ function [vars] = compute_MPCT_ADMM_band_ingredients(controller, options, spcies
     vars.N = N;  % Prediction horizon
     vars.n = n; % Dimension of state space
     vars.m = m; % Dimension of input space
+    vars.Q = Q;
+    vars.R = R;
     vars.T = T;
     vars.S = S;
+    vars.Q_rho_i = inv(Q + rho*diag(ones(n,1)));
+    vars.R_rho_i = inv(R + rho*diag(ones(m,1)));
+    vars.S_rho_i = inv(N*R + S + rho*diag(ones(m,1)));
+    vars.T_rho_i = inv(N*Q + T + rho*diag(ones(n,1)));
     vars.G = G;
-    vars.Gamma_hat = Gamma_hat;
-    vars.Gamma_hat_inv = Gamma_hat_inv;
+%     vars.Gamma_hat = Gamma_hat;
+%     vars.Gamma_hat_inv = Gamma_hat_inv;
     vars.U_hat = U_hat;
-    vars.V_hat = V_hat;
-    vars.Gamma_tilde = Gamma_tilde;
-    vars.Gamma_tilde_inv = Gamma_tilde_inv;
+%     vars.V_hat = V_hat;
+    vars.Gamma_tilde = Gamma_tilde; % Only needed for solver in Matlab. In C Alpha's and Beta's are used
+%     vars.Gamma_tilde_inv = Gamma_tilde_inv;
     vars.U_tilde = U_tilde;
-    vars.V_tilde = V_tilde;
+%     vars.V_tilde = V_tilde;
+    vars.M_hat = inv((eye(2*(n+m))+V_hat*Gamma_hat_inv*U_hat))*V_hat;
+    vars.M_tilde = inv((eye(2*(n+m))+V_tilde*Gamma_tilde_inv*U_tilde))*V_tilde;
     vars.LB = LB;
     vars.UB = UB;
     vars.rho = rho;
-    vars.rho_i = 1./rho;
+    if (vars.rho_is_scalar)
+        vars.rho_i = 1/rho;
+    else
+        vars.rho_i = 1./rho;
+    end
 
     % Scaling vectors and operating point
     if isa(controller, 'TrackingMPC')
@@ -238,11 +254,13 @@ function [vars] = compute_MPCT_ADMM_band_ingredients(controller, options, spcies
     vars.Beta = zeros(n, n, n_beta);
     vars.Alpha = zeros(n, n, n_alpha);
     
-    % Extract Alpha's and Beta's from Gamma_tilde
+    % Extract Alpha's and Beta's from Gamma_tilde_c
+    Gamma_tilde_c = chol(Gamma_tilde);
+
     for i = 1 : n : m_z
-        vars.Beta(:,:,(i-1)/n+1) = Gamma_tilde(i:i+n-1,i:i+n-1);
+        vars.Beta(:,:,(i-1)/n+1) = Gamma_tilde_c(i:i+n-1,i:i+n-1);
         if((i-1)/n+1 <= n_alpha) % If we are in the last column, we do not add a new Alpha
-            vars.Alpha(:,:,(i-1)/n+1) = Gamma_tilde(i:i+n-1,i+n:i+2*n-1);
+            vars.Alpha(:,:,(i-1)/n+1) = Gamma_tilde_c(i:i+n-1,i+n:i+2*n-1);
         end
     end
     
