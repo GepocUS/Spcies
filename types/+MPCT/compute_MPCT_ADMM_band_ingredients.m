@@ -263,6 +263,10 @@ function [vars] = compute_MPCT_ADMM_band_ingredients(controller, options, spcies
             vars.Alpha(:,:,(i-1)/n+1) = Gamma_tilde_c(i:i+n-1,i+n:i+2*n-1);
         end
     end
+
+    for i = 1 : n
+        vars.Beta(i,i,:) = 1/vars.Beta(i,i,:);
+    end
     
 end
 

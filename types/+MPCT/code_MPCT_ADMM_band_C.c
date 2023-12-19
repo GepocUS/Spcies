@@ -423,7 +423,7 @@ void solve_banded_Chol(const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_
             
             }
             
-            y[(k)*nn_+i] = (d[(k)*nn_+i] - sum) / Beta[k][i][i]; // TODO: Remember this is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiplity
+            y[(k)*nn_+i] = (d[(k)*nn_+i] - sum) * Beta[k][i][i]; // TODO: Remember this is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiplity
 
         }
 
@@ -453,7 +453,7 @@ void solve_banded_Chol(const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_
             
             }
 
-            z[(k-1)*nn_+i-1] = (y[(k-1)*nn_+i-1] - sum) / Beta[k-1][i-1][i-1]; // TODO: Remember this is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiplity
+            z[(k-1)*nn_+i-1] = (y[(k-1)*nn_+i-1] - sum) * Beta[k-1][i-1][i-1]; // TODO: Remember this is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiplity
 
         }
 
