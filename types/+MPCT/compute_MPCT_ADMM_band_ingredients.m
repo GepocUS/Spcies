@@ -256,7 +256,7 @@ function [vars] = compute_MPCT_ADMM_band_ingredients(controller, options, spcies
     
     % Extract Alpha's and Beta's from Gamma_tilde_c
     Gamma_tilde_c = chol(Gamma_tilde);
-
+    
     for i = 1 : n : m_z
         vars.Beta(:,:,(i-1)/n+1) = Gamma_tilde_c(i:i+n-1,i:i+n-1);
         if((i-1)/n+1 <= n_alpha) % If we are in the last column, we do not add a new Alpha
@@ -264,7 +264,9 @@ function [vars] = compute_MPCT_ADMM_band_ingredients(controller, options, spcies
         end
     end
 
-    for i = 1 : n
+    % Passing the inverse of the diagonal of Beta's so that we multiply by them instead
+    % of divinding. Used in solve_banded_Chol() function in C
+    for i = 1 : n 
         vars.Beta(i,i,:) = 1/vars.Beta(i,i,:);
     end
     
