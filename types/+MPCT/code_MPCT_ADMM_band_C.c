@@ -55,8 +55,8 @@ void MPCT_ADMM_band(double *pointer_x0, double *pointer_xr, double *pointer_ur, 
     double z2_c[2*nm_] = {0.0}; // Used to solve the equality-constrained QP step --> OK size
     double z3_c[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step --> OK size
     double p[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP
-    double vec[(NN_+1)*nm_] = {0.0}; // Auxiliary vector used to solve the equality-constrained QP step.
-    double vec2[(NN_+2)*nn_] = {0.0}; // Auxiliary vector used to solve the equality-constrained QP step.
+    double aux_0[(NN_+1)*nm_] = {0.0}; // Auxiliary vector used to solve the equality-constrained QP step.
+    double aux_1[(NN_+2)*nn_] = {0.0}; // Auxiliary vector used to solve the equality-constrained QP step.
     double res_fixed_point; // Variable used to determine if a fixed point has been reached
     double res_primal_feas; // Variable used to determine if primal feasibility is satisfied
     unsigned int res_flag = 0; // Flag used to determine if the exit condition is satisfied
@@ -158,19 +158,19 @@ void MPCT_ADMM_band(double *pointer_x0, double *pointer_xr, double *pointer_ur, 
 
         }
 
-        memset(vec, 0, sizeof(double)*(NN_+1)*nm_);
+        memset(aux_0, 0, sizeof(double)*(NN_+1)*nm_);
 
         for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
 
             for (unsigned int j = 0 ; j < 2*nm_ ; j++){
 
-                vec[i] += U_hat[i][j] * z2_a[j]; // TODO: Esta operación es muy esparsa: Aprovechar la estructura de U_hat (ver en Matlab)
+                aux_0[i] += U_hat[i][j] * z2_a[j]; // TODO: Esta operación es muy esparsa: Aprovechar la estructura de U_hat (ver en Matlab)
 
             }
             
         }
 
-        solve_banded_diag_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z3_a, vec); // Obtains z3_a
+        solve_banded_diag_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z3_a, aux_0); // Obtains z3_a
 
         for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){ // Obtains xi, which is the solution of eq. (9a)
 
@@ -180,11 +180,11 @@ void MPCT_ADMM_band(double *pointer_x0, double *pointer_xr, double *pointer_ur, 
 
         // Compute mu from eq. (9b) using Alg. 2 from the article
 
-        memset(vec2, 0, sizeof(double)*(NN_+2)*nn_);
+        memset(aux_1, 0, sizeof(double)*(NN_+2)*nn_);
 
         for (unsigned int i = 0 ; i < nn_ ; i++){
 
-            vec2[i] = -b[i];
+            aux_1[i] = -b[i];
 
         }
 
@@ -192,13 +192,13 @@ void MPCT_ADMM_band(double *pointer_x0, double *pointer_xr, double *pointer_ur, 
 
             for (unsigned int j = 0 ; j < (NN_+1)*nm_ ; j++){
 
-                vec2[i] -= G[i][j] * xi[j];
+                aux_1[i] -= G[i][j] * xi[j];
 
             }
 
         }
 
-        solve_banded_Chol(Alpha, Beta, z1_b, vec2); // Obtains z1_b // REVISAR AQUÍ
+        solve_banded_Chol(Alpha, Beta, z1_b, aux_1); // Obtains z1_b
 
         for (unsigned int i = 0 ; i < 2*nm_ ; i++){ // Obtains z2_b
 
@@ -210,19 +210,19 @@ void MPCT_ADMM_band(double *pointer_x0, double *pointer_xr, double *pointer_ur, 
 
         }
 
-        memset(vec2, 0, sizeof(double)*(NN_+2)*nn_);
+        memset(aux_1, 0, sizeof(double)*(NN_+2)*nn_);
 
         for (unsigned int i = 0 ; i < (NN_+2)*nn_ ; i++){
 
             for (unsigned int j = 0 ;  j < 2*nm_ ; j++){
 
-                vec2[i] += U_tilde[i][j] * z2_b[j]; // U_tilde is also practically dense, so no structure will be exploited
+                aux_1[i] += U_tilde[i][j] * z2_b[j]; // U_tilde is also practically dense, so no structure will be exploited
 
             } 
 
         }
 
-        solve_banded_Chol(Alpha, Beta, z3_b, vec2); // Obtains z3_b
+        solve_banded_Chol(Alpha, Beta, z3_b, aux_1); // Obtains z3_b
 
         for (unsigned int i = 0 ; i < (NN_+2)*nn_ ; i++){ // Obtains mu, which is the solution of eq. (9b)
 
@@ -231,21 +231,21 @@ void MPCT_ADMM_band(double *pointer_x0, double *pointer_xr, double *pointer_ur, 
         }
 
         // Compute z^{k+1} from eq. (9c) using ALg. 2 from the article
-        memset(vec, 0, sizeof(double)*(NN_+1)*nm_);
+        memset(aux_0, 0, sizeof(double)*(NN_+1)*nm_);
 
         for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
 
             for (unsigned int j = 0 ; j < (NN_+2)*nn_ ; j++){
 
-                vec[i] -= G[j][i] * mu[j];
+                aux_0[i] -= G[j][i] * mu[j];
 
             }
 
-            vec[i] -= p[i];
+            aux_0[i] -= p[i];
 
         }
 
-        solve_banded_diag_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z1_c, vec); // Obtains z1_c
+        solve_banded_diag_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z1_c, aux_0); // Obtains z1_c
 
         for (unsigned int i = 0 ; i < 2*nm_ ; i++){ // Obtains z2_c
 
@@ -257,19 +257,19 @@ void MPCT_ADMM_band(double *pointer_x0, double *pointer_xr, double *pointer_ur, 
 
         }
 
-        memset(vec, 0, sizeof(double)*(NN_+1)*nm_);
+        memset(aux_0, 0, sizeof(double)*(NN_+1)*nm_);
 
         for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
 
             for (unsigned int j = 0 ; j < 2*nm_ ; j++){
 
-                vec[i] += U_hat[i][j] * z2_c[j];
+                aux_0[i] += U_hat[i][j] * z2_c[j];
 
             }
 
         }
 
-        solve_banded_diag_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z3_c, vec); // Obtains z3_c
+        solve_banded_diag_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z3_c, aux_0); // Obtains z3_c
 
         for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){ // Obtains z^{k+1}, which is the solution of eq. (9c)
 
