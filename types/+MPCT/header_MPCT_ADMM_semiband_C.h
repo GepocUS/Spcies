@@ -11,11 +11,11 @@ typedef struct {
 
 #ifdef CONF_MATLAB
 
-void MPCT_ADMM_band(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt);
+void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt);
 
 #else
 
-void MPCT_ADMM_band(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, solution_MPCT *sol);
+void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, solution_MPCT *sol);
 
 #endif
 

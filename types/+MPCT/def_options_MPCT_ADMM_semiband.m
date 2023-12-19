@@ -1,6 +1,6 @@
-%% def_options_MPCT_ADMM_band
+%% def_options_MPCT_ADMM_semiband
 %
-% Returns the default options for the ADMM_band-based solver for the MPCT formulation
+% Returns the default options for the ADMM_semiband-based solver for the MPCT formulation
 % 
 % Information about this formulation and the solver can be found at:
 % 
@@ -10,7 +10,7 @@
 %   - def_options: Structure containing the default options of the solver
 % 
 
-function def_options = def_options_MPCT_ADMM_band()
+function def_options = def_options_MPCT_ADMM_semiband()
 
     def_options.rho = 1e-2;
     def_options.epsilon_x = 1e-6;

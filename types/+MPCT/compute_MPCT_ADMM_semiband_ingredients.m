@@ -1,4 +1,4 @@
-%% compute_MPCT_ADMM_band_ingredients
+%% compute_MPCT_ADMM_semiband_ingredients
 %
 % Computes the ingredients for the MPCT controller solved with ADMM
 % exploiting the semi-banded structure of the problem using Woodbury Matrix Identity
@@ -18,7 +18,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function [vars] = compute_MPCT_ADMM_band_ingredients(controller, options, spcies_options)
+function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, options, spcies_options)
 
     %% Extract from controller
     if isa(controller, 'TrackingMPC')
@@ -180,7 +180,7 @@ function [vars] = compute_MPCT_ADMM_band_ingredients(controller, options, spcies
     LB = [LB ; LBx_s ; LBu_s];
     UB = [UB ; UBx_s ; UBu_s];
 
-    %% Create variables used in the ADMM_band solver for MPCT
+    %% Create variables used in the ADMM_semiband solver for MPCT
     vars.N = N;  % Prediction horizon
     vars.n = n; % Dimension of state space
     vars.m = m; % Dimension of input space

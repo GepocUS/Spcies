@@ -36,19 +36,19 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     // Check that x0 is of the correct dimension
     if( !mxIsDouble(prhs[0]) || mxGetNumberOfElements(prhs[0]) != nn_ ){
-        mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_band:nrhs:x0",
+        mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:x0",
                           "x0 must be of dimension nn_");
     }
 
     // Check that xr is of the correct dimension
     if( !mxIsDouble(prhs[1]) || mxGetNumberOfElements(prhs[1]) != nn_ ){
-        mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_band:nrhs:xr",
+        mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:xr",
                           "xr must be of dimension nn_");
     }
 
     // Check that ur is of the correct dimension
     if( !mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != mm_ ){
-        mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_band:nrhs:ur",
+        mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:ur",
                           "ur must be of dimension mm_");
     }
 
@@ -125,7 +125,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     mxSetField(plhs[3], 0, "lambda", lambda);
 
     // Call solver
-    MPCT_ADMM_band(x0, xr, ur, u_opt, k, e_flag, z_opt, v_opt, lambda_opt);
+    MPCT_ADMM_semiband(x0, xr, ur, u_opt, k, e_flag, z_opt, v_opt, lambda_opt);
 
 }
 

@@ -1,6 +1,6 @@
-%% cons_MPCT_ADMM_band_C
+%% cons_MPCT_ADMM_semiband_C
 % 
-% Generates the constructor for C of the ADMM_band-based solver for the MPCT formulation
+% Generates the constructor for C of the ADMM_semiband-based solver for the MPCT formulation
 % 
 % Information about this formulation and the solver can be found at:
 % 
@@ -17,7 +17,7 @@
 %                           - .T: Cost function matrix T.
 %                           - .S: Cost function matrix S.
 %                           - .N: Prediction horizon.
-%       - solver_options: Structure containing options of the ADMM_band solver.
+%       - solver_options: Structure containing options of the ADMM_semiband solver.
 %              - .rho: Scalar. Value of the penalty parameter.
 %              - .epsilon_x: Vector by which the bound for x_s are reduced.
 %              - .epsilon_u: Vector by which the bound for u_s are reduced.
@@ -39,7 +39,7 @@
 % 
 
 
-function constructor = cons_MPCT_ADMM_band_C(recipe)
+function constructor = cons_MPCT_ADMM_semiband_C(recipe)
 
     %% Preliminaries
     import utils.add_line
@@ -49,14 +49,14 @@ function constructor = cons_MPCT_ADMM_band_C(recipe)
     this_path = fileparts(full_path);
 
     %% Default solver options
-    def_solver_options = MPCT.def_options_MPCT_ADMM_band();
+    def_solver_options = MPCT.def_options_MPCT_ADMM_semiband();
 
     % Fill recipe.solver_options with the defaults
     solver_options = utils.add_default_options_to_struct(recipe.solver_options, def_solver_options);
     recipe.solver_options = solver_options;
 
     %% Compute the ingredients of the controller
-    vars = MPCT.compute_MPCT_ADMM_band_ingredients(recipe.controller, solver_options, recipe.options);
+    vars = MPCT.compute_MPCT_ADMM_semiband_ingredients(recipe.controller, solver_options, recipe.options);
 
     %% Set save_name to type if none is provided
     if isempty(recipe.options.save_name)
@@ -143,11 +143,11 @@ function constructor = cons_MPCT_ADMM_band_C(recipe)
     % .c file
     constructor = constructor.new_empty_file('code',recipe.options,'c');
     constructor.files.code.blocks = {'$START$', C_code.get_generic_solver_struct;...
-                                     '$INSERT_SOLVER$', [this_path '/code_MPCT_ADMM_band_C.c']};
+                                     '$INSERT_SOLVER$', [this_path '/code_MPCT_ADMM_semiband_C.c']};
 
     % .h file
     constructor = constructor.new_empty_file('header',recipe.options,'h');
-    constructor.files.header.blocks = {'$START$', [this_path '/header_MPCT_ADMM_band_C.h']};
+    constructor.files.header.blocks = {'$START$', [this_path '/header_MPCT_ADMM_semiband_C.h']};
 
     % Data
     constructor.data = {'$INSERT_DEFINES$', defCell;...
