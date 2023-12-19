@@ -38,8 +38,6 @@
 %                 and instead substituted by an instance of the TrackingMPC
 %                 class of the GepocToolbox (https://github.com/GepocUS/GepocToolbox).
 %   - options: Structure containing options of the EADMM solver.
-%              - .rho_base: Scalar. Base value of the penalty parameter.
-%              - .rho_mult: Scalar. Multiplication factor of the base value.
 %              - .epsilon_x: Vector by which the bound for x_s are reduced.
 %              - .epsilon_u: Vector by which the bound for u_s are reduced.
 %              - .inf_bound: Scalar. Determines the value given to components without bound.
@@ -169,9 +167,9 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_band_solver(x0, xr, ur, varargi
     % Update q
     q = zeros((N+1)*(n+m),1);
 
-    q(end-n-m+1:end-m,1) = -var.T'*xr;
+    q(end-n-m+1:end-m,1) = -var.T*xr;
     
-    q(end-m+1:end,1) = -var.S'*ur;
+    q(end-m+1:end,1) = -var.S*ur;
 
     while ~done
         k = k + 1;
@@ -182,7 +180,12 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_band_solver(x0, xr, ur, varargi
         p = q + lambda - var.rho*v;
 
         % Compute xi from eq. (9a) using Alg. 2 from the article
+
 %         z1_a = var.Gamma_hat\p;
+        % The following code solves a banded-diagonal system of equations.
+        % Maybe in C it is worth it to create a function, as we need to solve
+        % it four times.
+        % 1st time
         for i = 1:n+m:(N)*(n+m)
             z1_a(i:i+n-1,1) = var.Q_rho_i*p(i:i+n-1);
         end
@@ -192,22 +195,66 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_band_solver(x0, xr, ur, varargi
         z1_a(N*(n+m)+1:N*(n+m)+n) = var.T_rho_i*p(N*(n+m)+1:N*(n+m)+n);
         z1_a(N*(n+m)+n+1:(N+1)*(n+m)) = var.S_rho_i*p(N*(n+m)+n+1:(N+1)*(n+m));
 
-        z2_a = (eye(2*(n+m))+var.V_hat*var.Gamma_hat_inv*var.U_hat)\(var.V_hat*z1_a);
-        z3_a = var.Gamma_hat\(var.U_hat*z2_a);
-    
-        xi = z1_a - z3_a;
+        % End of code for banded-diagonal system of equations.
+
+%         z2_a = (eye(2*(n+m))+var.V_hat*var.Gamma_hat_inv*var.U_hat)\(var.V_hat*z1_a);
+        z2_a = var.M_hat * z1_a;
+
+%         z3_a = var.Gamma_hat\(var.U_hat*z2_a);
+
+        vec = var.U_hat*z2_a;
+        % 2nd time: Banded-diagonal solve code
+        for i = 1:n+m:(N)*(n+m)
+            z3_a(i:i+n-1,1) = var.Q_rho_i*vec(i:i+n-1);
+        end
+        for i = n+1:n+m:(N)*(n+m)
+            z3_a(i:i+m-1,1) = var.R_rho_i*vec(i:i+m-1);
+        end
+        z3_a(N*(n+m)+1:N*(n+m)+n) = var.T_rho_i*vec(N*(n+m)+1:N*(n+m)+n);
+        z3_a(N*(n+m)+n+1:(N+1)*(n+m)) = var.S_rho_i*vec(N*(n+m)+n+1:(N+1)*(n+m));
+        % End of code for banded-diagonal system of equations.
+
+        xi = z1_a - z3_a; % OK
 
         % Compute mu from eq. (9b) using Alg. 2 from the article
-        z1_b = var.Gamma_tilde\-(var.G*xi+beq);
-        z2_b = (eye(2*(n+m))+var.V_tilde*var.Gamma_tilde_inv*var.U_tilde)\(var.V_tilde*z1_b);
-        z3_b = var.Gamma_tilde\(var.U_tilde*z2_b);
+        z1_b = var.Gamma_tilde\-(var.G*xi+beq); % En C: Calcular -(var.G*xi+beq) online y hacer solve_banded_chol()
+
+%         z2_b = (eye(2*(n+m))+var.V_tilde*var.Gamma_tilde_inv*var.U_tilde)\(var.V_tilde*z1_b);
+        z2_b = var.M_tilde * z1_b;
+        
+        z3_b = var.Gamma_tilde\(var.U_tilde*z2_b); % En C: Calcular (var.U_tilde*z2_b) online y hacer solve_banded_chol()
     
         mu = z1_b - z3_b;
 
         % Compute z^{k+1} from eq. (9c) using Alg. 2 from the article
-        z1_c = var.Gamma_hat\-(var.G'*mu+p);
-        z2_c = (eye(2*(n+m))+var.V_hat*var.Gamma_hat_inv*var.U_hat)\(var.V_hat*z1_c);
-        z3_c = var.Gamma_hat\(var.U_hat*z2_c);
+%         z1_c = var.Gamma_hat\-(var.G'*mu+p);
+        vec = -(var.G'*mu+p);
+        % 3rd time: Banded-diagonal solve code
+        for i = 1:n+m:(N)*(n+m)
+            z1_c(i:i+n-1,1) = var.Q_rho_i*vec(i:i+n-1);
+        end
+        for i = n+1:n+m:(N)*(n+m)
+            z1_c(i:i+m-1,1) = var.R_rho_i*vec(i:i+m-1);
+        end
+        z1_c(N*(n+m)+1:N*(n+m)+n) = var.T_rho_i*vec(N*(n+m)+1:N*(n+m)+n);
+        z1_c(N*(n+m)+n+1:(N+1)*(n+m)) = var.S_rho_i*vec(N*(n+m)+n+1:(N+1)*(n+m));
+        % End of code for banded-diagonal system of equations.
+        
+%         z2_c = (eye(2*(n+m))+var.V_hat*var.Gamma_hat_inv*var.U_hat)\(var.V_hat*z1_c);
+        z2_c = var.M_hat * z1_c;
+
+        %z3_c = var.Gamma_hat\(var.U_hat*z2_c);
+        vec = var.U_hat*z2_c;
+        % 4th time: Banded-diagonal solve code
+        for i = 1:n+m:(N)*(n+m)
+            z3_c(i:i+n-1,1) = var.Q_rho_i*vec(i:i+n-1);
+        end
+        for i = n+1:n+m:(N)*(n+m)
+            z3_c(i:i+m-1,1) = var.R_rho_i*vec(i:i+m-1);
+        end
+        z3_c(N*(n+m)+1:N*(n+m)+n) = var.T_rho_i*vec(N*(n+m)+1:N*(n+m)+n);
+        z3_c(N*(n+m)+n+1:(N+1)*(n+m)) = var.S_rho_i*vec(N*(n+m)+n+1:(N+1)*(n+m));
+        % End of code for banded-diagonal system of equations.
 
         % Obtaining z^{k+1}
         z = z1_c - z3_c;
