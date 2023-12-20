@@ -51,7 +51,7 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
     double z3_b[(NN_+2)*nn_] = {0.0}; // Used to solve the equality-constrained QP step
     double z1_c[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step
     double z3_c[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step
-    double z2[2*nm_] = {0.0}; // Used to solve the equality-constrained QP step
+    double z2[2*nm_] = {0.0}; // Used to solve the equality-constrained QP step. This one is used as z2_a, z2_b and z2_c.
     double p[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP
     double aux_0[(NN_+1)*nm_] = {0.0}; // Auxiliary vector used to solve the equality-constrained QP step.
     double aux_1[(NN_+2)*nn_] = {0.0}; // Auxiliary vector used to solve the equality-constrained QP step.
@@ -127,7 +127,7 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
         memset(z3_b, 0, sizeof(double)*(NN_+2)*nn_);
         memset(z1_c, 0, sizeof(double)*(NN_+1)*nm_);
         memset(z3_c, 0, sizeof(double)*(NN_+1)*nm_);
-        memset(z2, 0, sizeof(double)*2*nm_);
+        memset(z2, 0, sizeof(double)*2*nm_); 
 
         //********** Equality-constrained QP solve **********//
         // This problem updates z
