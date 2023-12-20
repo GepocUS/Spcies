@@ -45,15 +45,13 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
     double b[(NN_+2)*nn_] = {0.0}; // Independent term of the equlity constraint
     double xi[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step
     double mu[(NN_+2)*nn_] = {0.0}; // Used to solve the equality-constrained QP step
-    double z1_a[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step --> OK size
-    double z2_a[2*nm_] = {0.0}; // Used to solve the equality-constrained QP step --> OK size
-    double z3_a[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step --> OK size
-    double z1_b[(NN_+2)*nn_] = {0.0}; // Used to solve the equality-constrained QP step --> OK size
-    double z2_b[2*nm_] = {0.0}; // Used to solve the equality-constrained QP step --> OK size
-    double z3_b[(NN_+2)*nn_] = {0.0}; // Used to solve the equality-constrained QP step --> OK size
-    double z1_c[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step --> OK size
-    double z2_c[2*nm_] = {0.0}; // Used to solve the equality-constrained QP step --> OK size
-    double z3_c[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step --> OK size
+    double z1_a[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step
+    double z3_a[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step
+    double z1_b[(NN_+2)*nn_] = {0.0}; // Used to solve the equality-constrained QP step
+    double z3_b[(NN_+2)*nn_] = {0.0}; // Used to solve the equality-constrained QP step
+    double z1_c[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step
+    double z3_c[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step
+    double z2[2*nm_] = {0.0}; // Used to solve the equality-constrained QP step
     double p[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP
     double aux_0[(NN_+1)*nm_] = {0.0}; // Auxiliary vector used to solve the equality-constrained QP step.
     double aux_1[(NN_+2)*nn_] = {0.0}; // Auxiliary vector used to solve the equality-constrained QP step.
@@ -124,14 +122,12 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
         
         // Reset acumulator variables
         memset(z1_a, 0, sizeof(double)*(NN_+1)*nm_);
-        memset(z2_a, 0, sizeof(double)*2*nm_);
         memset(z3_a, 0, sizeof(double)*(NN_+1)*nm_);
         memset(z1_b, 0, sizeof(double)*(NN_+2)*nn_);
-        memset(z2_b, 0, sizeof(double)*2*nm_);
         memset(z3_b, 0, sizeof(double)*(NN_+2)*nn_);
         memset(z1_c, 0, sizeof(double)*(NN_+1)*nm_);
-        memset(z2_c, 0, sizeof(double)*2*nm_);
         memset(z3_c, 0, sizeof(double)*(NN_+1)*nm_);
+        memset(z2, 0, sizeof(double)*2*nm_);
 
         //********** Equality-constrained QP solve **********//
         // This problem updates z
@@ -152,7 +148,7 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
 
             for (unsigned int j = 0 ; j < (NN_+1)*nm_ ; j++){
 
-                z2_a[i] += M_hat[i][j] * z1_a[j]; // TODO: Quizás se pueda ahorrar aquí multiplicaciones por 0 gracias a la estructura que tiene M_hat (ver en Matlab)
+                z2[i] += M_hat[i][j] * z1_a[j]; // TODO: Quizás se pueda ahorrar aquí multiplicaciones por 0 gracias a la estructura que tiene M_hat (ver en Matlab)
 
             }
 
@@ -164,7 +160,7 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
 
             for (unsigned int j = 0 ; j < 2*nm_ ; j++){
 
-                aux_0[i] += U_hat[i][j] * z2_a[j]; // TODO: Esta operación es muy esparsa: Aprovechar la estructura de U_hat (ver en Matlab)
+                aux_0[i] += U_hat[i][j] * z2[j]; // TODO: Esta operación es muy esparsa: Aprovechar la estructura de U_hat (ver en Matlab)
 
             }
             
@@ -200,11 +196,13 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
 
         solve_banded_Chol(Alpha, Beta, z1_b, aux_1); // Obtains z1_b
 
+        memset(z2, 0, sizeof(double)*2*nm_);
+
         for (unsigned int i = 0 ; i < 2*nm_ ; i++){ // Obtains z2_b
 
             for (unsigned int j = 0 ; j < (NN_+2)*nn_ ; j++){
 
-                z2_b[i] += M_tilde[i][j] * z1_b[j]; // M_tilde is dense, so no structure can be exploited
+                z2[i] += M_tilde[i][j] * z1_b[j]; // M_tilde is dense, so no structure can be exploited
 
             }
 
@@ -216,7 +214,7 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
 
             for (unsigned int j = 0 ;  j < 2*nm_ ; j++){
 
-                aux_1[i] += U_tilde[i][j] * z2_b[j]; // U_tilde is also practically dense, so no structure will be exploited
+                aux_1[i] += U_tilde[i][j] * z2[j]; // U_tilde is also practically dense, so no structure will be exploited
 
             } 
 
@@ -247,11 +245,13 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
 
         solve_banded_diag_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z1_c, aux_0); // Obtains z1_c
 
+        memset(z2, 0, sizeof(double)*2*nm_);
+
         for (unsigned int i = 0 ; i < 2*nm_ ; i++){ // Obtains z2_c
 
             for (unsigned int j = 0 ; j < (NN_+1)*nm_ ; j++){
 
-                z2_c[i] += M_hat[i][j] * z1_c[j];
+                z2[i] += M_hat[i][j] * z1_c[j];
 
             }
 
@@ -263,7 +263,7 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
 
             for (unsigned int j = 0 ; j < 2*nm_ ; j++){
 
-                aux_0[i] += U_hat[i][j] * z2_c[j];
+                aux_0[i] += U_hat[i][j] * z2[j];
 
             }
 
