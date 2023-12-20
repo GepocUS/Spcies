@@ -184,15 +184,78 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
 
         }
 
-        for (unsigned int i = 0 ; i < (NN_+2)*nn_ ; i++){
+        // Multiply G*xi sparsely
 
-            for (unsigned int j = 0 ; j < (NN_+1)*nm_ ; j++){
+        // First part of G*xi
+        for (unsigned int i = 0 ; i < nn_ ; i++){
 
-                aux_1[i] -= G[i][j] * xi[j];
+            aux_1[i] -= xi[i];
+
+        }
+
+        // Intermediate part of G*xi
+        unsigned int r = 0;
+        unsigned int l = 0;
+
+        for (unsigned int i = nn_ ; i<(NN_+1)*nn_ ; i++){
+
+            for (unsigned int j = 0 ; j < nn_ ; j++){
+                aux_1[i] -= A[r][j] * xi[l*nm_+j];
+            }
+
+            for (unsigned int j = 0 ; j < mm_ ; j++){
+                aux_1[i] -= B[r][j] * xi[l*nm_+nn_+j];
+            }
+
+            aux_1[i] += xi[(l+1)*mm_+i];
+
+            r++;
+
+            if (r == nn_){
+                r = 0;
+                l++;
+            }
+
+        }
+
+        // Last part of G*xi
+        for (unsigned int i = 0 ; i < nn_ ; i++){
+
+            for (unsigned int j = 0 ; j < nn_ ; j++){
+
+                if (i == j){
+                    
+                    aux_1[(NN_+1)*nn_+i] -= (A[i][j] - 1.0) * xi[NN_*nm_+j];
+
+                }
+                
+                else{
+
+                    aux_1[(NN_+1)*nn_+i] -= A[i][j] * xi[NN_*nm_+j];    
+
+                }
+
+
+            }
+
+            for (unsigned int j = 0 ; j < mm_ ; j++){
+
+                aux_1[(NN_+1)*nn_+i] -= B[i][j] * xi[NN_*nm_+nn_+j];
 
             }
 
         }
+
+
+        // for (unsigned int i = 0 ; i < (NN_+2)*nn_ ; i++){
+
+        //     for (unsigned int j = 0 ; j < (NN_+1)*nm_ ; j++){
+
+        //         aux_1[i] -= G[i][j] * xi[j];
+
+        //     }
+
+        // }
 
         solve_banded_Chol(Alpha, Beta, z1_b, aux_1); // Obtains z1_b
 
