@@ -266,17 +266,102 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
         // Compute z^{k+1} from eq. (9c) using ALg. 2 from the article
         memset(aux_0, 0, sizeof(double)*(NN_+1)*nm_);
 
-        for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
+        // Sparse computation of -(G'*mu+p)
 
-            for (unsigned int j = 0 ; j < (NN_+2)*nn_ ; j++){
+        for (unsigned int i = 0 ; i < nn_ ; i++){
 
-                aux_0[i] -= G[j][i] * mu[j];
+            for (unsigned int j = 0; j < nn_ ; j++){
+
+                if (i == j){
+                    aux_0[i] -= A[j][i] * mu[nn_+j] + mu[j];
+                }
+
+                else{
+                    aux_0[i] -= A[j][i] * mu[nn_+j];
+                }
 
             }
 
             aux_0[i] -= p[i];
 
         }
+
+        for (unsigned int i = nn_ ; i<nm_ ; i++){
+
+            for (unsigned int j = 0 ; j < nn_ ; j++){
+
+                aux_0[i] -= B[j][i-nn_] * mu[nn_+j];
+
+            }
+
+            aux_0[i] -= p[i];
+
+        }
+
+        for (unsigned int l = 2 ; l<= NN_ ; l++){
+
+            for (unsigned int i = (l-1)*nm_ ; i < l*nn_+(l-1)*mm_ ; i++){
+
+                for (unsigned int j = 0 ; j < nn_ ; j++){
+
+                    if(i-(l-1)*nm_ == j){
+                        aux_0[i] -= (A[j][i-(l-1)*nm_] * mu[l*nn_+j] - mu[j+(l-1)*nn_]);
+                    }
+                    else{
+                        aux_0[i] -= A[j][i-(l-1)*nm_] * mu[l*nn_+j];
+                    }
+
+                }
+
+                aux_0[i] -= p[i];
+
+            }
+
+            for (unsigned int i = l*nm_ - mm_ ; i < l*nm_ ; i++){
+
+                for (unsigned int j = 0 ; j < nn_ ; j++){
+
+                    aux_0[i] -= B[j][i-l*nm_+mm_] * mu[l*nn_+j];
+
+                }
+
+                aux_0[i] -= p[i];
+
+            }
+
+
+        }
+
+        for (unsigned int i = NN_*nm_ ; i < NN_*nm_ + nn_ ; i++){
+
+            for (unsigned int j = 0 ; j < nn_ ; j++){
+
+                if (i-NN_*nm_ == j){
+                    aux_0[i] -= ((A[j][i-NN_*nm_]-1.0) * mu[(NN_+1)*nn_+j] - mu[j+NN_*nn_]);
+                }
+                else{
+                    aux_0[i] -= A[j][i-NN_*nm_] * mu[(NN_+1)*nn_+j];
+                }
+
+            }
+
+            aux_0[i] -= p[i];
+
+        }
+
+        for (unsigned int i = NN_*nm_+nn_ ; i<(NN_+1)*nm_ ; i++){
+
+            for (unsigned int j = 0 ; j < nn_ ; j++){
+
+                aux_0[i] -= B[j][i-NN_*nm_-nn_] * mu[(NN_+1)*nn_+j];
+
+            }
+
+            aux_0[i] -= p[i];
+
+        }
+
+        // End of computation of -(G'*mu+p)
 
         solve_banded_diag_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z1_c, aux_0); // Obtains z1_c
 
