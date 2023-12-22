@@ -176,24 +176,15 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
 
         // Compute mu from eq. (9b) using Alg. 2 from the article
 
+        // Sparse computation of -(G*xi+b)
         memset(aux_1, 0, sizeof(double)*(NN_+2)*nn_);
 
         for (unsigned int i = 0 ; i < nn_ ; i++){
 
-            aux_1[i] = -b[i];
+            aux_1[i] = -(b[i]+xi[i]);
 
         }
 
-        // Multiply -G*xi sparsely
-
-        // First part of -G*xi
-        for (unsigned int i = 0 ; i < nn_ ; i++){
-
-            aux_1[i] -= xi[i];
-
-        }
-
-        // Intermediate part of -G*xi
         for(unsigned int l = 1 ; l <= NN_ ; l++){
 
             for (unsigned int i = l*nn_ ; i < (l+1)*nn_ ; i++){
@@ -217,7 +208,6 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
 
         }
 
-        // Last part of -G*xi
         for (unsigned int i = (NN_+1)*nn_ ; i < (NN_+2)*nn_ ; i++){
 
             for (unsigned int j = 0 ; j < nn_ ; j++){
@@ -237,6 +227,7 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
             }
 
         }
+        // End of computation of -(G*xi+b)
 
         solve_banded_Chol(Alpha, Beta, z1_b, aux_1); // Obtains z1_b
 
