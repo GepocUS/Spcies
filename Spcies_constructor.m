@@ -172,6 +172,9 @@ classdef Spcies_constructor
                     file_text.(name) = strrep(file_text.(name), self.files.(name).flags{j, 1}, self.files.(name).flags{j, 2});
                     
                 end
+
+                % Find and replace functions
+                file_text.(name) = Spcies_constructor.insert_functions(file_text.(name), self.files.(name).dir.extension);
                 
                 % Add the default flags and appends
                 file_text.(name) = strrep(file_text.(name), '$INSERT_NAME$', self.files.(name).dir.name); % Name of the file
@@ -266,7 +269,57 @@ classdef Spcies_constructor
             end
             
         end
-               
+
+    end % End of public methods
+
+    methods (Static)
+
+        function text = insert_functions(text, extension)
+            % Finds and replaces the spcies functions in the file
+            % Functions are defined by lines in the file with the syntax:
+            %
+            % spcies_function_funcName();
+            % 
+            % where funcName can be ant text. The '();' are mandatory.
+            % This method finds all lines with the above syntax and substitutes them
+            % by the function with name 'funcName' found in 'spcies_root/types/functions'.
+            % The extension of the file used for substitution will match the extension
+            % of the file being generated.
+
+            % Get list of function names
+            func_list = extractBetween(text, 'spcies_function_', ';');
+            num_funcs = length(func_list);
+
+            % Extract the name of the functions
+            func_names = cell(1, num_funcs); 
+            for i=1:num_funcs
+                func_names{i} = extractBefore(func_list{i}, '(');
+            end
+
+            % Replace functions in text
+            for i=1:num_funcs
+                
+                % Get the text of the function (using the current file extension)
+                func_text = Spcies_constructor.get_function_text(func_names{i}, extension);
+
+                % Replace the function text in the main text
+                text = strrep(text, ['spcies_function_' func_list{i} ';'], func_text);
+
+            end
+
+        end
+
+        function func_text = get_function_text(func_name, extension)
+            % Returns the text of the file: '/types/functions/func_name.extension'
+
+            % Build file path
+            func_file_path = [spcies_get_root_directory '/types/functions/' func_name '.' extension];
+            
+            % Read file text
+            func_text = fileread(func_file_path);
+
+        end
+
     end
     
 end

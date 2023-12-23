@@ -3,6 +3,14 @@
 
 $INSERT_DEFINES$
 
+#if MEASURE_TIME == 1
+#if WIN32
+#include <Windows.h>
+#else // If Linux
+#include <time.h>
+#endif
+#endif
+
 typedef struct {
     double z[NN_*nm_]; // Optimal z
     double v[NN_*nm_]; // Optimal v
@@ -17,6 +25,11 @@ typedef struct {
 void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *A_in, double *B_in, double *Q_in, double *R_in, double *LB_in, double *UB_in, double *u_opt, int *k_in, int *e_flag, solution *sol);
 #else
 void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int *k_in, int *e_flag, solution *sol);
+#endif
+
+#if MEASURE_TIME == 1
+spcies_function_read_elapsed_time();
+spcies_function_read_time();
 #endif
 
 #endif
