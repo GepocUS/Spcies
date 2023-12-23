@@ -144,11 +144,28 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
         // Compute xi from eq. (9a) using Alg. 2 from the article
         solve_banded_diag_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z1_a, p); // Obtains z1_a
 
-        for (unsigned int i = 0 ; i < 2*nm_ ; i++){ // Obtains z2_a
+        // z2_a = M_hat * z1_a computed sparsely
+        for (unsigned int l = 0 ; l < NN_+1 ; l++){
 
-            for (unsigned int j = 0 ; j < (NN_+1)*nm_ ; j++){
+            for (unsigned int i = 0 ; i < nn_ ; i++){
 
-                z2[i] += M_hat[i][j] * z1_a[j]; // TODO: Quizás se pueda ahorrar aquí multiplicaciones por 0 gracias a la estructura que tiene M_hat (ver en Matlab)
+                for (unsigned int j = 0 ; j < nn_ ; j++){
+
+                    z2[i] += M_hat[i][j+l*nm_] * z1_a[j+l*nm_];
+                    z2[i+nm_] += M_hat[i+nm_][j+l*nm_] * z1_a[j+l*nm_];
+
+                }
+
+            }
+
+            for (unsigned int i = nn_ ; i < nm_ ; i++){
+
+                for (unsigned int j = 0 ; j < mm_ ; j++){
+
+                    z2[i] += M_hat[i][j+l*nm_+nn_] * z1_a[j+l*nm_+nn_];
+                    z2[i+nm_] += M_hat[i+nm_][j+l*nm_+nn_] * z1_a[j+l*nm_+nn_];
+
+                }
 
             }
 
@@ -156,14 +173,35 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
 
         memset(aux_0, 0, sizeof(double)*(NN_+1)*nm_);
 
-        for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
+        // aux_0 = U_hat * z2_a computed sparsely
+        for (unsigned int l = 0 ; l < NN_ ; l++){
 
-            for (unsigned int j = 0 ; j < 2*nm_ ; j++){
+            for (unsigned int i = l*nm_ ; i < l*nm_ + nn_ ; i++){
 
-                aux_0[i] += U_hat[i][j] * z2[j]; // TODO: Esta operación es muy esparsa: Aprovechar la estructura de U_hat (ver en Matlab)
+                for (unsigned int j = 0 ; j < nn_ ; j++){
+
+                    aux_0[i] -= Q[i-l*nm_][j] * z2[j];
+
+                }
 
             }
-            
+
+            for (unsigned int  i = l*nm_+nn_ ; i < (l+1)*nm_ ; i++){
+
+                for (unsigned int j = 0 ; j < mm_ ; j++){
+
+                    aux_0[i] -= R[i-l*nm_-nn_][j] * z2[j+nn_];
+
+                }
+
+            }
+
+        }
+
+        for (unsigned int i = NN_*nm_ ; i < (NN_+1)*nm_ ; i++){
+
+            aux_0[i] = z2[i-(NN_-1)*nm_];
+
         }
 
         solve_banded_diag_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z3_a, aux_0); // Obtains z3_a
@@ -267,7 +305,6 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
         memset(aux_0, 0, sizeof(double)*(NN_+1)*nm_);
 
         // Sparse computation of -(G'*mu+p)
-
         for (unsigned int i = 0 ; i < nn_ ; i++){
 
             for (unsigned int j = 0; j < nn_ ; j++){
@@ -367,11 +404,28 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
 
         memset(z2, 0, sizeof(double)*2*nm_);
 
-        for (unsigned int i = 0 ; i < 2*nm_ ; i++){ // Obtains z2_c
+        // z2_c = M_hat * z1_c computed sparsely
+        for (unsigned int l = 0 ; l < NN_+1 ; l++){
 
-            for (unsigned int j = 0 ; j < (NN_+1)*nm_ ; j++){
+            for (unsigned int i = 0 ; i < nn_ ; i++){
 
-                z2[i] += M_hat[i][j] * z1_c[j];
+                for (unsigned int j = 0 ; j < nn_ ; j++){
+
+                    z2[i] += M_hat[i][j+l*nm_] * z1_c[j+l*nm_];
+                    z2[i+nm_] += M_hat[i+nm_][j+l*nm_] * z1_c[j+l*nm_];
+
+                }
+
+            }
+
+            for (unsigned int i = nn_ ; i < nm_ ; i++){
+
+                for (unsigned int j = 0 ; j < mm_ ; j++){
+
+                    z2[i] += M_hat[i][j+l*nm_+nn_] * z1_c[j+l*nm_+nn_];
+                    z2[i+nm_] += M_hat[i+nm_][j+l*nm_+nn_] * z1_c[j+l*nm_+nn_];
+
+                }
 
             }
 
@@ -379,13 +433,34 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
 
         memset(aux_0, 0, sizeof(double)*(NN_+1)*nm_);
 
-        for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
+        // aux_0 = U_hat * z2_c computed sparsely
+        for (unsigned int l = 0 ; l < NN_ ; l++){
 
-            for (unsigned int j = 0 ; j < 2*nm_ ; j++){
+            for (unsigned int i = l*nm_ ; i < l*nm_ + nn_ ; i++){
 
-                aux_0[i] += U_hat[i][j] * z2[j];
+                for (unsigned int j = 0 ; j < nn_ ; j++){
+
+                    aux_0[i] -= Q[i-l*nm_][j] * z2[j];
+
+                }
 
             }
+
+            for (unsigned int  i = l*nm_+nn_ ; i < (l+1)*nm_ ; i++){
+
+                for (unsigned int j = 0 ; j < mm_ ; j++){
+
+                    aux_0[i] -= R[i-l*nm_-nn_][j] * z2[j+nn_];
+
+                }
+
+            }
+
+        }
+
+        for (unsigned int i = NN_*nm_ ; i < (NN_+1)*nm_ ; i++){
+
+            aux_0[i] = z2[i-(NN_-1)*nm_];
 
         }
 
@@ -543,7 +618,7 @@ void solve_banded_Chol(const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_
             
             }
             
-            y[(k)*nn_+i] = (d[(k)*nn_+i] - sum) * Beta[k][i][i]; // TODO: Remember this is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiplity
+            y[(k)*nn_+i] = (d[(k)*nn_+i] - sum) * Beta[k][i][i]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiplity instead by the diagonal inverted
 
         }
 
@@ -573,7 +648,7 @@ void solve_banded_Chol(const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_
             
             }
 
-            z[(k-1)*nn_+i-1] = (y[(k-1)*nn_+i-1] - sum) * Beta[k-1][i-1][i-1]; // TODO: Remember this is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiplity
+            z[(k-1)*nn_+i-1] = (y[(k-1)*nn_+i-1] - sum) * Beta[k-1][i-1][i-1]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiplity instead by the diagonal inverted
 
         }
 
