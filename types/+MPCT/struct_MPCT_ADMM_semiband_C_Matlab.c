@@ -14,18 +14,16 @@ void mexFunction(int nlhs, mxArray *plhs[],
     double *xr; // Local xr
     double *ur; // Local ur
     double *u_opt; // Local u_opt
-    double *k; // Local k
-    double *e_flag; // Local e_flag
-    double *z_opt; // Local z_opt
-    double *v_opt; // Local v_opt
-    double *lambda_opt; // Local lambda_opt
+    int k; // Local k
+    int e_flag; // Local e_flag
+    solution_MPCT sol;
 
     // Check inputs and outputs
 
     // Check number of inputs
     if(nrhs != 3){
         mexErrMsgIdAndTxt("Spcies:MPCT_EADMM:nrhs:number",
-                          "Not enough inputs");
+                          "Three inputs are required");
     }
 
     // Check number of outputs
@@ -37,95 +35,86 @@ void mexFunction(int nlhs, mxArray *plhs[],
     // Check that x0 is of the correct dimension
     if( !mxIsDouble(prhs[0]) || mxGetNumberOfElements(prhs[0]) != nn_ ){
         mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:x0",
-                          "x0 must be of dimension nn_");
+                          "x0 must be of dimension %%d", nn_);
     }
 
     // Check that xr is of the correct dimension
     if( !mxIsDouble(prhs[1]) || mxGetNumberOfElements(prhs[1]) != nn_ ){
         mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:xr",
-                          "xr must be of dimension nn_");
+                          "xr must be of dimension %%d", nn_);
     }
 
     // Check that ur is of the correct dimension
     if( !mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != mm_ ){
         mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:ur",
-                          "ur must be of dimension mm_");
+                          "ur must be of dimension %%d", mm_);
     }
 
     // Read input data
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    x0 = mxGetDoubles(prhs[0]);
-    #else
-    x0 = mxGetPr(prhs[0]);
-    #endif
-
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    xr = mxGetDoubles(prhs[1]);
-    #else
-    xr = mxGetPr(prhs[1]);
-    #endif
-
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    ur = mxGetDoubles(prhs[2]);
-    #else
-    ur = mxGetPr(prhs[2]);
-    #endif    
+    x0 = (double*) mxGetData(prhs[0]);
+    xr = (double*) mxGetData(prhs[1]);
+    ur = (double*) mxGetData(prhs[2]);
 
     // Prepare output data
+    mxArray *z_pt, *v_pt, *lambda_pt, *update_time_pt, *solve_time_pt, *polish_time_pt, *run_time_pt;
+    double *z_out, *v_out, *lambda_out, *update_time_out, *solve_time_out, *polish_time_out, *run_time_out, *k_out, *e_flag_out;
+
     plhs[0] = mxCreateDoubleMatrix(mm_, 1, mxREAL); // u_opt
     plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL); // k
     plhs[2] = mxCreateDoubleMatrix(1, 1, mxREAL); // e_flag
 
-    const char *field_names[] = {"z","v","lambda"};
-    plhs[3] = mxCreateStructMatrix(1, 1, 3, field_names);
+    u_opt = (double*) mxGetData(plhs[0]);
+    k_out = (double*) mxGetData(plhs[1]);
+    e_flag_out = (double*) mxGetData(plhs[2]);
 
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    u_opt = mxGetDoubles(plhs[0]);
-    #else
-    u_opt = mxGetData(plhs[0]);
-    #endif
+    // Solution structure
+    const char *field_names[] = {"z", "v", "lambda", "update_time", "solve_time", "polish_time", "run_time"};
+    plhs[3] = mxCreateStructMatrix(1, 1, 7, field_names);
 
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    k = mxGetDoubles(plhs[1]);
-    #else
-    k = mxGetData(plhs[1]);
-    #endif
+    z_pt = mxCreateDoubleMatrix((NN_+1)*nm_, 1, mxREAL);
+    v_pt = mxCreateDoubleMatrix((NN_+1)*nm_, 1, mxREAL);
+    lambda_pt = mxCreateDoubleMatrix((NN_+1)*nm_, 1, mxREAL);
+    update_time_pt = mxCreateDoubleMatrix(1, 1, mxREAL);
+    solve_time_pt = mxCreateDoubleMatrix(1, 1, mxREAL);
+    polish_time_pt = mxCreateDoubleMatrix(1, 1, mxREAL);
+    run_time_pt = mxCreateDoubleMatrix(1, 1, mxREAL);
 
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    e_flag = mxGetDoubles(plhs[2]);
-    #else
-    e_flag = mxGetData(plhs[2]);
-    #endif
+    z_out = (double*) mxGetData(z_pt);
+    v_out = (double*) mxGetData(v_pt);
+    lambda_out = (double*) mxGetData(lambda_pt);
+    update_time_out = (double*) mxGetData(update_time_pt);
+    solve_time_out = (double*) mxGetData(solve_time_pt);
+    polish_time_out = (double*) mxGetData(polish_time_pt);
+    run_time_out = (double*) mxGetData(run_time_pt);
 
-    mxArray *z, *v, *lambda;
-    z = mxCreateDoubleMatrix((NN_+1)*nm_, 1, mxREAL);
-    v = mxCreateDoubleMatrix((NN_+1)*nm_, 1, mxREAL);
-    lambda = mxCreateDoubleMatrix((NN_+1)*nm_, 1, mxREAL);
-
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    z_opt = mxGetDouble(z);
-    #else
-    z_opt = mxGetData(z);
-    #endif
-
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    v_opt = mxGetDouble(v);
-    #else
-    v_opt = mxGetData(v);
-    #endif
-
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    lambda_opt = mxGetDouble(lambda);
-    #else
-    lambda_opt = mxGetData(lambda);
-    #endif
-
-    mxSetField(plhs[3], 0, "z", z);
-    mxSetField(plhs[3], 0, "v", v);
-    mxSetField(plhs[3], 0, "lambda", lambda);
+    mxSetField(plhs[3], 0, "z", z_pt);
+    mxSetField(plhs[3], 0, "v", v_pt);
+    mxSetField(plhs[3], 0, "lambda", lambda_pt);
+    mxSetField(plhs[3], 0, "update_time", update_time_pt);
+    mxSetField(plhs[3], 0, "solve_time", solve_time_pt);
+    mxSetField(plhs[3], 0, "polish_time", polish_time_pt);
+    mxSetField(plhs[3], 0, "run_time", run_time_pt);
 
     // Call solver
-    MPCT_ADMM_semiband(x0, xr, ur, u_opt, k, e_flag, z_opt, v_opt, lambda_opt);
+    MPCT_ADMM_semiband(x0, xr, ur, u_opt, &k, &e_flag, &sol);
+
+    // Set output values
+    *k_out = (double) k;
+    *e_flag_out = (double) e_flag;
+    *update_time_out = sol.update_time;
+    *solve_time_out = sol.solve_time;
+    *polish_time_out = sol.polish_time;
+    *run_time_out = sol.run_time;
+
+    #ifdef DEBUG
+
+    for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++) {
+        z_out[i] = sol.z[i];
+        v_out[i] = sol.v[i];
+        lambda_out[i] = sol.lambda[i];
+    }
+
+    #endif
 
 }
 

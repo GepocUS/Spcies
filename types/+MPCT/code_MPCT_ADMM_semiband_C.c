@@ -2,38 +2,54 @@
  * ADMM solver for the MPCT formulation using Woodbury Matrix Identity
  *
  * ARGUMENTS:
- * The current system state is given in "pointer_x0". Pointer to array of size nn_.
- * The state reference is given in "pointer_xr". Pointer to array of size nn_.
- * The input reference is given in "pointer_ur". Pointer to array of size mm_.
- * The optimal constrol action is returned in "u_opt". Pointer to array of size mm_.
- * The number of iterations is returned in "e_flag". Pointer to int.
- *      1: Algorithm converged succesfully.
+ * The current system state is given in "x0_in". Pointer to array of size nn_.
+ * The state reference is given in "xr_in". Pointer to array of size nn_.
+ * The input reference is given in "ur_in". Pointer to array of size mm_.
+ * The optimal control action is returned in "u_opt". Pointer to array of size mm_.
+ * The number of iterations is returned in "k_in". Pointer to int.
+ * The exit flag is returned in "e_flag". Pointer to int.
+ *       1: Algorithm converged succesfully.
  *      -1: Algorithm did not converge within the maximum number of iterations. Returns current iterate.
  * The optimal decision variables and dual variables are returned in the solution structure sol.
- * 
- * If CONF_MATLAB is defined, then the solver uses slightly different arguments for the mex file.
  * 
  */
 
 #include <stdio.h>
 
-#ifdef CONF_MATLAB
+#if MEASURE_TIME == 1
 
-void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt){
-
-#else
-
-void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, solution_MPCT *sol){
+#if WIN32
+#include <Windows.h>
+#else // If Linux
+#include <time.h>
+#endif
 
 #endif
 
+void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int *k_in, int *e_flag, solution_MPCT *sol){
+
+    #if MEASURE_TIME == 1
+
+    #if WIN32
+    static LARGE_INTEGER frequency, start, post_update, post_solve, post_polish;
+    __int64 t_update_time, t_solve_time, t_polish_time, t_run_time; // Time in nano-seconds
+
+    if (frequency.QuadPart == 0){
+    QueryPerformanceFrequency(&frequency);}
+
+    QueryPerformanceCounter(&start); // Get time at the start
+
+    #else // If Linux
+    // Initialize time variables
+    struct timespec start, post_update, post_solve, post_polish;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+    #endif
+
+    #endif
+
     // Initialize solver variables
     int done = 0;
-    #ifdef CONF_MATLAB
-    double k = 0.0; // Number of iterations. In the Matlab case it is easier if it is defined as a double
-    #else
     int k = 0; // Number of iterations
-    #endif
     double x0[nn_] = {0.0}; // Current system state
     double xr[nn_] = {0.0}; // State reference
     double ur[mm_] = {0.0}; // Input reference
@@ -65,20 +81,20 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
     // Obtain variables in scaled units
     #if in_engineering == 1
     for(unsigned int i = 0; i < nn_; i++){
-        x0[i] = scaling_x[i]*( pointer_x0[i] - OpPoint_x[i] );
-        xr[i] = scaling_x[i]*( pointer_xr[i] - OpPoint_x[i] );
+        x0[i] = scaling_x[i]*( x0_in[i] - OpPoint_x[i] );
+        xr[i] = scaling_x[i]*( xr_in[i] - OpPoint_x[i] );
     }
     for(unsigned int i = 0; i < mm_; i++){
-        ur[i] = scaling_u[i]*( pointer_ur[i] - OpPoint_u[i] );
+        ur[i] = scaling_u[i]*( ur_in[i] - OpPoint_u[i] );
     }
     #endif
     #if in_engineering == 0
     for(unsigned int i = 0; i < nn_; i++){
-        x0[i] = pointer_x0[i];
-        xr[i] = pointer_xr[i];
+        x0[i] = x0_in[i];
+        xr[i] = xr_in[i];
     }
     for(unsigned int i = 0; i < mm_; i++){
-        ur[i] = pointer_ur[i];
+        ur[i] = ur_in[i];
     }
     #endif
 
@@ -111,9 +127,22 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
 
     }
 
+    // Measure time
+    #if MEASURE_TIME == 1
+
+    #if WIN32
+    QueryPerformanceCounter(&post_update); // Get time after the update    
+    t_update_time = 1000000000ULL * (post_update.QuadPart - start.QuadPart) / frequency.QuadPart;
+    sol->update_time = t_update_time/(double)1e+9;
+    #else // If Linux
+    clock_gettime(CLOCK_MONOTONIC_RAW, &post_update);
+    sol->update_time = (double) ( (post_update.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_update.tv_nsec - start.tv_nsec) / 1000000.0 );
+    #endif
+
+    #endif
+
     // Algorithm
     while(done == 0){
-
 
         k += 1;
 
@@ -537,6 +566,20 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
 
     }
 
+    // Measure time
+    #if MEASURE_TIME == 1
+    
+    #if WIN32
+    QueryPerformanceCounter(&post_solve); // Get time after solving
+    t_solve_time = 1000000000ULL * (post_solve.QuadPart - post_update.QuadPart) / frequency.QuadPart;
+    sol->solve_time = t_solve_time/(double)1e+9;
+    #else // If Linux
+    clock_gettime(CLOCK_MONOTONIC_RAW, &post_solve);
+    sol->solve_time = (double) ( (post_solve.tv_sec - post_update.tv_sec) * 1000.0 ) + (double) ( (post_solve.tv_nsec - post_update.tv_nsec) / 1000000.0 );
+    #endif
+    
+    #endif
+
     // Control action
     #if in_engineering == 1
     for (unsigned int i = nn_ ; i < nm_ ; i++){
@@ -554,22 +597,10 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
     #endif
 
     // Return number of iterations
-    *pointer_k = k;
+    *k_in = k;
 
     // Save solution into structure
     #ifdef DEBUG
-
-    #ifdef CONF_MATLAB
-
-    for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
-        
-        z_opt[i] = z[i];
-        v_opt[i] = v[i];
-        lambda_opt[i] = lambda[i];
-    
-    }
-
-    #else
 
     for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
         
@@ -581,8 +612,22 @@ void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_
 
     #endif
 
+    // Measure time
+    #if MEASURE_TIME == 1
+    
+    #if WIN32
+    QueryPerformanceCounter(&post_polish); // Get time after polishing
+    t_run_time = 1000000000ULL * (post_polish.QuadPart - start.QuadPart) / frequency.QuadPart;
+    t_polish_time = 1000000000ULL * (post_polish.QuadPart - post_solve.QuadPart) / frequency.QuadPart;
+    sol->run_time = t_run_time/(double)1e+9;
+    sol->polish_time = t_polish_time/(double)1e+9;
+    #else // If Linux
+    clock_gettime(CLOCK_MONOTONIC_RAW, &post_polish);
+    sol->run_time = (double) ( (post_polish.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - start.tv_nsec) / 1000000.0 );
+    sol->polish_time = (double) ( (post_polish.tv_sec - post_solve.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - post_solve.tv_nsec) / 1000000.0 );
     #endif
-
+    
+    #endif
 
 }
 

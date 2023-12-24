@@ -7,17 +7,13 @@ typedef struct {
     double z[(NN_+1)*nm_]; // Optimal z
     double v[(NN_+1)*nm_]; // Optimal v
     double lambda[(NN_+1)*nm_]; // Optimal lambda
+    double update_time; // Time taken for the update of the ingredients of the optimization solver
+    double solve_time; // Time spent in solving the optimization problem
+    double polish_time; // Time taken for extra stuff
+    double run_time; // Time taken in the execution of the whole MPC solver function, equal to the sum of all other times
 } solution_MPCT;
 
-#ifdef CONF_MATLAB
-
-void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt);
-
-#else
-
-void MPCT_ADMM_semiband(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, solution_MPCT *sol);
-
-#endif
+void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int *k_in, int *e_flag, solution_MPCT *sol);
 
 void solve_banded_diag_sys(const double (*Q_rho_i)[nn_], const double (*R_rho_i)[mm_], const double (*S_rho_i)[mm_], const double (*T_rho_i)[nn_], double *z, double *d);
 
