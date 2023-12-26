@@ -512,9 +512,41 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
             v[i] = rho_i[i] * lambda[i] + z[i];
             #endif
 
+        }
+
+        for (unsigned int i = nn_ ; i < nm_ ; i++){
+
             v[i] = (v[i] > LB[i]) ? v[i] : LB[i];
 
             v[i] = (v[i] < UB[i]) ? v[i] : UB[i];
+
+        }
+
+        for (unsigned int l = 1 ; l < NN_ ; l++){
+
+            for(unsigned int i = 0 ; i < nm_ ; i++){
+
+                v[l*nm_+i] = (v[l*nm_+i] > LB[i]) ? v[l*nm_+i] : LB[i];
+
+                v[l*nm_+i] = (v[l*nm_+i] < UB[i]) ? v[l*nm_+i] : UB[i];
+
+            }
+
+        }
+
+        for (unsigned int i = NN_*nm_ ; i<NN_*nm_+nn_ ; i++){
+
+            v[i] = (v[i] > LB[i-NN_*nm_]) ? v[i] : LB[i-NN_*nm_]+eps_x;
+
+            v[i] = (v[i] < UB[i-NN_*nm_]) ? v[i] : UB[i-NN_*nm_]-eps_x;
+
+        }
+
+        for (unsigned int i = NN_*nm_+nn_ ; i<(NN_+1)*nm_ ; i++){
+
+            v[i] = (v[i] > LB[i-(NN_*nm_+nn_)]) ? v[i] : LB[i-(NN_*nm_+nn_)]+eps_u;
+
+            v[i] = (v[i] < UB[i-(NN_*nm_+nn_)]) ? v[i] : UB[i-(NN_*nm_+nn_)]-eps_u;
 
         }
 
