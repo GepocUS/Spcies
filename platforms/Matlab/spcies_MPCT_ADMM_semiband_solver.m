@@ -274,7 +274,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         r_d = norm(v-v_old,'inf'); % Dual residual
 
         % Check exit condition
-        if (r_p <= options.tol_p && r_d <= options.tol_d) % Infinity norm
+        if (r_p <= options.tol && r_d <= options.tol) % Infinity norm
             done = true;
             e_flag = 1;
         elseif (k >= options.k_max)
