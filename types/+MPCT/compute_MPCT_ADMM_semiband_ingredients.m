@@ -163,8 +163,22 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, options, sp
     % W = G*inv(H)*G' = Gamma_tilde + U_tilde * V_tilde
 
     %% Compute upper and lower bounds
-    LB = [LBx ; LBu];
-    UB = [UBx ; UBu];
+    LBx_s = LBx + options.epsilon_x * ones(n,1); % Lower limit for the artificial reference of the state
+    UBx_s = UBx - options.epsilon_x * ones(n,1); % Upper limit for the artificial reference of the state
+    
+    LBu_s = LBu + options.epsilon_u * ones(m,1); % Lower limit for the artificial reference of the input
+    UBu_s = UBu - options.epsilon_u * ones(m,1); % Upper limit for the artificial reference of the input
+    
+    LB = [-options.inf_bound*ones(n,1) ; LBu]; % This makes x_0 not constrained
+    UB = [options.inf_bound*ones(n,1) ; UBu];
+    
+    for i = 2:N
+        LB = [LB ; LBx ; LBu];
+        UB = [UB ; UBx ; UBu];
+    end
+    
+    LB = [LB ; LBx_s ; LBu_s];
+    UB = [UB ; UBx_s ; UBu_s];
 
     %% Create variables used in the ADMM_semiband solver for MPCT
     vars.N = N;  % Prediction horizon

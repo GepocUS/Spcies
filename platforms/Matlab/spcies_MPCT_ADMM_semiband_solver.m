@@ -264,13 +264,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         v = var.rho_i.*lambda + z;
         
         % Obtaining v^{k+1}
-        v(n+1:n+m) = min(max(v(n+1:n+m),var.LB(n+1:n+m)),var.UB(n+1:n+m));
-
-        for i = 2:N-1
-            v(i*(n+m)+1:(i+1)*(n+m)) = min(max(v(i*(n+m)+1:(i+1)*(n+m)),var.LB),var.UB);
-        end
-
-        v(N*(n+m)+1:(N+1)*(n+m)) = min(max(v(N*(n+m)+1:(N+1)*(n+m)),var.LB+[options.epsilon_x*ones(n,1) ; options.epsilon_u*ones(m,1)]),var.UB-[options.epsilon_x*ones(n,1) ; options.epsilon_u*ones(m,1)]);
+        v = min(max(v,var.LB),var.UB);
         
         % Update lambda
         lambda = lambda + var.rho.*(z - v);
@@ -280,7 +274,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         r_d = norm(v-v_old,'inf'); % Dual residual
 
         % Check exit condition
-        if (r_p <= options.tol && r_d <= options.tol) % Infinity norm
+        if (r_p <= options.tol_p && r_d <= options.tol_d) % Infinity norm
             done = true;
             e_flag = 1;
         elseif (k >= options.k_max)
