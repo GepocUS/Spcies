@@ -125,7 +125,9 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
     constCell = add_line(constCell, 'Alpha', vars.Alpha, 1, precision, var_options);
     constCell = add_line(constCell, 'Beta', vars.Beta, 1, precision, var_options);
     constCell = add_line(constCell, 'U_tilde', vars.U_tilde, 1, precision, var_options);
-    constCell = add_line(constCell, 'M_hat', vars.M_hat, 1, precision, var_options);
+%     constCell = add_line(constCell, 'M_hat', vars.M_hat, 1, precision, var_options);
+    constCell = add_line(constCell, 'M_hat_x', vars.M_hat_x, 1, precision, var_options);
+    constCell = add_line(constCell, 'M_hat_u', vars.M_hat_u, 1, precision, var_options);
     constCell = add_line(constCell, 'M_tilde', vars.M_tilde, 1, precision, var_options);
     
 
