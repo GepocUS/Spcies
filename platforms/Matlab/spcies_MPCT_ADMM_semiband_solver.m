@@ -262,9 +262,29 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         % Inequality constrained QP solve: Update v
         
         v = var.rho_i.*lambda + z;
-        
+
         % Obtaining v^{k+1}
-        v = min(max(v,var.LB),var.UB);
+        for i = 1:n
+            v(i) = min(max(v(i),-options.inf_bound),options.inf_bound);
+        end
+
+        for i = n+1:n+m
+            v(i) = min(max(v(i),var.LB(i)),var.UB(i));
+        end
+
+        for l = 1:N-1
+            for i = l*(n+m)+1 : (l+1)*(n+m)
+                v(i) = min(max(v(i),var.LB(i-l*(n+m))),var.UB(i-l*(n+m)));
+            end
+        end
+
+        for i = N*(n+m)+1:N*(n+m)+n
+            v(i) = min(max(v(i),(var.LB(i-N*(n+m))+options.epsilon_x)),(var.UB(i-N*(n+m))-options.epsilon_x));
+        end
+
+        for i = N*(n+m)+n+1:(N+1)*(n+m)
+            v(i) = min(max(v(i),(var.LB(i-(N*(n+m)))+options.epsilon_u)),(var.UB(i-(N*(n+m)))-options.epsilon_u));
+        end
         
         % Update lambda
         lambda = lambda + var.rho.*(z - v);
