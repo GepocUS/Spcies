@@ -123,9 +123,6 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, options, sp
     m_z = size(G,1); % Number of equality constraints
     n_z = size(H,1); % Number of decision variables
 
-%     beq = zeros(m_z,1);
-%     beq(1:nx,1) = x;
-
     %% Ingredients necessary for low computational complexity
     
     if vars.rho_is_scalar
@@ -133,7 +130,7 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, options, sp
     else
         Gamma_hat = band + diag(rho);
     end
-%     dGamma_hat = decomposition(Gamma_hat,'diagonal'); % Decomposition object of Gamma_hat
+%   We could use: dGamma_hat = decomposition(Gamma_hat,'diagonal'); % Decomposition object of Gamma_hat
 
     Gamma_hat_inv = inv(Gamma_hat); % This avoids the inverse computation online
 
@@ -149,10 +146,10 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, options, sp
     U_hat = [Y , zeros(NN,MM) ; zeros(MM,MM) , eye(MM)];
     V_hat = [zeros(MM,NN) , eye(MM) ; Y' , zeros(MM,MM)];
 
-    % P = (Gamma_hat + U_hat*V_hat)
+    % Verification: P = (Gamma_hat + U_hat*V_hat)
 
     Gamma_tilde = G*Gamma_hat_inv*G';
-%     dGamma_tilde = decomposition(Gamma_tilde,'banded'); % Decomposition object of Gamma_tilde
+%    We could use: dGamma_tilde = decomposition(Gamma_tilde,'banded'); % Decomposition object of Gamma_tilde
 
     Gamma_tilde_inv = inv(Gamma_tilde); % This avoids the inverse computation online
 
@@ -175,7 +172,7 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, options, sp
 
     M_tilde = [M_tilde_full(:,1:2*n), M_tilde_full(:,N*n+1:(N+2)*n)];
 
-    % W = G*inv(H)*G' = Gamma_tilde + U_tilde_full * V_tilde
+    % Verification: W = G*inv(H)*G' = Gamma_tilde + U_tilde_full * V_tilde
 
     %% Compute upper and lower bounds
     LB = [LBx ; LBu];
@@ -196,15 +193,10 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, options, sp
     vars.S_rho_i = inv(N*R + S + rho*diag(ones(m,1)));
     vars.T_rho_i = inv(N*Q + T + rho*diag(ones(n,1)));
     vars.G = G;
-%     vars.Gamma_hat = Gamma_hat;
-%     vars.Gamma_hat_inv = Gamma_hat_inv;
     vars.U_hat = U_hat;
-%     vars.V_hat = V_hat;
     vars.Gamma_tilde = Gamma_tilde; % Only needed for solver in Matlab. In C Alpha's and Beta's are used
-%     vars.Gamma_tilde_inv = Gamma_tilde_inv;
     vars.U_tilde_full = U_tilde_full;
     vars.U_tilde = U_tilde;
-%     vars.V_tilde = V_tilde;
     vars.M_hat = M_hat;
     vars.M_hat_x = M_hat_x;
     vars.M_hat_u = M_hat_u;

@@ -4,7 +4,7 @@
 %
 % Information about this formulation and the solver can be found at:
 % 
-% TODO: Poner nombre del artículo si se publica
+% TODO: Write the name of the article here if published
 %
 % [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, 'name', value, 'name', ...)
 %
@@ -183,8 +183,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
 
 %         z1_a = var.Gamma_hat\p;
         % The following code solves a banded-diagonal system of equations.
-        % Maybe in C it is worth it to create a function, as we need to solve
-        % it four times.
+        % In C we create a function, as we need to solve it four times.
         % 1st time
         for i = 1:n+m:(N)*(n+m)
             z1_a(i:i+n-1,1) = var.Q_rho_i*p(i:i+n-1);
@@ -194,14 +193,12 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         end
         z1_a(N*(n+m)+1:N*(n+m)+n) = var.T_rho_i*p(N*(n+m)+1:N*(n+m)+n);
         z1_a(N*(n+m)+n+1:(N+1)*(n+m)) = var.S_rho_i*p(N*(n+m)+n+1:(N+1)*(n+m));
-
         % End of code for banded-diagonal system of equations.
 
 %         z2_a = (eye(2*(n+m))+var.V_hat*var.Gamma_hat_inv*var.U_hat)\(var.V_hat*z1_a);
         z2_a = var.M_hat * z1_a;
 
 %         z3_a = var.Gamma_hat\(var.U_hat*z2_a);
-
         vec = var.U_hat*z2_a;
         % 2nd time: Banded-diagonal solve code
         for i = 1:n+m:(N)*(n+m)
