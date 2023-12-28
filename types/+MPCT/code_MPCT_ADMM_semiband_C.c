@@ -345,15 +345,33 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         memset(z2, 0, sizeof(double)*2*nm_);
 
-        for (unsigned int i = 0 ; i < 2*nm_ ; i++){ // Obtains z2_b
+        // Computation of z2_b
+        for  (unsigned int i = 0 ; i < 2*nm_ ; i++){ 
 
-            for (unsigned int j = 0 ; j < (NN_+2)*nn_ ; j++){
+            for(unsigned int j = 0 ; j < nn_ ; j++){
 
-                z2[i] += M_tilde[i][j] * z1_b[j]; // M_tilde is dense, so no structure can be exploited
+                z2[i] += M_tilde[i][j] * z1_b[j]; // M_tilde is dense, but it presents repetitions inside, so we use a shortened version of it instead
+
+            }
+
+            for (unsigned int l = 0 ; l < NN_-1 ; l++){
+            
+                for (unsigned int j = nn_ ; j < 2*nn_ ; j++){
+                
+                    z2[i] += M_tilde[i][j] * z1_b[l*nn_+j];
+
+                }
+                
+            }
+
+            for (unsigned int j = 2*nn_ ; j < 4*nn_ ; j++){
+
+                z2[i] += M_tilde[i][j] * z1_b[(NN_-2)*nn_+j];
 
             }
 
         }
+        // End of computation of z2_b
 
         memset(aux_1, 0, sizeof(double)*(NN_+2)*nn_);
 
