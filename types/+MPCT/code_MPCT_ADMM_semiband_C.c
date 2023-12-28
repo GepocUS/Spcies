@@ -166,7 +166,9 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         }
 
-        // Compute xi from eq. (9a) using Alg. 2 from the article
+
+        /****** Compute xi from eq. (9a) using Alg. 2 from the article ******/
+
         solve_banded_diag_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z1_ac, p); // Obtains z1_a
 
         // z2_a = M_hat * z1_a computed sparsely
@@ -247,7 +249,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         memset(aux_0, 0, sizeof(double)*(NN_+1)*nm_);
 
-        // aux_0 = U_hat * z2_a computed sparsely
+        // (U_hat * z2_a) computed sparsely
         for (unsigned int l = 0 ; l < NN_ ; l++){
 
             for (unsigned int i = l*nm_ ; i < l*nm_ + nn_ ; i++){
@@ -277,17 +279,21 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
             aux_0[i] = z2[i-(NN_-1)*nm_];
 
         }
+        // End of computation of (U_hat * z2_a)
 
         solve_banded_diag_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z3_ac, aux_0); // Obtains z3_a
 
-        for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){ // Obtains xi, which is the solution of eq. (9a)
+        // Computation of xi, which is the solution of eq. (9a)
+        for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
 
             xi[i] = z1_ac[i] - z3_ac[i];
 
         }
+        // End of computation of xi
 
-        // Compute mu from eq. (9b) using Alg. 2 from the article
 
+        /****** Compute mu from eq. (9b) using Alg. 2 from the article ******/
+        
         // Sparse computation of -(G*xi+b)
         memset(aux_1, 0, sizeof(double)*(NN_+2)*nn_);
 
@@ -375,25 +381,46 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         memset(aux_1, 0, sizeof(double)*(NN_+2)*nn_);
 
-        for (unsigned int i = 0 ; i < (NN_+2)*nn_ ; i++){
+        // Computation of (U_tilde*z2_b)
+        for  (unsigned int i = 0 ; i < 2*nm_ ; i++){ 
 
-            for (unsigned int j = 0 ;  j < 2*nm_ ; j++){
+            for(unsigned int j = 0 ; j < nn_ ; j++){
 
-                aux_1[i] += U_tilde[i][j] * z2[j]; // U_tilde is also practically dense, so no structure will be exploited
+                aux_1[j] += U_tilde[j][i] * z2[i]; // U_tilde is dense, but it presents repetitions inside, so we use a shortened version of it instead
 
-            } 
+            }
+
+            for (unsigned int l = 0 ; l < NN_-1 ; l++){
+            
+                for (unsigned int j = nn_ ; j < 2*nn_ ; j++){
+                
+                    aux_1[l*nn_+j] += U_tilde[j][i] * z2[i];
+
+                }
+                
+            }
+
+            for (unsigned int j = 2*nn_ ; j < 4*nn_ ; j++){
+
+                aux_1[(NN_-2)*nn_+j] += U_tilde[j][i] * z2[i];
+
+            }
 
         }
+        // End of computation of (U_tilde*z2_b)
 
         solve_banded_Chol(Alpha, Beta, z3_b, aux_1); // Obtains z3_b
 
-        for (unsigned int i = 0 ; i < (NN_+2)*nn_ ; i++){ // Obtains mu, which is the solution of eq. (9b)
+        // Computation of mu, which is the solution of eq. (9b)
+        for (unsigned int i = 0 ; i < (NN_+2)*nn_ ; i++){ 
 
             mu[i] = z1_b[i] - z3_b[i];
 
         }
+        // End of computation of mu
 
-        // Compute z^{k+1} from eq. (9c) using ALg. 2 from the article
+        
+        /****** Compute z^{k+1} from eq. (9c) using ALg. 2 from the article ******/
         memset(aux_0, 0, sizeof(double)*(NN_+1)*nm_);
 
         // Sparse computation of -(G'*mu+p)
@@ -457,7 +484,6 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
                 aux_0[i] -= p[i];
 
             }
-
 
         }
 
@@ -575,7 +601,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         memset(aux_0, 0, sizeof(double)*(NN_+1)*nm_);
 
-        // aux_0 = U_hat * z2_c computed sparsely
+        // (U_hat * z2_c) computed sparsely
         for (unsigned int l = 0 ; l < NN_ ; l++){
 
             for (unsigned int i = l*nm_ ; i < l*nm_ + nn_ ; i++){
@@ -605,16 +631,19 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
             aux_0[i] = z2[i-(NN_-1)*nm_];
 
         }
+        // End of computation of (U_hat * z2_c)
 
         memset(z3_ac, 0, sizeof(double)*(NN_+1)*nm_);
 
         solve_banded_diag_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z3_ac, aux_0); // Obtains z3_c
 
-        for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){ // Obtains z^{k+1}, which is the solution of eq. (9c)
+        // Computation of  z^{k+1}, which is the solution of eq. (9c)
+        for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
 
             z[i] = z1_ac[i] - z3_ac[i];
 
         }
+        // End of computation of z^{k+1}
 
         //********** Inequality-constrained QP solve **********//
         // This problem updates v

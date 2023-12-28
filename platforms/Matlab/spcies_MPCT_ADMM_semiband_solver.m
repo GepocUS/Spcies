@@ -219,10 +219,10 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         % Compute mu from eq. (9b) using Alg. 2 from the article
         z1_b = var.Gamma_tilde\-(var.G*xi+beq); % En C: Calcular -(var.G*xi+beq) online y hacer solve_banded_chol()
 
-%         z2_b = (eye(2*(n+m))+var.V_tilde*var.Gamma_tilde_inv*var.U_tilde)\(var.V_tilde*z1_b);
+%         z2_b = (eye(2*(n+m))+var.V_tilde*var.Gamma_tilde_inv*var.U_tilde_full)\(var.V_tilde*z1_b);
         z2_b = var.M_tilde_full * z1_b;
         
-        z3_b = var.Gamma_tilde\(var.U_tilde*z2_b); % En C: Calcular (var.U_tilde*z2_b) online y hacer solve_banded_chol()
+        z3_b = var.Gamma_tilde\(var.U_tilde_full*z2_b); % En C: Calcular (var.U_tilde*z2_b) online y hacer solve_banded_chol()
     
         mu = z1_b - z3_b;
 
