@@ -1,22 +1,30 @@
-% spcies -- Suite of Predictive Controllers for Industrial Embedded Systems
+% SPCIES -- Suite of Predictive Controllers for Industrial Embedded Systems
 %
-% This toolbox generates sparse solvers for various MPC controllers in differen
+% This toolbox generates sparse solvers for various MPC controllers in different
 % programming languages, including MEX solvers for Matlab.
 %
 % For information on the toolbox please visit https://github.com/GepocUS/Spcies
 %
 % This function can be used for various purposes:
 %
+%   spcies('help')          % For the general help and the doc pages
+%                             Use spcies('help', 'topic') for displaying the help
+%                             page of 'topic'.
+%                             Use spcies('help') for general information and the
+%                             list of general topics.
+%                             Alternative call: spcies('h') or spcies('h', 'topic')
+% 
 %   spcies('version')       % Returns the version number of the toolbox. If git is
 %                             installed it also returns the git hash in the second
 %                             output, i.e., [version, hash] = spcies('version').
 %                             The first output is the latest version tag.
+%   spcies('license')       % Prints the license
 %
 %   spcies('install')       % Installs the toolbox.
 %   spcies('uninstall')     % Uninstalls the toolbox.
 %
-%   spcies('test')          % Test the solvers in the toolbox.
-%
+%   spcies('test')          % Tests the solvers in the toolbox.
+% 
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
@@ -101,6 +109,32 @@ switch varargin{1}
     %
     case 'test'
         [varargout{1}, varargout{2}] = spcies_tester(varargin{2:end});
+
+    % spcies ('help')
+    % 
+    % Help pages of the toolbox.
+    % 
+    % spcies('help') - shows the general 'help' info, including the category list
+    % spcies('help', 'topic') - shows the 'topic' help
+    case 'help'
+        spcies_help(varargin{2:end});
+    case 'h'
+        spcies_help(varargin{2:end});
+
+    % spcies('license')
+    % 
+    % Prints the license
+    % 
+    case 'license'
+        try
+            type([spcies_get_root_directory() '/LICENSE']);
+        catch ME
+            if strcmp(ME.identifier, 'MATLAB:type:fileNotFound')
+                warning(['Spcies license file not found.']);
+            else
+                rethrow(ME);
+            end
+        end
     
     % Command not recognized
     otherwise
