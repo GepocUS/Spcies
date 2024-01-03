@@ -3,15 +3,7 @@ SPCIES -- Help page for topic 'develop'
 This help page contains basic help and guidelines for developers.
 Contributions to the toolbox are welcome as pull requests in:
 https://github.com/GepocUS/Spcies
-Thus, basic knowledge of git and GitHub are required.
-
-We use a 'master' branch for the current production version of the toolbox.
-Each merge to the 'master' branch is typically associated with a new version
-number and release in the GitHub platform.
-
-We use a 'develop' branch for changes being made towards the next release.
-Pull requests should be either made to the 'develop' branch or to some 'feature'
-subbranch of 'develop'.
+Thus, basic knowledge of git and GitHub are required. See "Using git" below.
 
 %%% Structure of the toolbox
 
@@ -173,3 +165,28 @@ subbranch of 'develop'.
     by .gitignore file. They can be used to store functions and templates that are still in early development
     before including them in the 'spcies_root/platforms/Matlab' or 'spcies_root/types/+type/' folder for
     committing it in git.
+
+%%% Using git
+
+    We use a 'master' branch for the current production version of the toolbox.
+    Each merge to the 'master' branch is typically associated with a new version
+    number and release in the GitHub platform.
+
+    We use a 'develop' branch for changes being made towards the next release.
+    Pull requests should be either made to the 'develop' branch or to some 'feature'
+    subbranch of 'develop'.
+
+    Git commit messages should use start with one of the following tags:
+        - 'feat:' when adding or working on a new feature.
+        - 'fix:' or 'bug:' when fixing some issue or bug.
+        - 'refactor:' when refactoring code that neither fixed bug nor adds a feature.
+        - 'docs:' when updating documentation or README files.
+        - 'style:' when making changes in style/formatting.
+        - 'test:' when working on tests files or adding new tests.
+        - 'perf:' when working on performance improvements.
+        - 'revert:' when reverting a previous commit.
+
+    'feat:' is also used when adding a new solver, e.g., "feat: added laxMPC ADMM-based solver"
+
+    Changes made on a particular solver should be indicated using parentheses when applicable.
+    For example: "perf (laxMPC-ADMM): Improved computation of dual variables"
