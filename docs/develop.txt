@@ -153,7 +153,7 @@ Thus, basic knowledge of git and GitHub are required. See "Using git" below.
     
     In a .c or .h, a line such as:
         spcies_function_name();
-    will be substituted by the text in file '/+type/functions/name.extension', where '.extension' will
+    will be substituted by the text in file '/types/functions/name.extension', where '.extension' will
     be the extension of the file being generated (.c or .h).
 
     This is useful for sharing blocks of code that are used in more than one solver. For example, for
