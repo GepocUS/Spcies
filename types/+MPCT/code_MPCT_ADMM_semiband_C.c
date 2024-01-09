@@ -57,7 +57,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
     double v[(NN_+1)*nm_] = {0.0}; // Decision variable v
     double v_old[(NN_+1)*nm_] = {0.0}; // Decision variable v in the previous iteration
     double lambda[(NN_+1)*nm_] = {0.0}; // Decision variable lambda
-    double q[(NN_+1)*nm_] = {0.0}; // Linear term vector in the functional
+    double q[nm_] = {0.0}; // Linear term vector in the functional. Only non-zero elements are considered.
     double b[(NN_+2)*nn_] = {0.0}; // Independent term of the equlity constraint
     double xi[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step
     double mu[(NN_+2)*nn_] = {0.0}; // Used to solve the equality-constrained QP step
@@ -109,7 +109,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         
         for(unsigned int j = 0 ; j < nn_ ; j++){
 
-            q[NN_*nm_ + i] -= T[i][j] * xr[j];
+            q[i] -= T[i][j] * xr[j];
 
         }
 
@@ -119,7 +119,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         
         for(unsigned int j = 0 ; j < mm_ ; j++){
 
-            q[NN_*nm_ + nn_ + i] -= S[i][j] * ur[j];
+            q[nn_ + i] -= S[i][j] * ur[j];
 
         }
 
@@ -156,13 +156,19 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         //********** Equality-constrained QP solve **********//
         // This problem updates z
-        for(unsigned int i = 0; i < (NN_+1)*nm_ ; i++){
+        for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
 
             #ifdef SCALAR_RHO
-            p[i] = q[i] + lambda[i] - rho * v[i];
+            p[i] = lambda[i] - rho * v[i];
             #else
-            p[i] = q[i] + lambda[i] - rho[i] * v[i];
+            p[i] = lambda[i] - rho[i] * v[i];
             #endif
+
+        }
+
+        for (unsigned int i = 0 ; i < nm_ ; i++){
+
+            p[i+NN_*nm_] += q[i];
 
         }
 
