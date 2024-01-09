@@ -181,10 +181,12 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
 
         % Compute xi from eq. (9a) using Alg. 2 from the article
 
-%         z1_a = var.Gamma_hat\p;
+        % Obtaining z1_a = var.Gamma_hat\p;
+        
         % The following code solves a banded-diagonal system of equations.
         % In C we create a function, as we need to solve it four times.
-        % 1st time
+        
+        % 1st banded-diagonal system
         for i = 1:n+m:(N)*(n+m)
             z1_a(i:i+n-1,1) = var.Q_rho_i*p(i:i+n-1);
         end
@@ -195,12 +197,13 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         z1_a(N*(n+m)+n+1:(N+1)*(n+m)) = var.S_rho_i*p(N*(n+m)+n+1:(N+1)*(n+m));
         % End of code for banded-diagonal system of equations.
 
-%         z2_a = (eye(2*(n+m))+var.V_hat*var.Gamma_hat_inv*var.U_hat)\(var.V_hat*z1_a);
+        % Obtaining z2_a = (eye(2*(n+m))+var.V_hat*var.Gamma_hat_inv*var.U_hat)\(var.V_hat*z1_a);
         z2_a = var.M_hat * z1_a;
 
-%         z3_a = var.Gamma_hat\(var.U_hat*z2_a);
+        % Obtaining z3_a = var.Gamma_hat\(var.U_hat*z2_a);
         vec = var.U_hat*z2_a;
-        % 2nd time: Banded-diagonal solve code
+        
+        % 2nd banded-diagonal system
         for i = 1:n+m:(N)*(n+m)
             z3_a(i:i+n-1,1) = var.Q_rho_i*vec(i:i+n-1);
         end
@@ -210,23 +213,30 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         z3_a(N*(n+m)+1:N*(n+m)+n) = var.T_rho_i*vec(N*(n+m)+1:N*(n+m)+n);
         z3_a(N*(n+m)+n+1:(N+1)*(n+m)) = var.S_rho_i*vec(N*(n+m)+n+1:(N+1)*(n+m));
         % End of code for banded-diagonal system of equations.
-
-        xi = z1_a - z3_a; % OK
+        
+        % Computation of xi
+        xi = z1_a - z3_a;
 
         % Compute mu from eq. (9b) using Alg. 2 from the article
-        z1_b = var.Gamma_tilde\-(var.G*xi+beq); % En C: Calcular -(var.G*xi+beq) online y hacer solve_banded_chol()
+        
+        % Obtaining z1_b
+        z1_b = var.Gamma_tilde\-(var.G*xi+beq); % In C, -(var.G*xi+beq) is computed online and then we use solve_banded_chol()
 
-%         z2_b = (eye(2*(n+m))+var.V_tilde*var.Gamma_tilde_inv*var.U_tilde_full)\(var.V_tilde*z1_b);
+        % Obtaining z2_b = (eye(2*(n+m))+var.V_tilde*var.Gamma_tilde_inv*var.U_tilde_full)\(var.V_tilde*z1_b);
         z2_b = var.M_tilde_full * z1_b;
         
-        z3_b = var.Gamma_tilde\(var.U_tilde_full*z2_b); % En C: Calcular (var.U_tilde*z2_b) online y hacer solve_banded_chol()
+        % Obtaining z3_b
+        z3_b = var.Gamma_tilde\(var.U_tilde_full*z2_b); % In C, (var.U_tilde*z2_b) is computed online and then we use solve_banded_chol()
     
+        % Computation of mu
         mu = z1_b - z3_b;
 
         % Compute z^{k+1} from eq. (9c) using Alg. 2 from the article
-%         z1_c = var.Gamma_hat\-(var.G'*mu+p);
+        
+        % Obtaining z1_c = var.Gamma_hat\-(var.G'*mu+p);
         vec = -(var.G'*mu+p);
-        % 3rd time: Banded-diagonal solve code
+        
+        % 3rd banded-diagonal system
         for i = 1:n+m:(N)*(n+m)
             z1_c(i:i+n-1,1) = var.Q_rho_i*vec(i:i+n-1);
         end
@@ -237,12 +247,13 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         z1_c(N*(n+m)+n+1:(N+1)*(n+m)) = var.S_rho_i*vec(N*(n+m)+n+1:(N+1)*(n+m));
         % End of code for banded-diagonal system of equations.
         
-%         z2_c = (eye(2*(n+m))+var.V_hat*var.Gamma_hat_inv*var.U_hat)\(var.V_hat*z1_c);
+        % Obtaining z2_c = (eye(2*(n+m))+var.V_hat*var.Gamma_hat_inv*var.U_hat)\(var.V_hat*z1_c);
         z2_c = var.M_hat * z1_c;
 
-        %z3_c = var.Gamma_hat\(var.U_hat*z2_c);
+        % Obtaining z3_c = var.Gamma_hat\(var.U_hat*z2_c);
         vec = var.U_hat*z2_c;
-        % 4th time: Banded-diagonal solve code
+        
+        % 4th banded-diagonal system
         for i = 1:n+m:(N)*(n+m)
             z3_c(i:i+n-1,1) = var.Q_rho_i*vec(i:i+n-1);
         end
@@ -253,7 +264,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         z3_c(N*(n+m)+n+1:(N+1)*(n+m)) = var.S_rho_i*vec(N*(n+m)+n+1:(N+1)*(n+m));
         % End of code for banded-diagonal system of equations.
 
-        % Obtaining z^{k+1}
+        % Computation of z^{k+1}
         z = z1_c - z3_c;
 
         % Inequality constrained QP solve: Update v
@@ -288,7 +299,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
 
         % Compute residuals
         r_p = norm(z - v,'inf'); % Primal residual
-        r_d = norm(v-v_old,'inf'); % Dual residual
+        r_d = norm(v - v_old,'inf'); % Dual residual
 
         % Check exit condition
         if (r_p <= options.tol && r_d <= options.tol) % Infinity norm
