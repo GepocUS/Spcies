@@ -22,13 +22,13 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     // Check number of inputs
     if(nrhs != 3){
-        mexErrMsgIdAndTxt("Spcies:MPCT_EADMM:nrhs:number",
+        mexErrMsgIdAndTxt("Spcies:MPCT_ADMM:nrhs:number",
                           "Three inputs are required");
     }
 
     // Check number of outputs
     if(nlhs == 0){
-        mexErrMsgIdAndTxt("Spcies:MPCT_EADMM:nlhs:number",
+        mexErrMsgIdAndTxt("Spcies:MPCT_ADMM:nlhs:number",
                           "At least one output required");
     }
 
