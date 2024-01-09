@@ -2,6 +2,9 @@
 %
 % This is a non-sparse solver of the MPC for Tracking formulation from the Spcies toolbox.
 %
+% This solver uses the Woodbury Matrix Identity to efficiently compute the iterate z^{k+1} of ADMM when it is applied to the MPC for Tracking formulation.
+% This step consists of an equality-contrained QP whose Hessian presents a semi-banded structure.
+
 % Information about this formulation and the solver can be found at:
 % 
 % TODO: Write the name of the article here if published
