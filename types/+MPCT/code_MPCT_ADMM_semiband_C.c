@@ -527,75 +527,80 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         for (unsigned int i = 0 ; i < nn_ ; i++){
 
-            for (unsigned int l = 0 ; l < NN_+1 ; l++){
+            for (unsigned int l = 0 ; l < NN_ ; l++){
 
                 for (unsigned int j = 0 ; j < nn_ ; j++){
-
-                    if (l == NN_){
-                        z2[i] += M_hat_x[i][j+nn_]*z1_ac[l*nm_+j];
-                    }
-                    else{
-                        z2[i] += M_hat_x[i][j]*z1_ac[l*nm_+j];
-                    }
+                        
+                    z2[i] += M_hat_x[i][j]*z1_ac[l*nm_+j];
                     
                 }
                 
+            }
+
+            for (unsigned int j = 0 ; j < nn_ ; j++){
+
+                z2[i] += M_hat_x[i][j+nn_]*z1_ac[NN_*nm_+j];
+
             }
 
         }
 
         for (unsigned int i = nn_ ; i < nm_ ; i++){
 
-            for (unsigned int l = 0 ; l < NN_+1 ; l++){
+            for (unsigned int l = 0 ; l < NN_ ; l++){
             
                 for (unsigned int j = 0 ; j < mm_ ; j++){
-                    if (l == NN_){
-                        z2[i] += M_hat_u[i-nn_][j+mm_]*z1_ac[l*nm_+nn_+j];
-                    }
-                    else{
-                        z2[i] += M_hat_u[i-nn_][j]*z1_ac[l*nm_+nn_+j];
-                    }
+               
+                    z2[i] += M_hat_u[i-nn_][j]*z1_ac[l*nm_+nn_+j];
+
                 }
 
+            }
+
+            for (unsigned int j = 0 ; j < mm_ ; j++){
+
+                z2[i] += M_hat_u[i-nn_][j+mm_]*z1_ac[NN_*nm_+nn_+j];
+            
             }
 
         }
 
         for (unsigned int i = nm_ ; i < 2*nn_+mm_ ; i++){
 
-            for (unsigned int l = 0 ; l < NN_+1 ; l++){
+            for (unsigned int l = 0 ; l < NN_ ; l++){
 
                 for (unsigned int j = 0 ; j < nn_ ; j++){
 
-                    if(l == NN_){
-                        z2[i] += M_hat_x[i-mm_][j+nn_]*z1_ac[l*nm_+j];
-                    }
-                    else{
-                        z2[i] += M_hat_x[i-mm_][j]*z1_ac[l*nm_+j];
-                    }
-
+                    z2[i] += M_hat_x[i-mm_][j]*z1_ac[l*nm_+j];
                     
                 }
 
+            }
+
+            for (unsigned int j = 0 ; j < nn_ ; j++){
+
+                z2[i] += M_hat_x[i-mm_][j+nn_]*z1_ac[NN_*nm_+j];
+                
             }
 
         }
 
         for (unsigned int i = nm_+nn_ ; i < 2*nm_ ; i++){
 
-            for (unsigned int l = 0 ; l < NN_+1 ; l++){
+            for (unsigned int l = 0 ; l < NN_ ; l++){
 
                 for (unsigned int j = 0 ; j < mm_ ; j++){
                     
-                    if (l == NN_){
-                        z2[i] += M_hat_u[i-2*nn_][j+mm_]*z1_ac[l*nm_+nn_+j];
-                    }
-                    else{
-                        z2[i] += M_hat_u[i-2*nn_][j]*z1_ac[l*nm_+nn_+j];
-                    }
+                    z2[i] += M_hat_u[i-2*nn_][j]*z1_ac[l*nm_+nn_+j];
 
                 }
 
+            }
+
+            for (unsigned int j = 0 ; j < mm_ ; j++){
+                    
+                z2[i] += M_hat_u[i-2*nn_][j+mm_]*z1_ac[NN_*nm_+nn_+j];
+            
             }
 
         }
@@ -821,29 +826,39 @@ void solve_banded_Chol(const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_
     
     // Forward substitution
 
-    for (unsigned int k=0 ; k < NN_+2 ; k++){
+    for (unsigned int i = 0 ; i < nn_ ; i++){
+
+        sum = 0.0;
+
+        for(unsigned int p = 0 ; p < i ; p++){
+
+            sum += Beta[0][p][i] * y[p]; 
         
-        for (unsigned int i = 0 ; i <= nn_-1 ; i++){
+        }
+        
+        y[i] = (d[i] - sum) * Beta[0][i][i]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiply instead by the diagonal inverted
+
+    }
+
+    for (unsigned int k=1 ; k < NN_+2 ; k++){
+        
+        for (unsigned int i = 0 ; i < nn_ ; i++){
 
             sum = 0.0;
 
-            for(unsigned int p = 0 ; p+1 <= i ; p++){
+            for(unsigned int p = 0 ; p < i ; p++){
 
                 sum += Beta[k][p][i] * y[(k)*nn_+p]; 
             
             }
 
-            if (k>0){
-                    
-                for(unsigned int p = 0; p < nn_ ; p++){
-  
-                    sum += Alpha[k-1][p][i] * y[(k-1)*nn_+p];
+            for(unsigned int p = 0; p < nn_ ; p++){
 
-                }
-            
+                sum += Alpha[k-1][p][i] * y[(k-1)*nn_+p];
+
             }
             
-            y[(k)*nn_+i] = (d[(k)*nn_+i] - sum) * Beta[k][i][i]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiplity instead by the diagonal inverted
+            y[(k)*nn_+i] = (d[(k)*nn_+i] - sum) * Beta[k][i][i]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiply instead by the diagonal inverted
 
         }
 
@@ -851,7 +866,21 @@ void solve_banded_Chol(const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_
 
     // Backward substitution
 
-    for (unsigned int k = NN_+2 ; k > 0 ; k--){
+    for(unsigned int i = nn_ ; i > 0 ; i--){
+
+        sum = 0.0;
+
+        for(unsigned int p = i+1 ; p <= nn_ ; p++){
+
+            sum += Beta[NN_+1][i-1][p-1] * z[(NN_+1)*nn_+(p-1)];
+
+        }
+
+        z[(NN_+1)*nn_+i-1] = (y[(NN_+1)*nn_+i-1] - sum) * Beta[NN_+1][i-1][i-1]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiply instead by the diagonal inverted
+
+    }
+
+    for (unsigned int k = NN_+1 ; k > 0 ; k--){
 
         for(unsigned int i = nn_ ; i > 0 ; i--){
 
@@ -862,18 +891,14 @@ void solve_banded_Chol(const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_
                 sum += Beta[k-1][i-1][p-1] * z[(k-1)*nn_+(p-1)];
 
             }
+                
+            for(unsigned int p = 0 ; p < nn_ ; p++){
             
-            if (k < NN_+2){
-                
-                for(unsigned int p = 0 ; p < nn_ ; p++){
-                
-                    sum += Alpha[k-1][i-1][p] * z[(k)*nn_+p];
-                
-                }
+                sum += Alpha[k-1][i-1][p] * z[(k)*nn_+p];
             
             }
 
-            z[(k-1)*nn_+i-1] = (y[(k-1)*nn_+i-1] - sum) * Beta[k-1][i-1][i-1]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiplity instead by the diagonal inverted
+            z[(k-1)*nn_+i-1] = (y[(k-1)*nn_+i-1] - sum) * Beta[k-1][i-1][i-1]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiply instead by the diagonal inverted
 
         }
 
