@@ -180,18 +180,19 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         // z2_a = M_hat * z1_a computed sparsely
         for (unsigned int i = 0 ; i < nn_ ; i++){
 
-            for (unsigned int l = 0 ; l < NN_+1 ; l++){
+            for (unsigned int l = 0 ; l < NN_ ; l++){
 
                 for (unsigned int j = 0 ; j < nn_ ; j++){
 
-                    if (l == NN_){
-                        z2[i] += M_hat_x[i][j+nn_]*z1_ac[l*nm_+j];
-                    }
-                    else{
-                        z2[i] += M_hat_x[i][j]*z1_ac[l*nm_+j];
-                    }
+                    z2[i] += M_hat_x[i][j]*z1_ac[l*nm_+j];
                     
                 }
+                
+            }
+
+            for (unsigned int j = 0 ; j < nn_ ; j++){
+
+                z2[i] += M_hat_x[i][j+nn_]*z1_ac[NN_*nm_+j];
                 
             }
 
@@ -199,55 +200,59 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         for (unsigned int i = nn_ ; i < nm_ ; i++){
 
-            for (unsigned int l = 0 ; l < NN_+1 ; l++){
+            for (unsigned int l = 0 ; l < NN_ ; l++){
             
                 for (unsigned int j = 0 ; j < mm_ ; j++){
-                    if (l == NN_){
-                        z2[i] += M_hat_u[i-nn_][j+mm_]*z1_ac[l*nm_+nn_+j];
-                    }
-                    else{
-                        z2[i] += M_hat_u[i-nn_][j]*z1_ac[l*nm_+nn_+j];
-                    }
+                
+                    z2[i] += M_hat_u[i-nn_][j]*z1_ac[l*nm_+nn_+j];
+                
                 }
 
+            }
+
+            for (unsigned int j = 0 ; j < mm_ ; j++){
+                
+                z2[i] += M_hat_u[i-nn_][j+mm_]*z1_ac[NN_*nm_+nn_+j];
+            
             }
 
         }
 
         for (unsigned int i = nm_ ; i < 2*nn_+mm_ ; i++){
 
-            for (unsigned int l = 0 ; l < NN_+1 ; l++){
+            for (unsigned int l = 0 ; l < NN_ ; l++){
 
                 for (unsigned int j = 0 ; j < nn_ ; j++){
 
-                    if(l == NN_){
-                        z2[i] += M_hat_x[i-mm_][j+nn_]*z1_ac[l*nm_+j];
-                    }
-                    else{
-                        z2[i] += M_hat_x[i-mm_][j]*z1_ac[l*nm_+j];
-                    }
-
+                    z2[i] += M_hat_x[i-mm_][j]*z1_ac[l*nm_+j];
                     
                 }
 
+            }
+
+            for (unsigned int j = 0 ; j < nn_ ; j++){
+
+                z2[i] += M_hat_x[i-mm_][j+nn_]*z1_ac[NN_*nm_+j];
+                
             }
 
         }
 
         for (unsigned int i = nm_+nn_ ; i < 2*nm_ ; i++){
 
-            for (unsigned int l = 0 ; l < NN_+1 ; l++){
+            for (unsigned int l = 0 ; l < NN_ ; l++){
 
                 for (unsigned int j = 0 ; j < mm_ ; j++){
-                    
-                    if (l == NN_){
-                        z2[i] += M_hat_u[i-2*nn_][j+mm_]*z1_ac[l*nm_+nn_+j];
-                    }
-                    else{
-                        z2[i] += M_hat_u[i-2*nn_][j]*z1_ac[l*nm_+nn_+j];
-                    }
+
+                    z2[i] += M_hat_u[i-2*nn_][j]*z1_ac[l*nm_+nn_+j];
 
                 }
+
+            }
+
+            for (unsigned int j = 0 ; j < mm_ ; j++){
+                    
+                z2[i] += M_hat_u[i-2*nn_][j+mm_]*z1_ac[NN_*nm_+nn_+j];
 
             }
 
