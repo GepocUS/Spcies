@@ -58,12 +58,10 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
     double v_old[(NN_+1)*nm_] = {0.0}; // Decision variable v in the previous iteration
     double lambda[(NN_+1)*nm_] = {0.0}; // Decision variable lambda
     double q[nm_] = {0.0}; // Linear term vector in the functional. Only non-zero elements are considered.
-    double b[(NN_+2)*nn_] = {0.0}; // Independent term of the equlity constraint
     double xi[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step
     double mu[(NN_+2)*nn_] = {0.0}; // Used to solve the equality-constrained QP step
     double z1_ac[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step. Stores z1_a and z1_c.
     double z3_ac[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step. Stores z3_a and z3_c.
-    double z1_b[(NN_+2)*nn_] = {0.0}; // Used to solve the equality-constrained QP step
     double z3_b[(NN_+2)*nn_] = {0.0}; // Used to solve the equality-constrained QP step
     double z2[2*nm_] = {0.0}; // Used to solve the equality-constrained QP step. This one is used as z2_a, z2_b and z2_c.
     double p[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP
@@ -95,13 +93,6 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         ur[i] = ur_in[i];
     }
     #endif
-
-    // Compute b
-
-    for(unsigned int i = 0 ; i< nn_ ; i++){
-        b[i] = x0[i];
-    }
-
 
     // Compute q
 
@@ -150,7 +141,6 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         // Reset acumulator variables
         memset(z1_ac, 0, sizeof(double)*(NN_+1)*nm_);
         memset(z3_ac, 0, sizeof(double)*(NN_+1)*nm_);
-        memset(z1_b, 0, sizeof(double)*(NN_+2)*nn_);
         memset(z3_b, 0, sizeof(double)*(NN_+2)*nn_);
         memset(z2, 0, sizeof(double)*2*nm_); 
 
@@ -310,7 +300,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         for (unsigned int i = 0 ; i < nn_ ; i++){
 
-            aux_1[i] = -(b[i]+xi[i]);
+            aux_1[i] = -(x0[i]+xi[i]); // aux_1[i] = -(b[i]+xi[i]);
 
         }
 
@@ -358,7 +348,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         }
         // End of computation of -(G*xi+b)
 
-        solve_banded_Chol(Alpha, Beta, z1_b, aux_1); // Obtains z1_b
+        solve_banded_Chol(Alpha, Beta, mu, aux_1); // Obtains z1_b. We use mu instead to save memory
 
         memset(z2, 0, sizeof(double)*2*nm_);
 
@@ -367,7 +357,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
             for(unsigned int j = 0 ; j < nn_ ; j++){
 
-                z2[i] += M_tilde[i][j] * z1_b[j]; // M_tilde is dense, but it presents repetitions inside, so we use a shortened version of it instead
+                z2[i] += M_tilde[i][j] * mu[j]; // z2[i] += M_tilde[i][j] * z1_b[j]. M_tilde is dense, but it presents repetitions inside, so we use a shortened version of it instead
 
             }
 
@@ -375,7 +365,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
             
                 for (unsigned int j = nn_ ; j < 2*nn_ ; j++){
                 
-                    z2[i] += M_tilde[i][j] * z1_b[l*nn_+j];
+                    z2[i] += M_tilde[i][j] * mu[l*nn_+j]; // z2[i] += M_tilde[i][j] * z1_b[l*nn_+j];
 
                 }
                 
@@ -383,7 +373,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
             for (unsigned int j = 2*nn_ ; j < 4*nn_ ; j++){
 
-                z2[i] += M_tilde[i][j] * z1_b[(NN_-2)*nn_+j];
+                z2[i] += M_tilde[i][j] * mu[(NN_-2)*nn_+j]; // z2[i] += M_tilde[i][j] * z1_b[(NN_-2)*nn_+j];
 
             }
 
@@ -425,7 +415,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         // Computation of mu, which is the solution of eq. (9b)
         for (unsigned int i = 0 ; i < (NN_+2)*nn_ ; i++){ 
 
-            mu[i] = z1_b[i] - z3_b[i];
+            mu[i] -= z3_b[i]; // mu[i] = z1_b[i] - z3_b[i];
 
         }
         // End of computation of mu
