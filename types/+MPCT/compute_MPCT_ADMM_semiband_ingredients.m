@@ -95,14 +95,10 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, options, sp
     band = H; % Banded part of the Hessian
     
     % Constructing vertical right-hand side of H
-    for i=1:N
-        H((i-1)*(n+m)+1:i*(n+m),end-(n+m)+1:end) = [-Q , zeros(n,m) ; zeros(m,n), -R];
-    end
+    H(1:end-(n+m),end-(n+m)+1:end) = kron(ones(N,1),-blkdiag(Q,R));
     
     % Constructing bottom side of H
-    for i=1:N
-        H(end-(n+m)+1:end,(i-1)*(n+m)+1:i*(n+m)) = [-Q , zeros(n,m) ; zeros(m,n), -R]';
-    end
+    H(end-(n+m)+1:end,1:end-(n+m)) = kron(ones(1,N),-blkdiag(Q,R));
 
     %% Compute equality constraints (G*dec_var = beq)
     G = zeros((N+2)*n,(N+1)*(n+m));
@@ -135,15 +131,12 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, options, sp
     Gamma_hat_inv = inv(Gamma_hat); % This avoids the inverse computation online
 
     % Isolated vertical right-hand side of H
-    Y = [-Q , zeros(n,m) ; zeros(m,n), -R]; 
-    for i=1:N-1
-        Y = [Y ; [-Q , zeros(n,m) ; zeros(m,n), -R]];
-    end
+    Y = kron(ones(N,1),-blkdiag(Q,R));
     
     NN = size(Y,1);
     MM = size(Y,2);
 
-    U_hat = [Y , zeros(NN,MM) ; zeros(MM,MM) , eye(MM)];
+    U_hat = blkdiag(Y,eye(MM));
     V_hat = [zeros(MM,NN) , eye(MM) ; Y' , zeros(MM,MM)];
 
     % Verification: P = (Gamma_hat + U_hat*V_hat)
