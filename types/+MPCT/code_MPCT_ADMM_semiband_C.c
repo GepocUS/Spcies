@@ -300,7 +300,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         for (unsigned int i = 0 ; i < nn_ ; i++){
 
-            aux_1[i] = -(x0[i]+xi[i]); // aux_1[i] = -(b[i]+xi[i]);
+            aux_1[i] = -(x0[i] + xi[i]); // aux_1[i] = -(b[i]+xi[i]);
 
         }
 
@@ -317,7 +317,9 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
                 aux_1[i] += xi[l*nm_+i-l*nn_];
 
                 for (unsigned int j = 0 ; j < mm_ ; j++){
+
                     aux_1[i] -= B[i-l*nn_][j] * xi[(l-1)*nm_+nn_+j];
+                    
                 }
 
             }
@@ -335,7 +337,9 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
             aux_1[i] += xi[NN_*nm_+i-(NN_+1)*nn_];
 
             for (unsigned int j = 0 ; j < mm_ ; j++){
+
                 aux_1[i] -= B[i-(NN_+1)*nn_][j] * xi[NN_*nm_+nn_+j];
+
             }
 
         }
@@ -427,9 +431,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
             }
 
-            aux_0[i] -= mu[i];
-
-            aux_0[i] -= p[i];
+            aux_0[i] -= (mu[i]+p[i]);
 
         }
 
@@ -455,9 +457,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
                 }
 
-                aux_0[i] += mu[i-(l-1)*nm_+(l-1)*nn_];
-
-                aux_0[i] -= p[i];
+                aux_0[i] += (mu[i-(l-1)*nm_+(l-1)*nn_] - p[i]);
 
             }
 
@@ -483,9 +483,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
             }
 
-            aux_0[i] += (mu[(NN_+1)*nn_+i-NN_*nm_] + mu[i-NN_*nm_+NN_*nn_]);
-
-            aux_0[i] -= p[i];
+            aux_0[i] += (mu[(NN_+1)*nn_+i-NN_*nm_] + mu[i-NN_*nm_+NN_*nn_] - p[i]);
 
         }
 
