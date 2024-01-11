@@ -62,7 +62,6 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
     double mu[(NN_+2)*nn_] = {0.0}; // Used to solve the equality-constrained QP step
     double z1_ac[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step. Stores z1_a and z1_c.
     double z3_ac[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step. Stores z3_a and z3_c.
-    double z3_b[(NN_+2)*nn_] = {0.0}; // Used to solve the equality-constrained QP step
     double z2[2*nm_] = {0.0}; // Used to solve the equality-constrained QP step. This one is used as z2_a, z2_b and z2_c.
     double p[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP
     double aux_0[(NN_+1)*nm_] = {0.0}; // Auxiliary vector used to solve the equality-constrained QP step.
@@ -344,9 +343,9 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         }
         // End of computation of -(G*xi+b)
 
-        memset(mu, 0, sizeof(double)*(NN_+2)*nn_);
+        solve_banded_Chol(Alpha, Beta, aux_1); // Obtains z1_b. We use aux_1 to store the result. Note that aux_1 contained the independent term vector before calling this function.
 
-        solve_banded_Chol(Alpha, Beta, mu, aux_1); // Obtains z1_b. We use mu instead to save memory
+        memcpy(mu, aux_1, sizeof(double)*(NN_+2)*nn_); // We use mu to store z1_b.
 
         memset(z2, 0, sizeof(double)*2*nm_);
 
@@ -408,14 +407,12 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         }
         // End of computation of (U_tilde*z2_b)
 
-        memset(z3_b, 0, sizeof(double)*(NN_+2)*nn_);
-
-        solve_banded_Chol(Alpha, Beta, z3_b, aux_1); // Obtains z3_b
+        solve_banded_Chol(Alpha, Beta, aux_1); // Obtains z3_b, which is stored in aux_1 to save memory
 
         // Computation of mu, which is the solution of eq. (9b)
         for (unsigned int i = 0 ; i < (NN_+2)*nn_ ; i++){ 
 
-            mu[i] -= z3_b[i]; // mu[i] = z1_b[i] - z3_b[i];
+            mu[i] -= aux_1[i]; // mu[i] = z1_b[i] - z3_b[i];
 
         }
         // End of computation of mu
@@ -803,7 +800,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
 
 
-void solve_banded_Chol(const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_][nn_], double *z, double *d){
+void solve_banded_Chol(const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_][nn_], double *d){
 
     double y[(NN_+2)*nn_] = {0.0};
     
@@ -843,17 +840,21 @@ void solve_banded_Chol(const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_
 
     }
 
+    // From this moment, we are using the independent term vector "d" to return the solution vector "z" so as to save memory
+    
+    memset(d, 0, sizeof(double)*(NN_+2)*nn_);
+
     // Backward substitution
 
     for(unsigned int i = nn_ ; i > 0 ; i--){
 
         for(unsigned int p = i+1 ; p <= nn_ ; p++){
 
-            z[(NN_+1)*nn_+i-1] -= Beta[NN_+1][i-1][p-1] * z[(NN_+1)*nn_+(p-1)];
+            d[(NN_+1)*nn_+i-1] -= Beta[NN_+1][i-1][p-1] * d[(NN_+1)*nn_+(p-1)];
 
         }
 
-        z[(NN_+1)*nn_+i-1] = (z[(NN_+1)*nn_+i-1] + y[(NN_+1)*nn_+i-1]) * Beta[NN_+1][i-1][i-1]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiply instead by the diagonal inverted
+        d[(NN_+1)*nn_+i-1] = (d[(NN_+1)*nn_+i-1] + y[(NN_+1)*nn_+i-1]) * Beta[NN_+1][i-1][i-1]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiply instead by the diagonal inverted
 
     }
 
@@ -863,17 +864,17 @@ void solve_banded_Chol(const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_
 
             for(unsigned int p = i+1 ; p <= nn_ ; p++){
 
-                z[(k-1)*nn_+i-1] -= Beta[k-1][i-1][p-1] * z[(k-1)*nn_+(p-1)];
+                d[(k-1)*nn_+i-1] -= Beta[k-1][i-1][p-1] * d[(k-1)*nn_+(p-1)];
 
             }
                 
             for(unsigned int p = 0 ; p < nn_ ; p++){
             
-                z[(k-1)*nn_+i-1] -= Alpha[k-1][i-1][p] * z[(k)*nn_+p];
+                d[(k-1)*nn_+i-1] -= Alpha[k-1][i-1][p] * d[(k)*nn_+p];
             
             }
 
-            z[(k-1)*nn_+i-1] = (z[(k-1)*nn_+i-1] + y[(k-1)*nn_+i-1]) * Beta[k-1][i-1][i-1]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiply instead by the diagonal inverted
+            d[(k-1)*nn_+i-1] = (d[(k-1)*nn_+i-1] + y[(k-1)*nn_+i-1]) * Beta[k-1][i-1][i-1]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiply instead by the diagonal inverted
 
         }
 
