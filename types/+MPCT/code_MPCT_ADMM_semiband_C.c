@@ -293,12 +293,12 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         /****** Compute mu from eq. (9b) using Alg. 2 from the article ******/
         
-        // Sparse computation of -(G*xi+b)
-        memset(aux_1, 0, sizeof(double)*(NN_+2)*nn_);
+        // Sparse computation of -(G*xi+b), stored in mu to save memory
+        memset(mu, 0, sizeof(double)*(NN_+2)*nn_);
 
         for (unsigned int i = 0 ; i < nn_ ; i++){
 
-            aux_1[i] = -(x0[i] + xi[i]); // aux_1[i] = -(b[i]+xi[i]);
+            mu[i] = -(x0[i] + xi[i]); // aux_1[i] = -(b[i]+xi[i]);
 
         }
 
@@ -308,15 +308,15 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
                 for (unsigned int j = 0 ; j < nn_ ; j++){
 
-                    aux_1[i] -= A[i-l*nn_][j] * xi[(l-1)*nm_+j];
+                    mu[i] -= A[i-l*nn_][j] * xi[(l-1)*nm_+j];
 
                 }
 
-                aux_1[i] += xi[l*nm_+i-l*nn_];
+                mu[i] += xi[l*nm_+i-l*nn_];
 
                 for (unsigned int j = 0 ; j < mm_ ; j++){
 
-                    aux_1[i] -= B[i-l*nn_][j] * xi[(l-1)*nm_+nn_+j];
+                    mu[i] -= B[i-l*nn_][j] * xi[(l-1)*nm_+nn_+j];
                     
                 }
 
@@ -328,24 +328,22 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
             for (unsigned int j = 0 ; j < nn_ ; j++){
 
-                aux_1[i] -= A[i-(NN_+1)*nn_][j] * xi[NN_*nm_+j];
+                mu[i] -= A[i-(NN_+1)*nn_][j] * xi[NN_*nm_+j];
 
             }
 
-            aux_1[i] += xi[NN_*nm_+i-(NN_+1)*nn_];
+            mu[i] += xi[NN_*nm_+i-(NN_+1)*nn_];
 
             for (unsigned int j = 0 ; j < mm_ ; j++){
 
-                aux_1[i] -= B[i-(NN_+1)*nn_][j] * xi[NN_*nm_+nn_+j];
+                mu[i] -= B[i-(NN_+1)*nn_][j] * xi[NN_*nm_+nn_+j];
 
             }
 
         }
         // End of computation of -(G*xi+b)
 
-        solve_banded_Chol(Alpha, Beta, aux_1); // Obtains z1_b. We use aux_1 to store the result. Note that aux_1 contained the independent term vector before calling this function.
-
-        memcpy(mu, aux_1, sizeof(double)*(NN_+2)*nn_); // We use mu to store z1_b.
+        solve_banded_Chol(Alpha, Beta, mu); // Obtains z1_b. We use mu to store the result. Note that mu contained the independent term vector -(G*xi+b) before calling this function.
 
         memset(z2, 0, sizeof(double)*2*nm_);
 
@@ -841,7 +839,7 @@ void solve_banded_Chol(const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_
     }
 
     // From this moment, we are using the independent term vector "d" to return the solution vector "z" so as to save memory
-    
+
     memset(d, 0, sizeof(double)*(NN_+2)*nn_);
 
     // Backward substitution
