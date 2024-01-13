@@ -798,19 +798,19 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
 void solve_banded_Chol(const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_][nn_], double *d){
 
-    double y[(NN_+2)*nn_] = {0.0};
-    
+    // We are using the independent term vector "d" to return the solution vector "z" so as to save memory
+
     // Forward substitution
 
     for (unsigned int i = 0 ; i < nn_ ; i++){
 
         for(unsigned int p = 0 ; p < i ; p++){
 
-            y[i] -= Beta[0][p][i] * y[p]; 
+            d[i] -= Beta[0][p][i] * d[p]; 
         
         }
         
-        y[i] = (y[i] + d[i]) * Beta[0][i][i]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiply instead by the diagonal inverted
+        d[i] *= Beta[0][i][i]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiply instead by the diagonal inverted
 
     }
 
@@ -820,25 +820,21 @@ void solve_banded_Chol(const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_
 
             for(unsigned int p = 0 ; p < i ; p++){
 
-                y[(k)*nn_+i] -= Beta[k][p][i] * y[(k)*nn_+p]; 
+                d[(k)*nn_+i] -= Beta[k][p][i] * d[(k)*nn_+p]; 
             
             }
 
             for(unsigned int p = 0; p < nn_ ; p++){
 
-                y[(k)*nn_+i] -= Alpha[k-1][p][i] * y[(k-1)*nn_+p];
+                d[(k)*nn_+i] -= Alpha[k-1][p][i] * d[(k-1)*nn_+p];
 
             }
             
-            y[(k)*nn_+i] = (y[(k)*nn_+i] + d[(k)*nn_+i]) * Beta[k][i][i]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiply instead by the diagonal inverted
+            d[(k)*nn_+i] *= Beta[k][i][i]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiply instead by the diagonal inverted
 
         }
 
     }
-
-    // From this moment, we are using the independent term vector "d" to return the solution vector "z" so as to save memory
-
-    memset(d, 0, sizeof(double)*(NN_+2)*nn_);
 
     // Backward substitution
 
@@ -850,7 +846,7 @@ void solve_banded_Chol(const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_
 
         }
 
-        d[(NN_+1)*nn_+i-1] = (d[(NN_+1)*nn_+i-1] + y[(NN_+1)*nn_+i-1]) * Beta[NN_+1][i-1][i-1]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiply instead by the diagonal inverted
+        d[(NN_+1)*nn_+i-1] *= Beta[NN_+1][i-1][i-1]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiply instead by the diagonal inverted
 
     }
 
@@ -870,7 +866,7 @@ void solve_banded_Chol(const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_
             
             }
 
-            d[(k-1)*nn_+i-1] = (d[(k-1)*nn_+i-1] + y[(k-1)*nn_+i-1]) * Beta[k-1][i-1][i-1]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiply instead by the diagonal inverted
+            d[(k-1)*nn_+i-1] *= Beta[k-1][i-1][i-1]; // This is a division by the diagonal of Beta, but the diagonal of Beta is inverted, so we multiply instead by the diagonal inverted
 
         }
 
