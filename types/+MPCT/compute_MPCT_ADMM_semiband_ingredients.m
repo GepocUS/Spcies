@@ -181,10 +181,6 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, options, sp
     vars.R = R;
     vars.T = T;
     vars.S = S;
-    vars.Q_rho_i = inv(Q + rho*diag(ones(n,1)));
-    vars.R_rho_i = inv(R + rho*diag(ones(m,1)));
-    vars.S_rho_i = inv(N*R + S + rho*diag(ones(m,1)));
-    vars.T_rho_i = inv(N*Q + T + rho*diag(ones(n,1)));
     vars.G = G;
     vars.U_hat = U_hat;
     vars.Gamma_tilde = Gamma_tilde; % Only needed for solver in Matlab. In C Alpha's and Beta's are used
@@ -200,8 +196,20 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, options, sp
     vars.rho = rho;
     if (vars.rho_is_scalar)
         vars.rho_i = 1/rho;
+        vars.Q_rho_i = inv(Q + rho*diag(ones(n,1)));
+        vars.R_rho_i = inv(R + rho*diag(ones(m,1)));
+        vars.S_rho_i = inv(N*R + S + rho*diag(ones(m,1)));
+        vars.T_rho_i = inv(N*Q + T + rho*diag(ones(n,1)));
     else
         vars.rho_i = 1./rho;
+        vars.Q_rho_i = zeros(n,n,N);
+        vars.R_rho_i = zeros(m,m,N);
+        for i = 1:N
+            vars.Q_rho_i(:,:,i) = inv(Q + diag(rho((i-1)*(n+m)+1:(i-1)*(n+m)+n)));
+            vars.R_rho_i(:,:,i) = inv(R + diag(rho((i-1)*(n+m)+n+1:i*(n+m))));
+        end
+        vars.S_rho_i = inv(N*R + S + diag(rho(end-m+1:end)));
+        vars.T_rho_i = inv(N*Q + T + diag(rho(end-m-n+1:end-m)));
     end
 
     % Scaling vectors and operating point

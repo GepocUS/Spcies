@@ -879,15 +879,16 @@ void solve_banded_Chol(const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_
 
 }
 
+#ifdef SCALAR_RHO
 void solve_banded_QRST_sys(const double (*Q_rho_i)[nn_], const double (*R_rho_i)[mm_], const double (*S_rho_i)[mm_], const double (*T_rho_i)[nn_], double *z, double *d){
 
-    for (unsigned int i = 0 ; i < NN_*nm_ ; i += nm_){ // Moving in groups of nn+mm components
+    for (unsigned int i = 0 ; i < NN_ ; i++){ // Moving in groups of nn+mm components
 
         for (unsigned int j = 0 ; j < nn_ ; j++){ // Moving inside the groups
             
             for (unsigned int k = 0 ; k < nn_ ; k++){ // Multiplying the rows by the corresponding part of the independent term vector
                 
-                z[i+j] += Q_rho_i[j][k] * d[i+k];
+                z[i*nm_+j] += Q_rho_i[j][k] * d[i*nm_+k];
 
             }
 
@@ -897,7 +898,7 @@ void solve_banded_QRST_sys(const double (*Q_rho_i)[nn_], const double (*R_rho_i)
 
             for (unsigned int k = 0 ; k < mm_ ; k++){
 
-                z[i+j] += R_rho_i[j-nn_][k] * d[i+nn_+k];
+                z[i*nm_+j] += R_rho_i[j-nn_][k] * d[i*nm_+nn_+k];
 
             }
 
@@ -926,3 +927,51 @@ void solve_banded_QRST_sys(const double (*Q_rho_i)[nn_], const double (*R_rho_i)
     }
 
 }
+#else
+void solve_banded_QRST_sys(const double (*Q_rho_i)[nn_][nn_], const double (*R_rho_i)[mm_][mm_], const double (*S_rho_i)[mm_], const double (*T_rho_i)[nn_], double *z, double *d){
+
+    for (unsigned int i = 0 ; i < NN_ ; i++){ // Moving in groups of nn+mm components
+
+        for (unsigned int j = 0 ; j < nn_ ; j++){ // Moving inside the groups
+            
+            for (unsigned int k = 0 ; k < nn_ ; k++){ // Multiplying the rows by the corresponding part of the independent term vector
+                
+                z[i*nm_+j] += Q_rho_i[i][j][k] * d[i*nm_+k];
+
+            }
+
+        }
+
+        for (unsigned int j = nn_ ; j < nm_ ; j++){
+
+            for (unsigned int k = 0 ; k < mm_ ; k++){
+
+                z[i*nm_+j] += R_rho_i[i][j-nn_][k] * d[i*nm_+nn_+k];
+
+            }
+
+        }
+
+    }
+
+    for (unsigned int j = 0 ; j < nn_ ; j++){
+
+        for (unsigned int k = 0 ; k < nn_ ; k++){
+
+            z[NN_*nm_ + j] += T_rho_i[j][k] * d[NN_*nm_ + k];
+
+        }
+        
+    }
+
+    for (unsigned int j = nn_ ; j < nm_ ; j++){
+
+        for (unsigned int k = 0 ; k < mm_ ; k++){
+
+            z[NN_*nm_ + j] += S_rho_i[j-nn_][k] * d[NN_*nm_ + nn_ + k];
+
+        }
+
+    }
+}
+#endif
