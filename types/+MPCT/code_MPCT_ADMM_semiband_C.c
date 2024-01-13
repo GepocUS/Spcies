@@ -161,7 +161,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         /****** Compute xi from eq. (9a) using Alg. 2 from the article ******/
 
-        solve_banded_diag_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, xi, p); // Obtains z1_a, stored in xi to save memory
+        solve_banded_QRST_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, xi, p); // Obtains z1_a, stored in xi to save memory
 
         // z2_a = M_hat * z1_a computed sparsely
         for (unsigned int i = 0 ; i < nn_ ; i++){
@@ -278,7 +278,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         }
         // End of computation of (U_hat * z2_a)
 
-        solve_banded_diag_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z3_ac, aux); // Obtains z3_a
+        solve_banded_QRST_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z3_ac, aux); // Obtains z3_a
 
         // Computation of xi, which is the solution of eq. (9a)
         for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
@@ -499,7 +499,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         memset(z, 0, sizeof(double)*(NN_+1)*nm_);
 
-        solve_banded_diag_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z, aux); // Obtains z1_c, stored in z to save memory
+        solve_banded_QRST_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z, aux); // Obtains z1_c, stored in z to save memory
 
         memset(z2, 0, sizeof(double)*2*nm_);
 
@@ -619,7 +619,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         memset(z3_ac, 0, sizeof(double)*(NN_+1)*nm_);
 
-        solve_banded_diag_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z3_ac, aux); // Obtains z3_c
+        solve_banded_QRST_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z3_ac, aux); // Obtains z3_c
 
         // Computation of  z^{k+1}, which is the solution of eq. (9c)
         for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
@@ -879,7 +879,7 @@ void solve_banded_Chol(const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_
 
 }
 
-void solve_banded_diag_sys(const double (*Q_rho_i)[nn_], const double (*R_rho_i)[mm_], const double (*S_rho_i)[mm_], const double (*T_rho_i)[nn_], double *z, double *d){
+void solve_banded_QRST_sys(const double (*Q_rho_i)[nn_], const double (*R_rho_i)[mm_], const double (*S_rho_i)[mm_], const double (*T_rho_i)[nn_], double *z, double *d){
 
     for (unsigned int i = 0 ; i < NN_*nm_ ; i += nm_){ // Moving in groups of nn+mm components
 
