@@ -153,13 +153,15 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, options, sp
     V_tilde = V_hat*Gamma_hat_inv*G';
 
     M_hat = inv((eye(2*(n+m))+V_hat*Gamma_hat_inv*U_hat))*V_hat;
+    
+    M_hat_x1 = [M_hat(1:n,1:n) ; M_hat(n+m+1:2*n+m,1:n)];
+    M_hat_x2 = [M_hat(1:n,N*(n+m)+1:N*(n+m)+n) ; M_hat(n+m+1:2*n+m,N*(n+m)+1:N*(n+m)+n)];
+    
+    M_hat_u1 = [M_hat(n+1:n+m,n+1:n+m) ; M_hat(2*n+m+1:2*(n+m),n+1:n+m)];
+    M_hat_u2 = [M_hat(n+1:n+m, N*(n+m)+n+1:(N+1)*(n+m)) ; M_hat(2*n+m+1:2*(n+m),N*(n+m)+n+1:(N+1)*(n+m))];
 
-    M_hat_x = zeros(2*n,2*n);
-
-    M_hat_u = zeros(2*m,2*m);
-
-    M_hat_x(1:2*n,1:2*n) = [M_hat(1:n,1:n) , M_hat(1:n,N*(n+m)+1:N*(n+m)+n) ; M_hat(n+m+1:2*n+m,1:n) , M_hat(n+m+1:2*n+m,N*(n+m)+1:N*(n+m)+n)];
-    M_hat_u(1:2*m,1:2*m) = [M_hat(n+1:n+m,n+1:n+m) , M_hat(n+1:n+m, N*(n+m)+n+1:(N+1)*(n+m)) ; M_hat(2*n+m+1:2*(n+m),n+1:n+m), M_hat(2*n+m+1:2*(n+m),N*(n+m)+n+1:(N+1)*(n+m))];
+%     M_hat_x(1:2*n,1:2*n) = [M_hat(1:n,1:n) , M_hat(1:n,N*(n+m)+1:N*(n+m)+n) ; M_hat(n+m+1:2*n+m,1:n) , M_hat(n+m+1:2*n+m,N*(n+m)+1:N*(n+m)+n)];
+%     M_hat_u(1:2*m,1:2*m) = [M_hat(n+1:n+m,n+1:n+m) , M_hat(n+1:n+m, N*(n+m)+n+1:(N+1)*(n+m)) ; M_hat(2*n+m+1:2*(n+m),n+1:n+m), M_hat(2*n+m+1:2*(n+m),N*(n+m)+n+1:(N+1)*(n+m))];
 
     M_tilde_full = inv((eye(2*(n+m))+V_tilde*Gamma_tilde_inv*U_tilde_full))*V_tilde;
 
@@ -187,8 +189,10 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, options, sp
     vars.U_tilde_full = U_tilde_full;
     vars.U_tilde = U_tilde;
     vars.M_hat = M_hat;
-    vars.M_hat_x = M_hat_x;
-    vars.M_hat_u = M_hat_u;
+    vars.M_hat_x1 = M_hat_x1;
+    vars.M_hat_x2 = M_hat_x2;
+    vars.M_hat_u1 = M_hat_u1;
+    vars.M_hat_u2 = M_hat_u2;
     vars.M_tilde_full = M_tilde_full;
     vars.M_tilde = M_tilde;
     vars.LB = LB;
