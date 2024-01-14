@@ -164,81 +164,98 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         solve_banded_QRST_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, xi, p); // Obtains z1_a, stored in xi to save memory
 
         // z2_a = M_hat * z1_a computed sparsely
-        for (unsigned int i = 0 ; i < nn_ ; i++){
-
-            for (unsigned int l = 0 ; l < NN_ ; l++){
+        
+        for (unsigned int l = 0 ; l < NN_ ; l++){
+            
+            for (unsigned int i = 0 ; i < nn_ ; i++){
 
                 for (unsigned int j = 0 ; j < nn_ ; j++){
 
-                    z2[i] += M_hat_x1[i][j]*xi[l*nm_+j]; // z2[i] += M_hat_x[i][j]*z1_ac[l*nm_+j];
+                    z2[i] += M_hat_x1[i][j]*xi[l*nm_+j];
                     
                 }
                 
             }
 
+        }
+        
+        for (unsigned int i = 0 ; i < nn_ ; i++){
+            
             for (unsigned int j = 0 ; j < nn_ ; j++){
 
-                z2[i] += M_hat_x2[i][j]*xi[NN_*nm_+j]; // z2[i] += M_hat_x[i][j+nn_]*z1_ac[NN_*nm_+j];
+                z2[i] += M_hat_x2[i][j]*xi[NN_*nm_+j];
                 
             }
 
         }
 
-        for (unsigned int i = nn_ ; i < nm_ ; i++){
+        for (unsigned int l = 0 ; l < NN_ ; l++){
 
-            for (unsigned int l = 0 ; l < NN_ ; l++){
+            for (unsigned int i = nn_ ; i < nm_ ; i++){
             
                 for (unsigned int j = 0 ; j < mm_ ; j++){
                 
-                    z2[i] += M_hat_u1[i-nn_][j]*xi[l*nm_+nn_+j]; // z2[i] += M_hat_u[i-nn_][j]*z1_ac[l*nm_+nn_+j];
+                    z2[i] += M_hat_u1[i-nn_][j]*xi[l*nm_+nn_+j];
                 
                 }
 
             }
+        
+        }
+
+        for (unsigned int i = nn_ ; i < nm_ ; i++){
 
             for (unsigned int j = 0 ; j < mm_ ; j++){
                 
-                z2[i] += M_hat_u2[i-nn_][j]*xi[NN_*nm_+nn_+j]; // z2[i] += M_hat_u[i-nn_][j+mm_]*z1_ac[NN_*nm_+nn_+j];
+                z2[i] += M_hat_u2[i-nn_][j]*xi[NN_*nm_+nn_+j];
             
+            }
+
+        }
+
+        for (unsigned int l = 0 ; l < NN_ ; l++){
+
+            for (unsigned int i = nm_ ; i < 2*nn_+mm_ ; i++){
+            
+                for (unsigned int j = 0 ; j < nn_ ; j++){
+
+                    z2[i] += M_hat_x1[i-mm_][j]*xi[l*nm_+j];
+                    
+                }
+
             }
 
         }
 
         for (unsigned int i = nm_ ; i < 2*nn_+mm_ ; i++){
 
-            for (unsigned int l = 0 ; l < NN_ ; l++){
-
-                for (unsigned int j = 0 ; j < nn_ ; j++){
-
-                    z2[i] += M_hat_x1[i-mm_][j]*xi[l*nm_+j]; // z2[i] += M_hat_x[i-mm_][j]*z1_ac[l*nm_+j];
-                    
-                }
-
-            }
-
             for (unsigned int j = 0 ; j < nn_ ; j++){
 
-                z2[i] += M_hat_x2[i-mm_][j]*xi[NN_*nm_+j]; // z2[i] += M_hat_x[i-mm_][j+nn_]*z1_ac[NN_*nm_+j];
+                z2[i] += M_hat_x2[i-mm_][j]*xi[NN_*nm_+j];
                 
+            }
+
+        }
+
+        for (unsigned int l = 0 ; l < NN_ ; l++){
+
+            for (unsigned int i = nm_+nn_ ; i < 2*nm_ ; i++){
+
+                for (unsigned int j = 0 ; j < mm_ ; j++){
+
+                    z2[i] += M_hat_u1[i-2*nn_][j]*xi[l*nm_+nn_+j];
+
+                }
+
             }
 
         }
 
         for (unsigned int i = nm_+nn_ ; i < 2*nm_ ; i++){
 
-            for (unsigned int l = 0 ; l < NN_ ; l++){
-
-                for (unsigned int j = 0 ; j < mm_ ; j++){
-
-                    z2[i] += M_hat_u1[i-2*nn_][j]*xi[l*nm_+nn_+j]; // z2[i] += M_hat_u[i-2*nn_][j]*z1_ac[l*nm_+nn_+j];
-
-                }
-
-            }
-
             for (unsigned int j = 0 ; j < mm_ ; j++){
                     
-                z2[i] += M_hat_u2[i-2*nn_][j]*xi[NN_*nm_+nn_+j]; // z2[i] += M_hat_u[i-2*nn_][j+mm_]*z1_ac[NN_*nm_+nn_+j];
+                z2[i] += M_hat_u2[i-2*nn_][j]*xi[NN_*nm_+nn_+j];
 
             }
 
@@ -503,21 +520,40 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         memset(z2, 0, sizeof(double)*2*nm_);
 
-        for (unsigned int i = 0 ; i < nn_ ; i++){
 
-            for (unsigned int l = 0 ; l < NN_ ; l++){
+        for (unsigned int l = 0 ; l < NN_ ; l++){
+
+            for (unsigned int i = 0 ; i < nn_ ; i++){
 
                 for (unsigned int j = 0 ; j < nn_ ; j++){
                         
-                    z2[i] += M_hat_x1[i][j]*z[l*nm_+j]; // z2[i] += M_hat_x[i][j]*z1_ac[l*nm_+j];
+                    z2[i] += M_hat_x1[i][j]*z[l*nm_+j];
                     
                 }
                 
             }
+        
+        }
+
+        for (unsigned int i = 0 ; i < nn_ ; i++){
 
             for (unsigned int j = 0 ; j < nn_ ; j++){
 
-                z2[i] += M_hat_x2[i][j]*z[NN_*nm_+j]; // z2[i] += M_hat_x[i][j+nn_]*z1_ac[NN_*nm_+j];
+                z2[i] += M_hat_x2[i][j]*z[NN_*nm_+j];
+
+            }
+
+        }
+
+        for (unsigned int l = 0 ; l < NN_ ; l++){
+
+            for (unsigned int i = nn_ ; i < nm_ ; i++){
+            
+                for (unsigned int j = 0 ; j < mm_ ; j++){
+               
+                    z2[i] += M_hat_u1[i-nn_][j]*z[l*nm_+nn_+j];
+
+                }
 
             }
 
@@ -525,59 +561,57 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         for (unsigned int i = nn_ ; i < nm_ ; i++){
 
-            for (unsigned int l = 0 ; l < NN_ ; l++){
-            
-                for (unsigned int j = 0 ; j < mm_ ; j++){
-               
-                    z2[i] += M_hat_u1[i-nn_][j]*z[l*nm_+nn_+j]; // z2[i] += M_hat_u[i-nn_][j]*z1_ac[l*nm_+nn_+j];
-
-                }
-
-            }
-
             for (unsigned int j = 0 ; j < mm_ ; j++){
 
-                z2[i] += M_hat_u2[i-nn_][j]*z[NN_*nm_+nn_+j]; // z2[i] += M_hat_u[i-nn_][j+mm_]*z1_ac[NN_*nm_+nn_+j];
+                z2[i] += M_hat_u2[i-nn_][j]*z[NN_*nm_+nn_+j];
             
+            }
+
+        }
+
+        for (unsigned int l = 0 ; l < NN_ ; l++){
+
+            for (unsigned int i = nm_ ; i < 2*nn_+mm_ ; i++){
+
+                for (unsigned int j = 0 ; j < nn_ ; j++){
+
+                    z2[i] += M_hat_x1[i-mm_][j]*z[l*nm_+j];
+                    
+                }
+
             }
 
         }
 
         for (unsigned int i = nm_ ; i < 2*nn_+mm_ ; i++){
 
-            for (unsigned int l = 0 ; l < NN_ ; l++){
-
-                for (unsigned int j = 0 ; j < nn_ ; j++){
-
-                    z2[i] += M_hat_x1[i-mm_][j]*z[l*nm_+j]; // z2[i] += M_hat_x[i-mm_][j]*z1_ac[l*nm_+j];
-                    
-                }
-
-            }
-
             for (unsigned int j = 0 ; j < nn_ ; j++){
 
-                z2[i] += M_hat_x2[i-mm_][j]*z[NN_*nm_+j]; // z2[i] += M_hat_x[i-mm_][j+nn_]*z1_ac[NN_*nm_+j];
+                z2[i] += M_hat_x2[i-mm_][j]*z[NN_*nm_+j];
                 
+            }
+
+        }
+
+        for (unsigned int l = 0 ; l < NN_ ; l++){
+            
+            for (unsigned int i = nm_+nn_ ; i < 2*nm_ ; i++){
+
+                for (unsigned int j = 0 ; j < mm_ ; j++){
+                    
+                    z2[i] += M_hat_u1[i-2*nn_][j]*z[l*nm_+nn_+j];
+
+                }
+
             }
 
         }
 
         for (unsigned int i = nm_+nn_ ; i < 2*nm_ ; i++){
 
-            for (unsigned int l = 0 ; l < NN_ ; l++){
-
-                for (unsigned int j = 0 ; j < mm_ ; j++){
-                    
-                    z2[i] += M_hat_u1[i-2*nn_][j]*z[l*nm_+nn_+j]; // z2[i] += M_hat_u[i-2*nn_][j]*z1_ac[l*nm_+nn_+j];
-
-                }
-
-            }
-
             for (unsigned int j = 0 ; j < mm_ ; j++){
                     
-                z2[i] += M_hat_u2[i-2*nn_][j]*z[NN_*nm_+nn_+j]; // z2[i] += M_hat_u[i-2*nn_][j+mm_]*z1_ac[NN_*nm_+nn_+j];
+                z2[i] += M_hat_u2[i-2*nn_][j]*z[NN_*nm_+nn_+j];
             
             }
 
