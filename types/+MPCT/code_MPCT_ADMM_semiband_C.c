@@ -432,19 +432,18 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         
         /****** Compute z^{k+1} from eq. (9c) using ALg. 2 from the article ******/
-        memset(aux, 0, sizeof(double)*DIM_AUX);
 
-        // Sparse computation of -(G'*mu+p)
+        // Sparse computation of -(G'*mu+p). We store it in variable p.
 
         for (unsigned int i = 0 ; i < nn_ ; i++){
 
+            p[i] = -(p[i] + mu[i]);
+
             for (unsigned int j = 0; j < nn_ ; j++){
 
-                aux[i] -= A[j][i] * mu[nn_+j];
+                p[i] -= A[j][i] * mu[nn_+j];
 
             }
-
-            aux[i] -= (mu[i]+p[i]);
 
         }
 
@@ -452,11 +451,11 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
             for (unsigned int j = 0 ; j < nn_ ; j++){
 
-                aux[i] -= B[j][i-nn_] * mu[nn_+j];
+                p[i] += B[j][i-nn_] * mu[nn_+j];
 
             }
 
-            aux[i] -= p[i];
+            p[i] = -p[i];
 
         }
 
@@ -464,13 +463,13 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
             for (unsigned int i = (l-1)*nm_ ; i < l*nn_+(l-1)*mm_ ; i++){
 
+                p[i] = -(p[i] - mu[i-(l-1)*mm_]);
+
                 for (unsigned int j = 0 ; j < nn_ ; j++){
 
-                    aux[i] -= A[j][i-(l-1)*nm_] * mu[l*nn_+j];
+                    p[i] -= A[j][i-(l-1)*nm_] * mu[l*nn_+j];
 
                 }
-
-                aux[i] += (mu[i-(l-1)*mm_] - p[i]);
 
             }
 
@@ -478,11 +477,11 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
                 for (unsigned int j = 0 ; j < nn_ ; j++){
 
-                    aux[i] -= B[j][i-l*nm_+mm_] * mu[l*nn_+j];
+                    p[i] += B[j][i-l*nm_+mm_] * mu[l*nn_+j];
 
                 }
 
-                aux[i] -= p[i];
+                p[i] = -p[i];
 
             }
 
@@ -490,13 +489,13 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         for (unsigned int i = NN_*nm_ ; i < NN_*nm_ + nn_ ; i++){
 
+            p[i] = -p[i] + (mu[i+nn_-NN_*mm_] + mu[i-NN_*mm_]);
+
             for (unsigned int j = 0 ; j < nn_ ; j++){
 
-                aux[i] -= A[j][i-NN_*nm_] * mu[(NN_+1)*nn_+j];
+                p[i] -= A[j][i-NN_*nm_] * mu[(NN_+1)*nn_+j];
 
             }
-
-            aux[i] += (mu[i+nn_-NN_*mm_] + mu[i-NN_*mm_] - p[i]);
 
         }
 
@@ -504,19 +503,19 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
             for (unsigned int j = 0 ; j < nn_ ; j++){
 
-                aux[i] -= B[j][i-NN_*nm_-nn_] * mu[(NN_+1)*nn_+j];
+                p[i] += B[j][i-NN_*nm_-nn_] * mu[(NN_+1)*nn_+j];
 
             }
 
-            aux[i] -= p[i];
+            p[i] = -p[i];
 
         }
 
-        // End of computation of -(G'*mu+p)
+        // End of computation of -(G'*mu+p), which is stored in p.
 
         memset(z, 0, sizeof(double)*(NN_+1)*nm_);
 
-        solve_banded_QRST_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z, aux); // Obtains z1_c, stored in z to save memory
+        solve_banded_QRST_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z, p); // Obtains z1_c, stored in z to save memory
 
         memset(z2, 0, sizeof(double)*2*nm_);
 
@@ -617,7 +616,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         }
 
-        memset(aux, 0, sizeof(double)*(NN_+1)*nm_);
+        memset(aux, 0, sizeof(double)*DIM_AUX);
 
         // (U_hat * z2_c) computed sparsely
         for (unsigned int l = 0 ; l < NN_ ; l++){
