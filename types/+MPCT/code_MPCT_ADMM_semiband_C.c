@@ -214,7 +214,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         for (unsigned int l = 0 ; l < NN_ ; l++){
 
-            for (unsigned int i = nm_ ; i < 2*nn_+mm_ ; i++){
+            for (unsigned int i = nm_ ; i < nm_+nn_ ; i++){
             
                 for (unsigned int j = 0 ; j < nn_ ; j++){
 
@@ -226,7 +226,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         }
 
-        for (unsigned int i = nm_ ; i < 2*nn_+mm_ ; i++){
+        for (unsigned int i = nm_ ; i < nm_+nn_ ; i++){
 
             for (unsigned int j = 0 ; j < nn_ ; j++){
 
@@ -569,7 +569,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         for (unsigned int l = 0 ; l < NN_ ; l++){
 
-            for (unsigned int i = nm_ ; i < 2*nn_+mm_ ; i++){
+            for (unsigned int i = nm_ ; i < nm_+nn_ ; i++){
 
                 for (unsigned int j = 0 ; j < nn_ ; j++){
 
@@ -581,7 +581,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         }
 
-        for (unsigned int i = nm_ ; i < 2*nn_+mm_ ; i++){
+        for (unsigned int i = nm_ ; i < nm_+nn_ ; i++){
 
             for (unsigned int j = 0 ; j < nn_ ; j++){
 
