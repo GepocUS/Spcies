@@ -173,8 +173,8 @@ classdef Spcies_constructor
                     
                 end
 
-                % Find and replace functions
-                file_text.(name) = Spcies_constructor.insert_functions(file_text.(name), self.files.(name).dir.extension);
+                % Find and replace snippets
+                file_text.(name) = Spcies_constructor.insert_snippets(file_text.(name), self.files.(name).dir.extension);
                 
                 % Add the default flags and appends
                 file_text.(name) = strrep(file_text.(name), '$INSERT_NAME$', self.files.(name).dir.name); % Name of the file
@@ -274,49 +274,49 @@ classdef Spcies_constructor
 
     methods (Static)
 
-        function text = insert_functions(text, extension)
-            % Finds and replaces the spcies functions in the file
+        function text = insert_snippets(text, extension)
+            % Finds and replaces the spcies snippets in the file
             % Functions are defined by lines in the file with the syntax:
             %
-            % spcies_function_funcName();
+            % spcies_snippet_snipName();
             % 
-            % where funcName can be ant text. The '();' are mandatory.
+            % where snipName can be any text. The '();' are mandatory.
             % This method finds all lines with the above syntax and substitutes them
-            % by the function with name 'funcName' found in 'spcies_root/types/functions'.
+            % by the snippet with name 'snipName' found in 'spcies_root/snippets/'.
             % The extension of the file used for substitution will match the extension
             % of the file being generated.
 
-            % Get list of function names
-            func_list = extractBetween(text, 'spcies_function_', ';');
-            num_funcs = length(func_list);
+            % Get list of snippet names
+            snip_list = extractBetween(text, 'spcies_snippet_', ';');
+            num_snips = length(snip_list);
 
-            % Extract the name of the functions
-            func_names = cell(1, num_funcs); 
-            for i=1:num_funcs
-                func_names{i} = extractBefore(func_list{i}, '(');
+            % Extract the name of the snippets
+            snip_names = cell(1, num_snips); 
+            for i=1:num_snips
+                snip_names{i} = extractBefore(snip_list{i}, '(');
             end
 
-            % Replace functions in text
-            for i=1:num_funcs
+            % Replace snippets in text
+            for i=1:num_snips
                 
-                % Get the text of the function (using the current file extension)
-                func_text = Spcies_constructor.get_function_text(func_names{i}, extension);
+                % Get the text of the snippet (using the current file extension)
+                snip_text = Spcies_constructor.get_snippet_text(snip_names{i}, extension);
 
-                % Replace the function text in the main text
-                text = strrep(text, ['spcies_function_' func_list{i} ';'], func_text);
+                % Replace the snippet text in the main text
+                text = strrep(text, ['spcies_snippet_' snip_list{i} ';'], snip_text);
 
             end
 
         end
 
-        function func_text = get_function_text(func_name, extension)
-            % Returns the text of the file: '/types/functions/func_name.extension'
+        function snip_text = get_snippet_text(snip_name, extension)
+            % Returns the text of the file: '/snippets/func_name.extension'
 
             % Build file path
-            func_file_path = [spcies_get_root_directory '/types/functions/' func_name '.' extension];
+            snip_file_path = [spcies_get_root_directory '/snippets/' snip_name '.' extension];
             
             % Read file text
-            func_text = fileread(func_file_path);
+            snip_text = fileread(snip_file_path);
 
         end
 

@@ -694,7 +694,7 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
 
 }
 
-spcies_function_read_elapsed_time();
+spcies_snippet_get_elapsed_time();
 
-spcies_function_read_time();
+spcies_snippet_read_time();
 

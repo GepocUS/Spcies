@@ -28,8 +28,8 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
 #endif
 
 #if MEASURE_TIME == 1
-spcies_function_read_elapsed_time();
-spcies_function_read_time();
+spcies_snippet_get_elapsed_time();
+spcies_snippet_read_time();
 #endif
 
 #endif

@@ -24,7 +24,6 @@ Thus, basic knowledge of git and GitHub are required. See "Using git" below.
     │   ├── spcies_tester.m
     │   └── test_xx.m
     ├── types/
-    │   ├── functions/
     │   └── +type/
     │       ├── code_type_method_subclass_C.c
     │       ├── compute_type_method_subclass_ingredients.m
@@ -33,6 +32,7 @@ Thus, basic knowledge of git and GitHub are required. See "Using git" below.
     │       ├── def_options_type_method_subclass.m
     │       ├── header_type_method_subclass_C.h
     │       └── struct_type_method_subclass_C_Matlab.cLICENSE
+    ├── snippets/
     ├── LICENSE
     ├── README.md
     ├── spcies.m
@@ -96,8 +96,8 @@ Thus, basic knowledge of git and GitHub are required. See "Using git" below.
       If a type/method does not have a subclass or has a subclass without a name (default method), then
       the naming convention is to eliminate the '_subclass'. For example, 'laxMPC' with 'ADMM' and now
       subclass (i.e., default ADMM algorithm) would be named as 'code_laxMPC_ADMM_C.c'.
-    - types/functions/ -> This directory contains template functions that can be inserted into files in
-      the code generation process. See "Automatic function insertion in code" below.
+    - snippets/ -> This directory contains template snippets that can be inserted into files in
+      the code generation process. See "Automatic snippet insertion in code" below.
 
 %%% Template C
     
@@ -146,15 +146,15 @@ Thus, basic knowledge of git and GitHub are required. See "Using git" below.
     Finally, the developer should add or modify the docs of the toolbox, i.e., the files in 'docs/' to
     add any new documentation or update any documentation that is now incorrect or incomplete.
 
-%%% Automatic function insertion in code
+%%% Automatic snippet insertion in code
 
-    Similar to the tags (e.g., '$INSERT_NAME$'), SPCIES offers an automatic way of inserting functions
+    Similar to the tags (e.g., '$INSERT_NAME$'), SPCIES offers an automatic way of inserting snippets
     or blocks of code into a .c or .h template (See "Template C").
     
     In a .c or .h, a line such as:
-        spcies_function_name();
-    will be substituted by the text in file '/types/functions/name.extension', where '.extension' will
-    be the extension of the file being generated (.c or .h).
+        spcies_snippet_name();
+    will be substituted by the text in file 'spcies_root/snippets/name.extension', where '.extension'
+    will be the extension of the file being generated (.c or .h).
 
     This is useful for sharing blocks of code that are used in more than one solver. For example, for
     the functions used to measure computation times.
