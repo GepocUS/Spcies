@@ -694,7 +694,11 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
 
 }
 
+#if MEASURE_TIME == 1
+
 spcies_snippet_get_elapsed_time();
 
 spcies_snippet_read_time();
+
+#endif
 
