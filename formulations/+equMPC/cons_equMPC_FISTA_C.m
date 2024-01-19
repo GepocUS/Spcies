@@ -1,6 +1,6 @@
-%% cons_equMPC_ADMM_C
+%% cons_equMPC_FISTA_C
 %
-% Generates the constructor for C of the ADMM-based solver for the equality MPC formulation
+% Generates the constructor for C of the FISTA-based solver for the equality MPC formulation
 %
 % Information about this formulation and the solver can be found at:
 %
@@ -18,9 +18,7 @@
 %                           - .Q: Cost function matrix Q.
 %                           - .R: Cost function matrix R.
 %                           - .N: Prediction horizon.
-%       - solver_options: Structure containing options of the ADMM solver.
-%              - .rho: Penalty parameter. Scalar of vector. Defaults to the scalar 1e-2.
-%                      If a vector is provided, it must have the same dimensions as the decision variables.
+%       - solver_options: Structure containing options of the FISTA solver.
 %              - .tol: Exit tolerance of the solver. Defaults to 1e-4.
 %              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
 %              - .in_engineering: Boolean that determines if the arguments of the solver are given in
@@ -36,7 +34,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function constructor = cons_equMPC_ADMM_C(recipe)
+function constructor = cons_equMPC_FISTA_C(recipe)
 
     %% Preliminaries
     import sp_utils.add_line
@@ -46,26 +44,23 @@ function constructor = cons_equMPC_ADMM_C(recipe)
     this_path = fileparts(full_path);
     
     %% Default solver options
-    def_solver_options = equMPC.def_options_equMPC_ADMM();
+    def_solver_options = equMPC.def_options_equMPC_FISTA();
     
     % Fill recipe.solver_options with the defaults
     solver_options = sp_utils.add_default_options_to_struct(recipe.solver_options, def_solver_options);
     recipe.solver_options = solver_options;
     
     %% Compute the ingredients of the controller
-    vars = equMPC.compute_equMPC_ADMM_ingredients(recipe.controller, solver_options, recipe.options);
+    vars = equMPC.compute_equMPC_FISTA_ingredients(recipe.controller, solver_options, recipe.options);
 
     % Check that the options are allowed
     if solver_options.time_varying && size(vars.LB, 2) > 1
-        error("EquMPC ADMM time varying solver only allows fixed bounds along the prediction horizon");
-    end
-    if solver_options.time_varying && ~vars.rho_is_scalar
-        error("EquMPC ADMM time varying solver only allows the use of a scalar rho");
+        error("EquMPC FISTA time varying solver only allows fixed bounds along the prediction horizon");
     end
     
-    %% Set save_name to type if none is provided
+    %% Set save_name to formulation if none is provided
     if isempty(recipe.options.save_name)
-        recipe.options.save_name = recipe.options.type;
+        recipe.options.save_name = recipe.options.formulation;
     end
     
     %% Rename variables for convenience
@@ -84,7 +79,7 @@ function constructor = cons_equMPC_ADMM_C(recipe)
     precision = recipe.options.precision;
     
     %% Create vars cell matrix: Name, value, initialize, type(int, float, etc), class(variable, constant, define, etc)
-
+    
     % Defines
     defCell = [];
     defCell = add_line(defCell, 'nn_', n, 1, 'uint', 'define');
@@ -101,7 +96,7 @@ function constructor = cons_equMPC_ADMM_C(recipe)
     if recipe.options.time
         defCell = add_line(defCell, 'MEASURE_TIME', 1, 1, 'bool', 'define');
     end
-
+    
     % Constants
     constCell = [];
     if size(vars.LB, 2) > 1
@@ -118,13 +113,12 @@ function constructor = cons_equMPC_ADMM_C(recipe)
         end
     end
     if ~solver_options.time_varying
-        constCell = add_line(constCell, 'Hi', vars.Hi, 1, precision, var_options);
-        constCell = add_line(constCell, 'Hi_0', vars.Hi_0, 1, precision, var_options);
-        constCell = add_line(constCell, 'Q', vars.Q, 1, precision, var_options);
-        constCell = add_line(constCell, 'R', vars.R, 1, precision, var_options);
         constCell = add_line(constCell, 'AB', vars.AB, 1, precision, var_options);
         constCell = add_line(constCell, 'Alpha', vars.Alpha, 1, precision, var_options);
         constCell = add_line(constCell, 'Beta', vars.Beta, 1, precision, var_options);
+        constCell = add_line(constCell, 'Q', vars.Q, 1, precision, var_options);
+        constCell = add_line(constCell, 'R', vars.R, 1, precision, var_options);
+        constCell = add_line(constCell, 'QRi', vars.QRi, 1, precision, var_options);
     end
     if solver_options.in_engineering
         constCell = add_line(constCell, 'scaling_x', vars.scaling_x, 1, precision, var_options);
@@ -134,18 +128,6 @@ function constructor = cons_equMPC_ADMM_C(recipe)
         constCell = add_line(constCell, 'OpPoint_u', vars.OpPoint_u, 1, precision, var_options);
     end
     
-    % rho
-    if vars.rho_is_scalar
-        defCell = add_line(defCell, 'SCALAR_RHO', 1, 0, 'bool', 'define');
-        defCell = add_line(defCell, 'rho', vars.rho, 1, precision, 'define');
-        defCell = add_line(defCell, 'rho_i', vars.rho_i, 1, precision, 'define');
-    else
-        constCell = add_line(constCell, 'rho', vars.rho, 1, precision, var_options);
-        constCell = add_line(constCell, 'rho_0', vars.rho_0, 1, precision, var_options);
-        constCell = add_line(constCell, 'rho_i', vars.rho_i, 1, precision, var_options);
-        constCell = add_line(constCell, 'rho_i_0', vars.rho_i_0, 1, precision, var_options);
-    end
-
     %% Declare an empty constructor object
     constructor = Spcies_constructor;
     
@@ -154,11 +136,11 @@ function constructor = cons_equMPC_ADMM_C(recipe)
     % .c file
     constructor = constructor.new_empty_file('code', recipe.options, 'c');
     constructor.files.code.blocks = {'$START$', C_code.get_generic_solver_struct;...
-                                     '$INSERT_SOLVER$', [this_path '/code_equMPC_ADMM_C.c']};
+                                     '$INSERT_SOLVER$', [this_path '/code_equMPC_FISTA_C.c']};
       
     % .h file
     constructor = constructor.new_empty_file('header', recipe.options, 'h');
-    constructor.files.header.blocks = {'$START$', [this_path '/header_equMPC_ADMM_C.h']};
+    constructor.files.header.blocks = {'$START$', [this_path '/header_equMPC_FISTA_C.h']};
     
     % Data
     constructor.data = {'$INSERT_DEFINES$', defCell;...

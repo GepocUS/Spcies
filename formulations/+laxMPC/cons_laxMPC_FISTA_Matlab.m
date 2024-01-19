@@ -1,20 +1,17 @@
-%% cons_HMPC_ADMM_Matlab
+%% cons_laxMPC_FISTA_Matlab
 %
-% Generates the constructor for Matlab of the ADMM-based solver for the HMPC formulation.
+% Generates the constructor for Matlab of the FISTA-based solver for the lax MPC formulation.
 % 
-% Information about this formulation can be found at:
+% Information about this formulation and the solver can be found at:
 %
-% P. Krupa, D. Limon, and T. Alamo, “Harmonic based model predictive
-% control for set-point tracking", IEEE Transactions on Automatic Control.
-%
-% Information about the solver canbe found in:
-%
-% Pablo Krupa, Daniel Limon, Alberto Bemporad, Teodoro Alamo, "Efficiently
-% solving the hamonic model predictive control formulation", arXiv: 2202.06629, 2022.
+% P. Krupa, D. Limon, T. Alamo, "Implementation of model predictive control in
+% programmable logic controllers", Transactions on Control Systems Technology, 2020.
+% 
+% Specifically, this formulation is given in equation (9) of the above reference.
 % 
 % INPUTS:
 %   - recipe: An instance of the Spcies_problem class.
-%             The specifics of the fields of this recipe can be found cons_HMPC_ADMM_C.m
+%             The specifics of the fields of this recipe can be found in cons_laxMPC_FISTA_C.m
 % 
 % OUTPUTS:
 %   - constructor: An instance of the Spcies_constructor class ready for file generation.
@@ -22,11 +19,11 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function constructor = cons_HMPC_ADMM_Matlab(recipe)
+function constructor = cons_laxMPC_FISTA_Matlab(recipe)
 
     %% Add a name
     if isempty(recipe.options.save_name)
-        recipe.options.save_name = recipe.options.type;
+        recipe.options.save_name = recipe.options.formulation;
     end
 
     %% Construct the C files
@@ -37,7 +34,7 @@ function constructor = cons_HMPC_ADMM_Matlab(recipe)
     recipe_C.options.save_name = [recipe.options.save_name '_plain_C'];
     recipe_C.options.save = false;
     
-    constructor_C = HMPC.cons_HMPC_ADMM_C(recipe_C);
+    constructor_C = laxMPC.cons_laxMPC_FISTA_C(recipe_C);
     constructor_C = constructor_C.construct(recipe_C.options);
     
     %% Generate constructor
@@ -49,7 +46,7 @@ function constructor = cons_HMPC_ADMM_Matlab(recipe)
     
     % Add mex file code
     constructor = constructor.new_empty_file('mex_code', recipe.options, 'c');
-    constructor.files.mex_code.blocks = {'$START$', [this_path '/struct_HMPC_ADMM_C_Matlab.c']};
+    constructor.files.mex_code.blocks = {'$START$', [this_path '/struct_laxMPC_FISTA_C_Matlab.c']};
     constructor.files.mex_code.flags = {'$C_CODE_NAME$', constructor_C.files.code.dir.name};
     
     % Add the execution command for compiling the mex file
@@ -58,3 +55,4 @@ function constructor = cons_HMPC_ADMM_Matlab(recipe)
                                             '$C_CODE_NAME$', constructor_C.files.code.dir.name};
     
 end
+

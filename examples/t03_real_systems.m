@@ -89,7 +89,7 @@ solver_options.tol = 1e-5; % Exit tolerance of the solver
 
 spcies_clear;
 spcies_gen_controller('sys', sys, 'param', paramMPC, 'solver_options', solver_options,...
-                      'platform', 'Matlab', 'type', 'laxMPC');
+                      'platform', 'Matlab', 'formulation', 'laxMPC');
 
 % And then control the "real" system using the discrete-time model contained in sys.
 num_iter = 50; % Number of simulated sample times
@@ -209,7 +209,7 @@ paramMPC = struct('Q', Q, 'R', R, 'T', T, 'N', N);
 % provided/returned in "engineering" units. To do so, we need to set the "in_engineering" solver options to true.
 solver_options.in_engineering = true;
 spcies_gen_controller('sys', sysN, 'param', paramMPC, 'solver_options', solver_options,...
-                      'platform', 'Matlab', 'type', 'laxMPC', 'save_name', 'laxMPC_scaled');
+                      'platform', 'Matlab', 'formulation', 'laxMPC', 'save_name', 'laxMPC_scaled');
 
 % We can now rerun the closed-loop simulation
 hX = zeros(n, num_iter+1); % Evolution of the state

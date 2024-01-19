@@ -21,12 +21,12 @@ Fields of the 'sys' structure:
 Fields of the 'param' structure:
     - Basic 'param' fields N, Q, R, T; see spcies('help', 'param')
 
-Available methods, subclasses and solver_options:
+Available methods, submethods and solver_options:
     - 'ADMM'
-        - No subclasses
+        - No submethods
         - 'solver_options': Defaults for 'ADMM', see spcies('help', 'ADMM')
         - Restrictions: Q and R must be diagonal positive semidefinite.
     - 'FISTA'
-        - No subclasses
+        - No submethods
         - 'solver_options': Defaults for 'FISTA', see spcies('help', 'FISTA')
         - Restrictions: Q, R and T must be diagonal positive definite.

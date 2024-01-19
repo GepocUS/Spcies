@@ -32,7 +32,7 @@ options.time = true;
 
 % Generate the solver (note that we select the 'platform' as 'C')
 spcies_gen_controller('sys', sys, 'param', paramMPC, 'solver_options', solver_options,...
-    'options', options, 'platform', 'C', 'type', 'laxMPC');
+    'options', options, 'platform', 'C', 'formulation', 'laxMPC');
 
 %% STEP 3: Use the generated solver
 % Go to /examples/cl_in_C/

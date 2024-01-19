@@ -41,7 +41,7 @@ solver_options.time_varying = true;
 
 options.save_name = 'myMPCsolver';
 options.time = true; % To measure computation times
-options.type = 'equMPC'; % The 'laxMPC' formulation also has time-varying solvers. Check it out!
+options.formulation = 'equMPC'; % The 'laxMPC' formulation also has time-varying solvers. Check it out!
 % In this tutorial we use the ADMM solver, as selected below, but a time-varying version
 % of the FISTA solver is also available.
 options.method = 'ADMM'; % Try the FISTA version by changing this to 'FISTA'

@@ -19,19 +19,19 @@ Thus, basic knowledge of git and GitHub are required. See "Using git" below.
     │   ├── +C_code/
     │   └── Matlab/
     │       ├── personal/
-    │       └── solver_type_method.m
+    │       └── solver_formulation_method.m
     ├── tests/
     │   ├── spcies_tester.m
     │   └── test_xx.m
-    ├── types/
-    │   └── +type/
-    │       ├── code_type_method_subclass_C.c
-    │       ├── compute_type_method_subclass_ingredients.m
-    │       ├── cons_type_method_subclass_C.m
-    │       ├── cons_type_method_subclass_Matlab.m
-    │       ├── def_options_type_method_subclass.m
-    │       ├── header_type_method_subclass_C.h
-    │       └── struct_type_method_subclass_C_Matlab.cLICENSE
+    ├── formulations/
+    │   └── +formulation/
+    │       ├── code_formulation_method_submethod_C.c
+    │       ├── compute_formulation_method_submethod_ingredients.m
+    │       ├── cons_formulation_method_submethod_C.m
+    │       ├── cons_formulation_method_submethod_Matlab.m
+    │       ├── def_options_formulation_method_submethod.m
+    │       ├── header_formulation_method_submethod_C.h
+    │       └── struct_formulation_method_submethod_C_Matlab.cLICENSE
     ├── snippets/
     ├── LICENSE
     ├── README.md
@@ -76,35 +76,36 @@ Thus, basic knowledge of git and GitHub are required. See "Using git" below.
     - tests/ -> Suite of tests of the toolbox. Mainly used as "unit tests" for development.
         - spcies_tester.m -> Entry point to running the tests. Can be called using spcies('test')
         - test_xx.m -> All the tests that can be run using spcies_tester().
-    - types/ -> Directory that contains a folder for each of the MPC formulations available in
+    - formulations/ -> Directory that contains a folder for each of the MPC formulations available in
       the toolbox. Each formulation is given a name. The folder for each formulation follows the
-      naming convention '+type', where 'type' is the name of the formulation. Variations of a same
-      MPC formulation can share the same '+type' folder, e.g., formulations 'HMPC' and 'ellipHMPC'
-      share the '+HMPC' folder.
-      Each '+type' folder must contain a series of functions and files that form the basis for 
+      naming convention '+formulation', where 'formulation' is the name of the formulation. Variations of
+      a same MPC formulation can share the same '+formulation' folder, e.g., formulations 'HMPC' and
+      'ellipHMPC' share the '+HMPC' folder.
+      Each '+formulation' folder must contain a series of functions and files that form the basis for 
       the generation of the solvers. These functions follow a strict naming convention (otherwise
-      they will not be found by Spcies_constructor) where 'type' and 'method' and 'subclass' should
+      they will not be found by Spcies_constructor) where 'formulation' and 'method' and 'submethod' should
       be substituted by their corresponding names as given to spcies_gen_controller().
-        - code_type_method_subclass_C.c -> Template of C code of the solver. See "Template C" below.
-        - compute_type_method_subclass_ingredients.m -> Computes the offline ingredients of the solver.
-        - cons_type_method_subclass_C.m -> Performs the variable declarations of the solver for C code.
-        - cons_type_method_subclass_Matlab.m -> Same as before but when generating for Matlab 'platform'.
-        - def_options_type_method_subclass.m -> Returns the default solver options.
-        - header_type_method_subclass_C.h -> Template of the C header. See "Template C" below.
-        - struct_type_method_subclass_C_Matlab.c -> Template of the C mexFunction file.
+        - code_formulation_method_submethod_C.c -> Template of C code of the solver. See "Template C" below.
+        - compute_formulation_method_submethod_ingredients.m -> Computes the offline ingredients of the solver.
+        - cons_formulation_method_submethod_C.m -> Performs the variable declarations of the solver for C code.
+        - cons_formulation_method_submethod_Matlab.m -> Same as before but when generating for Matlab 'platform'.
+        - def_options_formulation_method_submethod.m -> Returns the default solver options.
+        - header_formulation_method_submethod_C.h -> Template of the C header. See "Template C" below.
+        - struct_formulation_method_submethod_C_Matlab.c -> Template of the C mexFunction file.
           See "Template MEX functions" below.
-      If a type/method does not have a subclass or has a subclass without a name (default method), then
-      the naming convention is to eliminate the '_subclass'. For example, 'laxMPC' with 'ADMM' and now
-      subclass (i.e., default ADMM algorithm) would be named as 'code_laxMPC_ADMM_C.c'.
+      If a formulation/method does not have a submethod or has a submethod without a name (default method), then
+      the naming convention is to eliminate the '_submethod'. For example, 'laxMPC' with 'ADMM' and now
+      submethod (i.e., default ADMM algorithm) would be named as 'code_laxMPC_ADMM_C.c'.
     - snippets/ -> This directory contains template snippets that can be inserted into files in
       the code generation process. See "Automatic snippet insertion in code" below.
 
 %%% Template C
     
     SPCIES generates solvers by constructing offline all the ingredients required online and inserting
-    them into a .c file that contains the code of the solver. That is, each type-method-subclass trio
-    has a .c file named code_type_method_subclass_C.c (located in the corresponding 'types/+type/' folder)
-    that contains the code of the solver and is missing the variables (defines, constants and variables).
+    them into a .c file that contains the code of the solver. That is, each formulation-method-submethod
+    trio has a .c file named code_formulation_method_submethod_C.c (located in the corresponding
+    'formulations/+formulation/' folder) that contains the code of the solver and is missing the variables
+    (defines, constants and variables).
     Instead, the template contains tags that will be substituted by the corresponding text in the file
     generation process. Tags follow the naming convention '$TAG_NAME$'.
     Default tags are:
@@ -113,35 +114,36 @@ Thus, basic knowledge of git and GitHub are required. See "Using git" below.
         $INSERT_DEFINES$ -> #define C variables will be inserted here.
         $INSERT_NAME$ -> The name of the generated files (determines by options.save_name)
         $INSERT_PATH$ -> The path of the file will be inserted here
-    Other tags can be defined in cons_type_method_subclass_C.m or cons_type_method_subclass_Matlab.m.
+    Other tags can be defined in cons_formulation_method_submethod_C.m or
+    cons_formulation_method_submethod_Matlab.m.
 
-    A header file for the code_type_method_subclass_C.c code is also required. The naming convention is
-    'header_type_method_subclass_C.h'.
+    A header file for the code_formulation_method_submethod_C.c code is also required. The naming convention is
+    'header_formulation_method_submethod_C.h'.
     As in the .c file, tags are substituted by the text defined in the 'cons_' functions or Spcies_constructor.
 
 %%% Template MEX functions
 
     For the generation and compilation of Matlab MEX functions, another file is required. The MEX functions
     use the same .c solver, but require a .c file containing a mexFunction() as Matlab's entry point.
-    The naming convention for this file is 'struct_type_method_subclass_C_Matlab.c'.
+    The naming convention for this file is 'struct_formulation_method_submethod_C_Matlab.c'.
     Tags may also be used in this file.
         
 %% Generating a new solver for a new or existing MPC formulation
     
-    For each trio type-method-subclass, the developer needs to create a new copy of the functions
-    described in above section "Structure of the toolbox" within the "+types" folders, i.e., to create:
-        - code_type_method_subclass_C.c
-        - compute_type_method_subclass_ingredients.m
-        - cons_type_method_subclass_C.m
-        - cons_type_method_subclass_Matlab.m
-        - def_options_type_method_subclass.m
-        - header_type_method_subclass_C.h
-        - struct_type_method_subclass_C_Matlab.c
+    For each trio formulation-method-submethod, the developer needs to create a new copy of the functions
+    described in above section "Structure of the toolbox" within the "+formulations" folders, i.e., to create:
+        - code_formulation_method_submethod_C.c
+        - compute_formulation_method_submethod_ingredients.m
+        - cons_formulation_method_submethod_C.m
+        - cons_formulation_method_submethod_Matlab.m
+        - def_options_formulation_method_submethod.m
+        - header_formulation_method_submethod_C.h
+        - struct_formulation_method_submethod_C_Matlab.c
     The easiest way to go about this is to use an existing set of files as a guideline and make the
-    necessary changes for the new type-method-subclass.
+    necessary changes for the new formulation-method-submethod.
 
     The developer may also need to update spcies_default_options.m to indicate the default method and
-    subclass of a new type.
+    submethod of a new formulation.
 
     Finally, the developer should add or modify the docs of the toolbox, i.e., the files in 'docs/' to
     add any new documentation or update any documentation that is now incorrect or incomplete.
@@ -161,10 +163,10 @@ Thus, basic knowledge of git and GitHub are required. See "Using git" below.
 
 %%% Personal folders
     
-    The folders 'spcies_root/platforms/Matlab/personal/' and 'spcies_root/types/+personal/' are ignored
+    The folders 'spcies_root/platforms/Matlab/personal/' and 'spcies_root/formulations/+personal/' are ignored
     by .gitignore file. They can be used to store functions and templates that are still in early development
-    before including them in the 'spcies_root/platforms/Matlab' or 'spcies_root/types/+type/' folder for
-    committing it in git.
+    before including them in the 'spcies_root/platforms/Matlab' or 'spcies_root/formulations/+formulation/'
+    folder for committing it in git.
 
 %%% Using git
 

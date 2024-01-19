@@ -5,11 +5,11 @@
 % spcies_options of other functions of the toolbox.
 % 
 % The options of the toolbox are:
-%   - type: String that determines the type of controller to be generated.
-%   - platform: String that determines the target embedded system or platform.
+%   - formulation: String that determines the MPC formulation to be generated.
 %   - method: String that determines the optimization method used.
-%   - subclass: String that determines the exact solver to be used.
-%               (only used if various are available).
+%   - submethod: String that determines the exact solver to be used.
+%                (only used if various are available).
+%   - platform: String that determines the target embedded system or platform.
 %   - save_name: String that indicates the name with which files are saved.
 %                If empty, then each controller will use its own
 %                default naming convention.
@@ -28,18 +28,18 @@
 %
 % OUTPUTS:
 %   - def_opt: Structure containing the default options of the toolbox.
-%   - def_metod: Structure containing the default method of eath type.
-%   - def_subclass: Structure containing the default subclass of each type.
+%   - def_method: Structure containing the default method of eath formulaiton.
+%   - def_submethod: Structure containing the default submethod of each formulation.
 %
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function [def_opt, def_method, def_subclass] = spcies_default_options()
+function [def_opt, def_method, def_submethod] = spcies_default_options()
     
     % Default options of the toolbox
+    def_opt.formulation = ''; % Default formulation
     def_opt.method = ''; % Default method
-    def_opt.subclass = ''; % Defult subclass
-    def_opt.type = ''; % Default type
+    def_opt.submethod = ''; % Defult submethod
     def_opt.platform = 'Matlab'; % Default platform
     def_opt.save_name = ''; % Default value of the save_name argument
     def_opt.directory = '$SPCIES$'; % Default directory where to save files
@@ -49,7 +49,7 @@ function [def_opt, def_method, def_subclass] = spcies_default_options()
     def_opt.save = 1; % Determines if the file is saved (currently unused)
     def_opt.time = 0; % Determines if timing results are measured and returned by the solvers
     
-    % Default metods for each type of controller
+    % Default metods for each MPC formulation
     def_method.laxMPC = 'ADMM';
     def_method.equMPC = 'ADMM';
     def_method.ellipMPC = 'ADMM';
@@ -57,16 +57,16 @@ function [def_opt, def_method, def_subclass] = spcies_default_options()
     def_method.HMPC = 'ADMM';
     def_method.Other = '';
     
-    % Default subclasses for each type of controller
-    def_subclass.laxMPC.ADMM = '';
-    def_subclass.laxMPC.FISTA = '';
-    def_subclass.equMPC.ADMM = '';
-    def_subclass.equMPC.FISTA = '';
-    def_subclass.ellipMPC.ADMM = '';
-    def_subclass.MPCT.EADMM = '';
-    def_subclass.MPCT.ADMM = 'cs';
-    def_subclass.HMPC.ADMM = '';
-    def_subclass.HMPC.SADMM = '';
-    def_subclass.Other = '';
+    % Default submethods for each MPC formulation
+    def_submethod.laxMPC.ADMM = '';
+    def_submethod.laxMPC.FISTA = '';
+    def_submethod.equMPC.ADMM = '';
+    def_submethod.equMPC.FISTA = '';
+    def_submethod.ellipMPC.ADMM = '';
+    def_submethod.MPCT.EADMM = '';
+    def_submethod.MPCT.ADMM = 'cs';
+    def_submethod.HMPC.ADMM = '';
+    def_submethod.HMPC.SADMM = '';
+    def_submethod.Other = '';
      
 end

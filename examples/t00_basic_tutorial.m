@@ -111,7 +111,7 @@ spcies_clear;
 
 % We now generate the mex file by calling the following function:
 spcies_gen_controller('sys', sys, 'param', param, 'solver_options', solver_options,...
-    'options', options, 'platform', 'Matlab', 'type', 'laxMPC');
+    'options', options, 'platform', 'Matlab', 'formulation', 'laxMPC');
 
 % Notice that we are indicating the 'platform' as 'Matlab', which is telling
 % the function to generate a mex file. This was not strictly needed, since
@@ -120,7 +120,7 @@ spcies_gen_controller('sys', sys, 'param', param, 'solver_options', solver_optio
 % Another way of passing the target to the function would have been to include
 % it in the options structure in the field 'platform'.
 
-% Notice also that we are telling the function that the 'type' of controller 
+% Notice also that we are telling the function that the 'formulation' of controller 
 % I want it to generate a solver for is the laxMPC formulation.
 % For a full list of supported MPC formulations and solvers for them please
 % refer to the documentation of the toolbox and the other examples.

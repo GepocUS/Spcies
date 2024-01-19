@@ -1,13 +1,13 @@
-%% cons_equMPC_FISTA_C
+%% cons_laxMPC_ADMM_C
 %
-% Generates the constructor for C of the FISTA-based solver for the equality MPC formulation
+% Generates the constructor for C of the ADMM-based solver for the lax MPC formulation
 %
 % Information about this formulation and the solver can be found at:
 %
 % P. Krupa, D. Limon, T. Alamo, "Implementation of model predictive control in
 % programmable logic controllers", Transactions on Control Systems Technology, 2020.
 % 
-% Specifically, this formulation is given in equation (8) of the above reference.
+% Specifically, this formulation is given in equation (9) of the above reference.
 % 
 % INPUTS:
 %   - recipe: An instance of the Spcies_problem class. Its properties must contain:
@@ -17,8 +17,11 @@
 %                 - .param: Structure containing the ingredients of the controller:
 %                           - .Q: Cost function matrix Q.
 %                           - .R: Cost function matrix R.
+%                           - .P: Cost function matrix P.
 %                           - .N: Prediction horizon.
-%       - solver_options: Structure containing options of the FISTA solver.
+%       - solver_options: Structure containing options of the ADMM solver.
+%              - .rho: Penalty parameter. Scalar of vector. Defaults to the scalar 1e-2.
+%                      If a vector is provided, it must have the same dimensions as the decision variables.
 %              - .tol: Exit tolerance of the solver. Defaults to 1e-4.
 %              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
 %              - .in_engineering: Boolean that determines if the arguments of the solver are given in
@@ -34,7 +37,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function constructor = cons_equMPC_FISTA_C(recipe)
+function constructor = cons_laxMPC_ADMM_C(recipe)
 
     %% Preliminaries
     import sp_utils.add_line
@@ -44,23 +47,27 @@ function constructor = cons_equMPC_FISTA_C(recipe)
     this_path = fileparts(full_path);
     
     %% Default solver options
-    def_solver_options = equMPC.def_options_equMPC_FISTA();
-    
+    def_solver_options = laxMPC.def_options_laxMPC_ADMM();
+ 
     % Fill recipe.solver_options with the defaults
     solver_options = sp_utils.add_default_options_to_struct(recipe.solver_options, def_solver_options);
     recipe.solver_options = solver_options;
-    
+
     %% Compute the ingredients of the controller
-    vars = equMPC.compute_equMPC_FISTA_ingredients(recipe.controller, solver_options, recipe.options);
+    vars = laxMPC.compute_laxMPC_ADMM_ingredients(recipe.controller, solver_options, recipe.options);
 
     % Check that the options are allowed
     if solver_options.time_varying && size(vars.LB, 2) > 1
-        error("EquMPC FISTA time varying solver only allows fixed bounds along the prediction horizon");
+        error("LaxMPC ADMM time varying solver only allows fixed bounds along the prediction horizon");
+    end
+    if solver_options.time_varying && ~vars.rho_is_scalar
+        error("LaxMPC ADMM time varying solver only allows the use of a scalar rho");
     end
     
-    %% Set save_name to type if none is provided
+    
+    %% Set save_name to formulation if none is provided
     if isempty(recipe.options.save_name)
-        recipe.options.save_name = recipe.options.type;
+        recipe.options.save_name = recipe.options.formulation;
     end
     
     %% Rename variables for convenience
@@ -103,8 +110,10 @@ function constructor = cons_equMPC_FISTA_C(recipe)
         % Different constraints for each prediction step
         constCell = add_line(constCell, 'LB0', vars.LB(n+1:end, 1), 1, precision, var_options);
         constCell = add_line(constCell, 'UB0', vars.UB(n+1:end, 1), 1, precision, var_options);
-        constCell = add_line(constCell, 'LB', vars.LB(:, 2:end)', 1, precision, var_options);
-        constCell = add_line(constCell, 'UB', vars.UB(:, 2:end)', 1, precision, var_options);
+        constCell = add_line(constCell, 'LB', vars.LB(:, 2:end-1)', 1, precision, var_options);
+        constCell = add_line(constCell, 'UB', vars.UB(:, 2:end-1)', 1, precision, var_options);
+        constCell = add_line(constCell, 'LBN', vars.LB(1:n, end)', 1, precision, var_options);
+        constCell = add_line(constCell, 'UBN', vars.UB(1:n, end)', 1, precision, var_options);
         defCell = add_line(defCell, 'VAR_BOUNDS', 1, 1, 'int', 'define');
     else
         if ~solver_options.time_varying
@@ -113,19 +122,38 @@ function constructor = cons_equMPC_FISTA_C(recipe)
         end
     end
     if ~solver_options.time_varying
+        constCell = add_line(constCell, 'Hi', vars.Hi, 1, precision, var_options);
+        constCell = add_line(constCell, 'Hi_0', vars.Hi_0, 1, precision, var_options);
+        constCell = add_line(constCell, 'Hi_N', vars.Hi_N, 1, precision, var_options);
+        constCell = add_line(constCell, 'Q', vars.Q, 1, precision, var_options);
+        constCell = add_line(constCell, 'R', vars.R, 1, precision, var_options);
         constCell = add_line(constCell, 'AB', vars.AB, 1, precision, var_options);
         constCell = add_line(constCell, 'Alpha', vars.Alpha, 1, precision, var_options);
         constCell = add_line(constCell, 'Beta', vars.Beta, 1, precision, var_options);
-        constCell = add_line(constCell, 'Q', vars.Q, 1, precision, var_options);
-        constCell = add_line(constCell, 'R', vars.R, 1, precision, var_options);
-        constCell = add_line(constCell, 'QRi', vars.QRi, 1, precision, var_options);
+    else
+        constCell = add_line(constCell, 'T_rho_i', vars.T_rho_i, 1, precision, var_options);
     end
+    constCell = add_line(constCell, 'T', vars.T, 1, precision, var_options);
     if solver_options.in_engineering
         constCell = add_line(constCell, 'scaling_x', vars.scaling_x, 1, precision, var_options);
         constCell = add_line(constCell, 'scaling_u', vars.scaling_u, 1, precision, var_options);
         constCell = add_line(constCell, 'scaling_i_u', vars.scaling_i_u, 1, precision, var_options);
         constCell = add_line(constCell, 'OpPoint_x', vars.OpPoint_x, 1, precision, var_options);
         constCell = add_line(constCell, 'OpPoint_u', vars.OpPoint_u, 1, precision, var_options);
+    end
+    
+    % rho
+    if vars.rho_is_scalar
+        defCell = add_line(defCell, 'SCALAR_RHO', 1, 0, 'bool', 'define');
+        defCell = add_line(defCell, 'rho', vars.rho, 1, precision, 'define');
+        defCell = add_line(defCell, 'rho_i', vars.rho_i, 1, precision, 'define');
+    else
+        constCell = add_line(constCell, 'rho', vars.rho, 1, precision, var_options);
+        constCell = add_line(constCell, 'rho_0', vars.rho_0, 1, precision, var_options);
+        constCell = add_line(constCell, 'rho_N', vars.rho_N, 1, precision, var_options);
+        constCell = add_line(constCell, 'rho_i', vars.rho_i, 1, precision, var_options);
+        constCell = add_line(constCell, 'rho_i_0', vars.rho_i_0, 1, precision, var_options);
+        constCell = add_line(constCell, 'rho_i_N', vars.rho_i_N, 1, precision, var_options);
     end
     
     %% Declare an empty constructor object
@@ -136,11 +164,11 @@ function constructor = cons_equMPC_FISTA_C(recipe)
     % .c file
     constructor = constructor.new_empty_file('code', recipe.options, 'c');
     constructor.files.code.blocks = {'$START$', C_code.get_generic_solver_struct;...
-                                     '$INSERT_SOLVER$', [this_path '/code_equMPC_FISTA_C.c']};
+                                     '$INSERT_SOLVER$', [this_path '/code_laxMPC_ADMM_C.c']};
       
     % .h file
     constructor = constructor.new_empty_file('header', recipe.options, 'h');
-    constructor.files.header.blocks = {'$START$', [this_path '/header_equMPC_FISTA_C.h']};
+    constructor.files.header.blocks = {'$START$', [this_path '/header_laxMPC_ADMM_C.h']};
     
     % Data
     constructor.data = {'$INSERT_DEFINES$', defCell;...

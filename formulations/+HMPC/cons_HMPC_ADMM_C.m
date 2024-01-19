@@ -1,12 +1,16 @@
-%% cons_HMPC_ADMM_split_C
+%% cons_HMPC_ADMM_C
 %
-% Generates the constructor for C of the HMPC formulation based on ADMM which splits
-% the decision variables into (z, s) and (z_hat, s_hat).
+% Generates the constructor for C of the HMPC formulation based on ADMM.
 % 
 % Information about this formulation can be found at:
 %
 % P. Krupa, D. Limon, and T. Alamo, “Harmonic based model predictive
 % control for set-point tracking", IEEE Transactions on Automatic Control.
+%
+% Information about the solver canbe found in:
+%
+% Pablo Krupa, Daniel Limon, Alberto Bemporad, Teodoro Alamo, "Efficiently
+% solving the hamonic model predictive control formulation", arXiv: 2202.06629, 2022.
 % 
 % INPUTS:
 %   - recipe: An instance of the Spcies_problem class. Its properties must contain:
@@ -23,9 +27,10 @@
 %                           - .N: Prediction horizon.
 %                           - .w: Base frequency.
 %       - solver_options: Structure containing options of the solver.
-%                         Default values provided in def_options_HMPC_ADMM.m
+%                         Default values provided in def_options_HMPC_SADMM.m
 %              - .sigma: Penalty parameter sigma. Scalar.
 %              - .rho: Penalty parameter rho. Scalar.
+%              - .alpha: Relaxation parameter of the SADMM algorithm.
 %              - .tol_p: Primal exit tolerance of the solver.
 %              - .tol_d: Dual exit tolerance of the solver.
 %              - .k_max: Maximum number of iterations of the solver.
@@ -46,7 +51,8 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function constructor = cons_HMPC_ADMM_split_C(recipe)
+function constructor = cons_HMPC_ADMM_C(recipe)
+
     %% Preliminaries
     import sp_utils.add_line
 
@@ -55,11 +61,7 @@ function constructor = cons_HMPC_ADMM_split_C(recipe)
     this_path = fileparts(full_path);
 
     %% Default solver options
-    if strcmp(recipe.options.method, 'SADMM_split')
-        def_solver_options = HMPC.def_options_HMPC_SADMM();
-    else
-        def_solver_options = HMPC.def_options_HMPC_ADMM();
-    end
+    def_solver_options = HMPC.def_options_HMPC_ADMM();
     
     % Fill recipe.solver_options with the defaults
     solver_options = sp_utils.add_default_options_to_struct(recipe.solver_options, def_solver_options);
@@ -75,15 +77,11 @@ function constructor = cons_HMPC_ADMM_split_C(recipe)
     end
     
     %% Compute the ingredients of the controller
-    if strcmp(recipe.options.method, 'SADMM_split')
-        vars = HMPC.compute_HMPC_SADMM_split_ingredients(recipe.controller, solver_options, recipe.options);
-    else
-        vars = HMPC.compute_HMPC_ADMM_split_ingredients(recipe.controller, solver_options, recipe.options);
-    end
+    vars = HMPC.compute_HMPC_ADMM_ingredients(recipe.controller, solver_options, recipe.options);
     
-    %% Set save_name to type if none is provided
+    %% Set save_name to formulation if none is provided
     if isempty(recipe.options.save_name)
-        recipe.options.save_name = recipe.options.type;
+        recipe.options.save_name = recipe.options.formulation;
     end
 
     %% Rename variables for convenience
@@ -95,6 +93,7 @@ function constructor = cons_HMPC_ADMM_split_C(recipe)
     n_eq = vars.n_eq;
     n_y = vars.n_y;
     n_soc = vars.n_soc;
+    n_box = vars.n_box;
 
     % Determine if constant variables are defined as static
     if recipe.options.const_are_static
@@ -116,22 +115,16 @@ function constructor = cons_HMPC_ADMM_split_C(recipe)
     defCell = add_line(defCell, 'nn', n, 1, 'uint', 'define');
     defCell = add_line(defCell, 'mm', m, 1, 'uint', 'define');
     defCell = add_line(defCell, 'nm', n+m, 1, 'uint', 'define');
-    if ~recipe.solver_options.box_constraints
-        defCell = add_line(defCell, 'n_y', n_y, 1, 'uint', 'define');
-    end
     defCell = add_line(defCell, 'NN', N, 1, 'uint', 'define');
     defCell = add_line(defCell, 'dim', dim, 1, 'uint', 'define');
     defCell = add_line(defCell, 'n_s', n_s, 1, 'uint', 'define');
     defCell = add_line(defCell, 'n_eq', n_eq, 1, 'uint', 'define');
     defCell = add_line(defCell, 'n_soc', n_soc, 1, 'uint', 'define');
-    if solver_options.sparse
-        defCell = add_line(defCell, 'nrow_M', dim+n_eq+2*n_s, 1, 'uint', 'define');
-    else
-        defCell = add_line(defCell, 'NON_SPARSE', 1, 1, 'bool', 'define');
-    end
-    if ~solver_options.box_constraints
-        defCell = add_line(defCell, 'COUPLED_CONSTRAINTS', 1, 1, 'bool', 'define');
-    end
+    defCell = add_line(defCell, 'n_y', n_y, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'n_box', n_box, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'nrow_C', vars.C_CSR.nrow, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'nrow_Ct', vars.Ct_CSR.nrow, 1, 'uint', 'define');
+    
     defCell = add_line(defCell, 'k_max', solver_options.k_max, 1, 'uint', 'define');
     defCell = add_line(defCell, 'tol_p', solver_options.tol_p, 1, precision, 'define');
     defCell = add_line(defCell, 'tol_d', solver_options.tol_d, 1, precision, 'define');
@@ -139,7 +132,7 @@ function constructor = cons_HMPC_ADMM_split_C(recipe)
     if solver_options.debug
         defCell = add_line(defCell, 'DEBUG', 1, 1, 'bool', 'define');
     end
-    if strcmp(recipe.options.method, 'SADMM_split')
+    if strcmp(solver_options.method, 'SADMM')
         defCell = add_line(defCell, 'alpha_SADMM', solver_options.alpha, 1, precision, 'define');
         defCell = add_line(defCell, 'IS_SYMMETRIC', 1, 1, precision, 'define');
     end
@@ -151,9 +144,17 @@ function constructor = cons_HMPC_ADMM_split_C(recipe)
     constCell = [];
     constCell = add_line(constCell, 'rho', vars.rho, 1, precision, var_options_penalty);
     constCell = add_line(constCell, 'rho_i', vars.rho_i, 1, precision, var_options_penalty);
-    constCell = add_line(constCell, 'sigma', vars.sigma, 1, precision, var_options_penalty);
-    constCell = add_line(constCell, 'sigma_i', vars.sigma_i, 1, precision, var_options_penalty);
     constCell = add_line(constCell, 'A', vars.A, 1, precision, var_options);
+    
+    constCell = add_line(constCell, 'C_val', vars.C_CSR.val, 1, precision, var_options);
+    constCell = add_line(constCell, 'C_col', vars.C_CSR.col-1, 1, 'int', var_options);
+    constCell = add_line(constCell, 'C_row', vars.C_CSR.row-1, 1, 'int', var_options);
+    
+    constCell = add_line(constCell, 'Ct_val', vars.Ct_CSR.val, 1, precision, var_options);
+    constCell = add_line(constCell, 'Ct_col', vars.Ct_CSR.col-1, 1, 'int', var_options);
+    constCell = add_line(constCell, 'Ct_row', vars.Ct_CSR.row-1, 1, 'int', var_options);
+    
+%     constCell = add_line(constCell, 'C', vars.C, 1, precision, var_options);
     constCell = add_line(constCell, 'QQ', vars.Q, 1, precision, var_options);
     constCell = add_line(constCell, 'Te', vars.Te, 1, precision, var_options);
     constCell = add_line(constCell, 'Se', vars.Se, 1, precision, var_options);
@@ -161,22 +162,13 @@ function constructor = cons_HMPC_ADMM_split_C(recipe)
     constCell = add_line(constCell, 'UB', vars.UB, 1, precision, var_options);
     constCell = add_line(constCell, 'LBy', vars.LBy, 1, precision, var_options);
     constCell = add_line(constCell, 'UBy', vars.UBy, 1, precision, var_options);
-    if solver_options.sparse
-        constCell = add_line(constCell, 'L_val', vars.L_CSC.val, 1, precision, var_options);
-        constCell = add_line(constCell, 'L_col', vars.L_CSC.col-1, 1, 'int', var_options);
-        constCell = add_line(constCell, 'L_row', vars.L_CSC.row-1, 1, 'int', var_options);
-        constCell = add_line(constCell, 'Dinv', vars.Dinv, 1, precision, var_options);
-        constCell = add_line(constCell, 'idx_x0', vars.idx_x0-1-dim-n_s, 1, 'int', var_options);
-    else
-        constCell = add_line(constCell, 'M1', vars.M1, 1, precision, var_options);
-        if solver_options.use_soc
-            constCell = add_line(constCell, 'M2', vars.M2, 1, precision, var_options);
-            defCell = add_line(defCell, 'dim_M2', n_eq+n_s, 1, precision, 'define');
-        else
-            constCell = add_line(constCell, 'M2', vars.M2(:,1:n), 1, precision, var_options);
-            defCell = add_line(defCell, 'dim_M2', n, 1, precision, 'define');
-        end
+    if solver_options.use_soc
+        constCell = add_line(constCell, 'd', vars.d, 1, precision, var_options);
     end
+
+    constCell = add_line(constCell, 'M1', vars.M1, 1, precision, var_options);
+    constCell = add_line(constCell, 'M2', vars.M2, 1, precision, var_options);
+           
     if solver_options.in_engineering
         constCell = add_line(constCell, 'scaling_x', vars.scaling_x, 1, precision, var_options);
         constCell = add_line(constCell, 'scaling_u', vars.scaling_u, 1, precision, var_options);
@@ -187,7 +179,7 @@ function constructor = cons_HMPC_ADMM_split_C(recipe)
     
     % Variables
     varsCell = [];
-    varsCell = add_line(varsCell, 'bh', vars.bh, 1, precision);
+%     varsCell = add_line(varsCell, 'bh', vars.bh, 1, precision);
     
     %% Declare an empty constructor object
     constructor = Spcies_constructor;
@@ -197,15 +189,16 @@ function constructor = cons_HMPC_ADMM_split_C(recipe)
     % .c file
     constructor = constructor.new_empty_file('code', recipe.options, 'c');
     constructor.files.code.blocks = {'$START$', C_code.get_generic_solver_struct;...
-                                     '$INSERT_SOLVER$', [this_path '/code_HMPC_ADMM_split_C.c']};
+                                     '$INSERT_SOLVER$', [this_path '/code_HMPC_ADMM_C.c']};
     
     % .h file
     constructor = constructor.new_empty_file('header', recipe.options, 'h');
-    constructor.files.header.blocks = {'$START$', [this_path '/header_HMPC_ADMM_split_C.h']};
+    constructor.files.header.blocks = {'$START$', [this_path '/header_HMPC_ADMM_C.h']};
     
     % Data
     constructor.data = {'$INSERT_DEFINES$', defCell;...
-                        '$INSERT_CONSTANTS$', constCell;...
-                        '$INSERT_VARIABLES$', varsCell};
+                        '$INSERT_CONSTANTS$', constCell};
 
+                        %'$INSERT_VARIABLES$', varsCell
+    
 end

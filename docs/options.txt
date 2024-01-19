@@ -11,12 +11,12 @@ Execute spcies('help', 'method') for the list of available methods.
     'method': String. Determines the optimization method used by the solver.
               Use spcies('help', 'method') for the list of supported methods.
               Each MPC formulation may only supports a subset of the methods.
-    'subclass': String. Determines the subclass of optimization method used by
+    'submethod': String. Determines the submethod of optimization method used by
                 the solver. Some MPC formulations may have more than one solver
-                that uses the same optimization method. If 'subclass'=='', the
-                default 'subclass' is used.
-    'type': String. Determines the MPC formulation to be constructed.
-            Use spcies('help', 'MPC') for the list of available MPC formulations.
+                that uses the same optimization method. If 'submethod' == '', the
+                default 'submethod' is used.
+    'formulation': String. Determines the MPC formulation to be constructed.
+                   Use spcies('help', 'MPC') for the list of available MPC formulations.
     'platform': String, either 'C' or 'Matlab'. Determines if the solver is generated
                 in plain C or if it is also generated and compiled for Matlab MEX.
     'save_name': String. Determines the name of the generated files.

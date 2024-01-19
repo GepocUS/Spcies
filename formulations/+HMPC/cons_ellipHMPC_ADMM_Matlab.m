@@ -1,33 +1,32 @@
-%% cons_ellipMPC_ADMM_soc_Matlab
+%% cons_HMPC_ADMM_Matlab
 %
-% Generates the constructor for Matlab of the ADMM-based solver for MPC with ellipsoidal terminal constraint
-% for the case in which the terminal constraint is imposed using a second order cone constraint.
+% Generates the constructor for Matlab of the ADMM-based solver for the HMPC formulation.
 % 
-% The ellipMPC formulation can be found at 
-% 
-% P. Krupa, R. Jaouani, D. Limon, and T. Alamo, “A sparse ADMM-based solver for linear MPC subject
-% to terminal quadratic constraint,” arXiv:2105.08419, 2021.
-% 
-% However, there is currently no specific documentation on this solver.
+% Information about this formulation can be found at:
 %
-% P. Krupa, R. Jaouani, D. Limon, and T. Alamo, “A sparse ADMM-based solver for linear MPC subject
-% to terminal quadratic constraint,” arXiv:2105.08419, 2021.
+% P. Krupa, D. Limon, and T. Alamo, “Harmonic based model predictive
+% control for set-point tracking", IEEE Transactions on Automatic Control.
+%
+% Information about the solver canbe found in:
+%
+% Pablo Krupa, Daniel Limon, Alberto Bemporad, Teodoro Alamo, "Efficiently
+% solving the hamonic model predictive control formulation", arXiv: 2202.06629, 2022.
 % 
 % INPUTS:
 %   - recipe: An instance of the Spcies_problem class.
-%             The specifics of the fields of this recipe can be found in cons_ellipMPC_ADMM_soc_C.m
+%             The specifics of the fields of this recipe can be found cons_HMPC_ADMM_C.m
 % 
 % OUTPUTS:
 %   - constructor: An instance of the Spcies_constructor class ready for file generation.
 %                  
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
-%
+% 
 
-function constructor = cons_ellipMPC_ADMM_soc_Matlab(recipe)
+function constructor = cons_HMPC_ADMM_Matlab(recipe)
 
     %% Add a name
     if isempty(recipe.options.save_name)
-        recipe.options.save_name = recipe.options.type;
+        recipe.options.save_name = recipe.options.formulation;
     end
 
     %% Construct the C files
@@ -38,7 +37,7 @@ function constructor = cons_ellipMPC_ADMM_soc_Matlab(recipe)
     recipe_C.options.save_name = [recipe.options.save_name '_plain_C'];
     recipe_C.options.save = false;
     
-    constructor_C = ellipMPC.cons_ellipMPC_ADMM_soc_C(recipe_C);
+    constructor_C = HMPC.cons_ellipHMPC_ADMM_C(recipe_C);
     constructor_C = constructor_C.construct(recipe_C.options);
     
     %% Generate constructor
@@ -50,7 +49,7 @@ function constructor = cons_ellipMPC_ADMM_soc_Matlab(recipe)
     
     % Add mex file code
     constructor = constructor.new_empty_file('mex_code', recipe.options, 'c');
-    constructor.files.mex_code.blocks = {'$START$', [this_path '/struct_ellipMPC_ADMM_soc_C_Matlab.c']};
+    constructor.files.mex_code.blocks = {'$START$', [this_path '/struct_ellipHMPC_ADMM_C_Matlab.c']};
     constructor.files.mex_code.flags = {'$C_CODE_NAME$', constructor_C.files.code.dir.name};
     
     % Add the execution command for compiling the mex file

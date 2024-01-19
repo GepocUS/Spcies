@@ -1,17 +1,13 @@
-%% cons_equMPC_FISTA_Matlab
+%% cons_MPCT_ADMM_cs_Matlab
 %
-% Generates the constructor for Matlab of the FISTA-based solver for the equality MPC formulation.
+% Generates the constructor for Matlab of the MPCT solver using ADMM on an extended state space
 % 
-% Information about this formulation and the solver can be found at:
-%
-% P. Krupa, D. Limon, T. Alamo, "Implementation of model predictive control in
-% programmable logic controllers", Transactions on Control Systems Technology, 2020.
-% 
-% Specifically, this formulation is given in equation (8) of the above reference.
+% The solver extends the state and control inputs by adding the artificial reference to them.
+% Currently, there is no additional documentation available for the solver.
 % 
 % INPUTS:
 %   - recipe: An instance of the Spcies_problem class.
-%             The specifics of the fields of this recipe can be found in cons_equMPC_FISTA_C.m
+%             The specifics of the fields of this recipe can be found in cons_MPCT_ADMM_cs_C.m
 % 
 % OUTPUTS:
 %   - constructor: An instance of the Spcies_constructor class ready for file generation.
@@ -19,11 +15,11 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function constructor = cons_equMPC_FISTA_Matlab(recipe)
+function constructor = cons_MPCT_ADMM_cs_Matlab(recipe)
 
     %% Add a name
     if isempty(recipe.options.save_name)
-        recipe.options.save_name = recipe.options.type;
+        recipe.options.save_name = recipe.options.formulation;
     end
 
     %% Construct the C files
@@ -34,7 +30,7 @@ function constructor = cons_equMPC_FISTA_Matlab(recipe)
     recipe_C.options.save_name = [recipe.options.save_name '_plain_C'];
     recipe_C.options.save = false;
     
-    constructor_C = equMPC.cons_equMPC_FISTA_C(recipe_C);
+    constructor_C = MPCT.cons_MPCT_ADMM_cs_C(recipe_C);
     constructor_C = constructor_C.construct(recipe_C.options);
     
     %% Generate constructor
@@ -46,7 +42,7 @@ function constructor = cons_equMPC_FISTA_Matlab(recipe)
     
     % Add mex file code
     constructor = constructor.new_empty_file('mex_code', recipe.options, 'c');
-    constructor.files.mex_code.blocks = {'$START$', [this_path '/struct_equMPC_FISTA_C_Matlab.c']};
+    constructor.files.mex_code.blocks = {'$START$', [this_path '/struct_MPCT_ADMM_cs_C_Matlab.c']};
     constructor.files.mex_code.flags = {'$C_CODE_NAME$', constructor_C.files.code.dir.name};
     
     % Add the execution command for compiling the mex file

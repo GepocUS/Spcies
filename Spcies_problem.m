@@ -41,10 +41,10 @@ classdef Spcies_problem
             addParameter(par, 'controller', def_controller, @(x) isa(x, 'ssMPC'));
             addParameter(par, 'solver_options', del_solver_options, @(x) isstruct(x)); 
             addParameter(par, 'options', [], @(x) isstruct(x));
+                addParameter(par, 'formulation', def_options.formulation, @(x) ischar(x));
                 addParameter(par, 'method', def_options.method, @(x) ischar(x));
-                addParameter(par, 'subclass', def_options.subclass, @(x) ischar(x));
-                addParameter(par, 'type', def_options.type, @(x) ischar(x));
-                addParameter(par, 'platform', def_options.type, @(x) ischar(x));
+                addParameter(par, 'submethod', def_options.submethod, @(x) ischar(x));
+                addParameter(par, 'platform', def_options.platform, @(x) ischar(x));
                 addParameter(par, 'save_name', def_options.save_name, @(x) ischar(x));
                 addParameter(par, 'directory', def_options.directory, @(x) ischar(x));
                 addParameter(par, 'override', def_options.override, @(x) islogical(x) || x==1 || x==0);
@@ -52,6 +52,10 @@ classdef Spcies_problem
                 addParameter(par, 'precision', def_options.precision, @(x) ischar(x));
                 addParameter(par, 'save', def_options.save);
                 addParameter(par, 'time', def_options.time, @(x) islogical(x) || x==1 || x==0);
+
+                % Deprecated:
+                addParameter(par, 'type', NaN, @(x) ischar(x)); % Now 'formulation'
+                addParameter(par, 'subclass', NaN, @(x) ischar(x)); % Now 'submethod'
                 
             % Parse
             parse(par, varargin{:});
@@ -90,10 +94,29 @@ classdef Spcies_problem
                 end
 
             end
-            
-            if isempty(self.options.type)
-                self.options.type = sp_utils.determine_type(self.controller);
+
+            % Check deprecated options
+            if isfield(self.options, 'type')
+                warning("Spcies: 'type' is now deprecated. Please use 'formulation' instead. 'type' will be removed in some future release.")
+                self.options.formulation = self.options.type;
             end
+            if isfield(self.options, 'subclass')
+                warning("Spcies: 'subclass' is now deprecated. Please use 'submethod' instead. 'subclass' will be removed in some future release.")
+                self.options.submethod = self.options.subclass;
+            end
+            if ~isnan(par.Results.type)
+                warning("Spcies: 'type' is now deprecated. Please use 'formulation' instead. 'type' will be removed in some future release.")
+                self.options.formulation = par.Results.type;
+            end
+            if ~isnan(par.Results.subclass)
+                warning("Spcies: 'subclass' is now deprecated. Please use 'submethod' instead. 'subclass' will be removed in some future release.")
+                self.options.submethod = par.Results.subclass;
+            end
+            
+            if isempty(self.options.formulation)
+                self.options.formulation = sp_utils.determine_formulation(self.controller);
+            end
+
             
         end         
         

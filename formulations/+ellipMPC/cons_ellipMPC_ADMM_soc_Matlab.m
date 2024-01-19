@@ -1,28 +1,33 @@
-%% cons_HMPC_ADMM_split_Matlab
+%% cons_ellipMPC_ADMM_soc_Matlab
 %
-% Generates the constructor for Matlab of the ADMM-based solver for the HMPC formulation
-% which splits the decision variables into (z, s) and (z_hat, s_hat).
+% Generates the constructor for Matlab of the ADMM-based solver for MPC with ellipsoidal terminal constraint
+% for the case in which the terminal constraint is imposed using a second order cone constraint.
 % 
-% Information about this formulation can be found at:
+% The ellipMPC formulation can be found at 
+% 
+% P. Krupa, R. Jaouani, D. Limon, and T. Alamo, “A sparse ADMM-based solver for linear MPC subject
+% to terminal quadratic constraint,” arXiv:2105.08419, 2021.
+% 
+% However, there is currently no specific documentation on this solver.
 %
-% P. Krupa, D. Limon, and T. Alamo, “Harmonic based model predictive
-% control for set-point tracking", IEEE Transactions on Automatic Control.
+% P. Krupa, R. Jaouani, D. Limon, and T. Alamo, “A sparse ADMM-based solver for linear MPC subject
+% to terminal quadratic constraint,” arXiv:2105.08419, 2021.
 % 
 % INPUTS:
 %   - recipe: An instance of the Spcies_problem class.
-%             The specifics of the fields of this recipe can be found cons_HMPC_ADMM_C.m
+%             The specifics of the fields of this recipe can be found in cons_ellipMPC_ADMM_soc_C.m
 % 
 % OUTPUTS:
 %   - constructor: An instance of the Spcies_constructor class ready for file generation.
 %                  
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
-% 
+%
 
-function constructor = cons_HMPC_ADMM_split_Matlab(recipe)
+function constructor = cons_ellipMPC_ADMM_soc_Matlab(recipe)
 
     %% Add a name
     if isempty(recipe.options.save_name)
-        recipe.options.save_name = recipe.options.type;
+        recipe.options.save_name = recipe.options.formulation;
     end
 
     %% Construct the C files
@@ -33,7 +38,7 @@ function constructor = cons_HMPC_ADMM_split_Matlab(recipe)
     recipe_C.options.save_name = [recipe.options.save_name '_plain_C'];
     recipe_C.options.save = false;
     
-    constructor_C = HMPC.cons_HMPC_ADMM_split_C(recipe_C);
+    constructor_C = ellipMPC.cons_ellipMPC_ADMM_soc_C(recipe_C);
     constructor_C = constructor_C.construct(recipe_C.options);
     
     %% Generate constructor
@@ -45,7 +50,7 @@ function constructor = cons_HMPC_ADMM_split_Matlab(recipe)
     
     % Add mex file code
     constructor = constructor.new_empty_file('mex_code', recipe.options, 'c');
-    constructor.files.mex_code.blocks = {'$START$', [this_path '/struct_HMPC_ADMM_split_C_Matlab.c']};
+    constructor.files.mex_code.blocks = {'$START$', [this_path '/struct_ellipMPC_ADMM_soc_C_Matlab.c']};
     constructor.files.mex_code.flags = {'$C_CODE_NAME$', constructor_C.files.code.dir.name};
     
     % Add the execution command for compiling the mex file

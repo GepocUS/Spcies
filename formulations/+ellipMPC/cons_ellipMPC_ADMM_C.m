@@ -59,9 +59,9 @@ function constructor = cons_ellipMPC_ADMM_C(recipe)
     %% Compute the ingredients of the controller
     vars = ellipMPC.compute_ellipMPC_ADMM_ingredients(recipe.controller, solver_options, recipe.options);
     
-    %% Set save_name to type if none is provided
+    %% Set save_name to formulation if none is provided
     if isempty(recipe.options.save_name)
-        recipe.options.save_name = recipe.options.type;
+        recipe.options.save_name = recipe.options.formulation;
     end
     
     %% Rename variables for convenience
