@@ -106,7 +106,7 @@ function [u, k, e_flag, Hist] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
     end
     
     % Add default values
-    options = utils.add_default_options_to_struct(options, def_options);
+    options = sp_utils.add_default_options_to_struct(options, def_options);
     
     % Create the controller structure
     if isempty(par.Results.controller)

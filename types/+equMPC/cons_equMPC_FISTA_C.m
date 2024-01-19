@@ -37,7 +37,7 @@
 function constructor = cons_equMPC_FISTA_C(recipe)
 
     %% Preliminaries
-    import utils.add_line
+    import sp_utils.add_line
 
     % Get path to this directory
     full_path = mfilename('fullpath');
@@ -47,7 +47,7 @@ function constructor = cons_equMPC_FISTA_C(recipe)
     def_solver_options = equMPC.def_options_equMPC_FISTA();
     
     % Fill recipe.solver_options with the defaults
-    solver_options = utils.add_default_options_to_struct(recipe.solver_options, def_solver_options);
+    solver_options = sp_utils.add_default_options_to_struct(recipe.solver_options, def_solver_options);
     recipe.solver_options = solver_options;
     
     %% Compute the ingredients of the controller

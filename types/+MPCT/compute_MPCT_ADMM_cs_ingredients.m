@@ -134,12 +134,12 @@ function vars = compute_MPCT_ADMM_cs_ingredients(controller, options, spcies_opt
     Dinv = 1./diag(D); % Vector containing the inverse of the diagonal elements of D
     
     % Compute the CSC representation of (L - I)
-    L_CSC = utils.full2CSC(L - eye(size(L, 1)));
+    L_CSC = sp_utils.full2CSC(L - eye(size(L, 1)));
     
     % Compute the CSR representation of the matrices -Aeq*Hinv and -Hinv*Aeq'
-    AHi_CSR = utils.full2CSR(-Aeq*Hinv);
-    HiA_CSR = utils.full2CSR(-Hinv*Aeq');
-    Hi_CSR = utils.full2CSR(-Hinv);
+    AHi_CSR = sp_utils.full2CSR(-Aeq*Hinv);
+    HiA_CSR = sp_utils.full2CSR(-Hinv*Aeq');
+    Hi_CSR = sp_utils.full2CSR(-Hinv);
     
     %% Create variables used in the sparse solver
     vars.n = n;

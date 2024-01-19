@@ -31,7 +31,7 @@ function M_sparse = full2CSC(M, threshold)
     [n, m] = size(M);
     
     %% Compute the CSR representation of the transposed
-    M_CSR = utils.full2CSR(M', threshold);
+    M_CSR = sp_utils.full2CSR(M', threshold);
     
     %% Fix the values of nrow and ncol
     M_sparse.val = M_CSR.val;

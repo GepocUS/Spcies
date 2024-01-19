@@ -108,7 +108,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_cs_solver(x0, xr, ur, varargin)
     else
         options = par.Results.options;
     end
-    options = utils.add_default_options_to_struct(options, def_options);
+    options = sp_utils.add_default_options_to_struct(options, def_options);
 
     % Create the controller structure
     if isempty(par.Results.controller)
@@ -181,15 +181,15 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_cs_solver(x0, xr, ur, varargin)
         q_hat = q + lambda - var.rho.*v;
         
         % Compute the right-hand-side of the system of equations W*mu = rhs   
-        rhs = utils.smv(var.AHi_CSR.val, var.AHi_CSR.col, var.AHi_CSR.row, q_hat); % Perform the sparse matrix vector multiplication
+        rhs = sp_utils.smv(var.AHi_CSR.val, var.AHi_CSR.col, var.AHi_CSR.row, q_hat); % Perform the sparse matrix vector multiplication
         rhs(1:n) = rhs(1:n) - b(1:n); % Substract b
         
         % Solve the W*mu = rhs system of equations
-        mu = utils.LDLsolve(var.L_CSC.val, var.L_CSC.row, var.L_CSC.col, var.Dinv, rhs);
+        mu = sp_utils.LDLsolve(var.L_CSC.val, var.L_CSC.row, var.L_CSC.col, var.Dinv, rhs);
         
         % Update z
-        z = utils.smv(var.Hi_CSR.val, var.Hi_CSR.col, var.Hi_CSR.row, q_hat)...
-            + utils.smv(var.HiA_CSR.val, var.HiA_CSR.col, var.HiA_CSR.row, mu);
+        z = sp_utils.smv(var.Hi_CSR.val, var.Hi_CSR.col, var.Hi_CSR.row, q_hat)...
+            + sp_utils.smv(var.HiA_CSR.val, var.HiA_CSR.col, var.HiA_CSR.row, mu);
         
         % Update v
         v = max( min( z + var.rho_i.*lambda, UB), LB);

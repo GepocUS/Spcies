@@ -22,7 +22,7 @@
 clear; clc
 
 %% STEP 1: Construct the system
-[sys, param] = utils.example_OscMass();
+[sys, param] = sp_utils.example_OscMass();
 n = size(sys.A, 1); % For convenience, we save the size of the state dimension
 m = size(sys.B, 2); % and of the input dimension
 

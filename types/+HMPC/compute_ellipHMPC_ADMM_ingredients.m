@@ -235,8 +235,8 @@ function var = compute_ellipHMPC_ADMM_ingredients(controller, options, spcies_op
     var.G = G; % Equality constraints
     var.b = b;
     var.C = C; % Matrices for the cone constraints: relate x to s
-    var.C_CSR = utils.full2CSR(C);
-    var.Ct_CSR = utils.full2CSR(C');
+    var.C_CSR = sp_utils.full2CSR(C);
+    var.Ct_CSR = sp_utils.full2CSR(C');
     var.d = d;
     
     var.Hwx = [eye(n)*cos(w), -eye(n)*sin(w);

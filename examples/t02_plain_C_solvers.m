@@ -16,8 +16,8 @@ clear; clc;
 
 %% STEP 1: Construct the system
 % We will use the same oscillating masses system used in the basic_tutorial, which, for 
-% convenience, we can easily create using the utility function utils.example_OscMass().
-[sys, paramMPC] = utils.example_OscMass();
+% convenience, we can easily create using the utility function sp_utils.example_OscMass().
+[sys, paramMPC] = sp_utils.example_OscMass();
 
 %% STEP 2: Generate the solver in plain C
 

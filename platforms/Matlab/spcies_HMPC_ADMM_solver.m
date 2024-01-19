@@ -44,7 +44,7 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_solver(x0, xr, ur, varargin)
     end
     
     % Add default values
-    options = utils.add_default_options_to_struct(options, def_options);
+    options = sp_utils.add_default_options_to_struct(options, def_options);
     
     % Create the controller structure
     if isempty(par.Results.controller)
@@ -131,19 +131,19 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_solver(x0, xr, ur, varargin)
         %%%%%%%%%%%%% Update z %%%%%%%%%%%%%
         
         % Compute q_hat
-        q_hat = q + utils.smv(var.Ct_CSR.val, var.Ct_CSR.col, var.Ct_CSR.row, var.rho*(s - d) + lambda);
+        q_hat = q + sp_utils.smv(var.Ct_CSR.val, var.Ct_CSR.col, var.Ct_CSR.row, var.rho*(s - d) + lambda);
         
         % Compute right hand side of the system of equations
         if ~options.sparse
             z = var.M1*q_hat + var.M2*b;
         else
             error('Only sparse for now in the reduced ADMM version');
-%             rhs = utils.LDLsolve(var.L_CSC.val, var.L_CSC.row, var.L_CSC.col, var.Dinv, var.Pldl'*[-q_hat; bh]);
-%             z = utils.LDLsolve(var.L_CSC.val, var.L_CSC.row, var.L_CSC.col, var.Dinv, [-q_hat; bh]);
+%             rhs = sp_utils.LDLsolve(var.L_CSC.val, var.L_CSC.row, var.L_CSC.col, var.Dinv, var.Pldl'*[-q_hat; bh]);
+%             z = sp_utils.LDLsolve(var.L_CSC.val, var.L_CSC.row, var.L_CSC.col, var.Dinv, [-q_hat; bh]);
         end
         
         % Compute C*z - d
-        Czd = utils.smv(var.C_CSR.val, var.C_CSR.col, var.C_CSR.row, z) - d;
+        Czd = sp_utils.smv(var.C_CSR.val, var.C_CSR.col, var.C_CSR.row, z) - d;
         
         %%%%%%%%%%%%% Update dual (in the SADMM variant) %%%%%%%%%%%%%
         if strcmp(options.method, 'SADMM')
@@ -162,11 +162,11 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_solver(x0, xr, ur, varargin)
         % Projection for s subject to the SOC constraints
         if options.use_soc
             for j = 1:n_soc
-                s(n_box + 3*(j-1) + (1:3)) = utils.proj_SOC(s_proj(n_box + 3*(j-1) + (1:3)));
+                s(n_box + 3*(j-1) + (1:3)) = sp_utils.proj_SOC(s_proj(n_box + 3*(j-1) + (1:3)));
             end
         else
             for j = 1:n_y
-                s(n_box + 3*(j-1) + (1:3)) = utils.proj_D(s_proj(n_box + 3*(j-1) + (1:3)), var.LBy(j), var.UBy(j));
+                s(n_box + 3*(j-1) + (1:3)) = sp_utils.proj_D(s_proj(n_box + 3*(j-1) + (1:3)), var.LBy(j), var.UBy(j));
             end
         end
         

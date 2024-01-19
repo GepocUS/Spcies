@@ -8,7 +8,7 @@ Thus, basic knowledge of git and GitHub are required. See "Using git" below.
 %%% Structure of the toolbox
 
     spcies_root/
-    ├── +utils/
+    ├── +sp_utils/
     │   └── util_function.m
     ├── docs/
     │   └── topic.txt
@@ -52,10 +52,10 @@ Thus, basic knowledge of git and GitHub are required. See "Using git" below.
       Used in the class Spcies_constructor to define the files that need to be generated.
     - spcies_public_functions.m -> Any other function that can be called by the user.
       By convention they are named as 'spcies_function_name.m'.
-      Functions that are not indented for public use should be put into '+utils/'.
+      Functions that are not indented for public use should be put into '+sp_utils/'.
     - README.md -> General README file for the GitHub repository.
     - LICENSE -> LICENSE of the toolbox.
-    - +utils/ -> Directory containing any internal toolbox function, i.e., private functions
+    - +sp_utils/ -> Directory containing any internal toolbox function, i.e., private functions
       that are not intended for the user.
       These functions don't have any particular naming convention.
     - docs/ -> Folder containing the help pages for each each topic. These help pages can

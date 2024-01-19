@@ -92,7 +92,7 @@ classdef Spcies_problem
             end
             
             if isempty(self.options.type)
-                self.options.type = utils.determine_type(self.controller);
+                self.options.type = sp_utils.determine_type(self.controller);
             end
             
         end         

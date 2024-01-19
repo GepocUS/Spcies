@@ -39,7 +39,7 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_split_SOC_solver(x0, xr, ur, va
     end
     
     % Add default values
-    options = utils.add_default_options_to_struct(options, def_options);
+    options = sp_utils.add_default_options_to_struct(options, def_options);
     
     % Create the controller structure
     if isempty(par.Results.controller)
@@ -132,7 +132,7 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_split_SOC_solver(x0, xr, ur, va
         if ~options.sparse
             rhs = var.M1*q_hat + var.M2*bh;
         else
-            rhs = utils.LDLsolve(var.L_CSC.val, var.L_CSC.row, var.L_CSC.col, var.Dinv, var.Pldl'*[-q_hat; bh]);
+            rhs = sp_utils.LDLsolve(var.L_CSC.val, var.L_CSC.row, var.L_CSC.col, var.Dinv, var.Pldl'*[-q_hat; bh]);
         end
             
         z_hat = rhs(1:dim);
@@ -152,7 +152,7 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_split_SOC_solver(x0, xr, ur, va
         
             % Projection for s subject to the SOC constraints
             for j = 1:n_soc
-                s(3*(j-1) + (1:3)) = utils.proj_SOC(s_proj(3*(j-1) + (1:3)));
+                s(3*(j-1) + (1:3)) = sp_utils.proj_SOC(s_proj(3*(j-1) + (1:3)));
             end
             
         else
@@ -163,7 +163,7 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_split_SOC_solver(x0, xr, ur, va
             end
             % Projection for s subject to the SOC constraints
             for j = 1:n_soc
-                s(N*n_y + 3*(j-1) + (1:3)) = utils.proj_SOC(s_proj(N*n_y + 3*(j-1) + (1:3)));
+                s(N*n_y + 3*(j-1) + (1:3)) = sp_utils.proj_SOC(s_proj(N*n_y + 3*(j-1) + (1:3)));
             end
             
         end

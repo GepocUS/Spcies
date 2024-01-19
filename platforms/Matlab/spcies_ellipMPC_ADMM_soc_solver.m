@@ -107,7 +107,7 @@ function [u, k, e_flag, Hist] = spcies_ellipMPC_ADMM_soc_solver(x0, xr, ur, vara
     end
     
     % Add default values
-    options = utils.add_default_options_to_struct(options, def_options);
+    options = sp_utils.add_default_options_to_struct(options, def_options);
     
     % Create the controller structure
     if isempty(par.Results.controller)
@@ -188,12 +188,12 @@ function [u, k, e_flag, Hist] = spcies_ellipMPC_ADMM_soc_solver(x0, xr, ur, vara
         
         % Solve system of equations
             % Compute r.h.s.
-        rhs = utils.smv(var.GhHhi_CSR.val, var.GhHhi_CSR.col, var.GhHhi_CSR.row, q_hat) - bh;
+        rhs = sp_utils.smv(var.GhHhi_CSR.val, var.GhHhi_CSR.col, var.GhHhi_CSR.row, q_hat) - bh;
             % Solve system of equations
-        psi = utils.LDLsolve(var.L_CSC.val, var.L_CSC.row, var.L_CSC.col, var.Dinv, rhs);
+        psi = sp_utils.LDLsolve(var.L_CSC.val, var.L_CSC.row, var.L_CSC.col, var.Dinv, rhs);
             % Compute solution
-        aux = utils.smv(var.HhiGh_CSR.val, var.HhiGh_CSR.col, var.HhiGh_CSR.row, psi) +...
-              utils.smv(var.Hhi_CSR.val, var.Hhi_CSR.col, var.Hhi_CSR.row, q_hat);
+        aux = sp_utils.smv(var.HhiGh_CSR.val, var.HhiGh_CSR.col, var.HhiGh_CSR.row, psi) +...
+              sp_utils.smv(var.Hhi_CSR.val, var.Hhi_CSR.col, var.Hhi_CSR.row, q_hat);
         
         %aux = var.M1*q_hat + var.M2*bh; % aux = [z_hat; s_hat]
 

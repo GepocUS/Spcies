@@ -145,12 +145,12 @@ function vars = compute_ellipMPC_ADMM_soc_ingredients(controller, options, spcie
     Dinv = 1./diag(D); % Vector containing the inverse of the diagonal elements of D
     
     % Compute the CSC representation of (L - I)
-    L_CSC = utils.full2CSC(L - eye(size(L, 1)));
+    L_CSC = sp_utils.full2CSC(L - eye(size(L, 1)));
     
     % Compute the CSR representation of the matrices -Gh*Hhi and -Hhi*Gh'
-    GhHhi_CSR = utils.full2CSR(-Gh*Hhi);
-    HhiGh_CSR = utils.full2CSR(-Hhi*Gh');
-    Hhi_CSR = utils.full2CSR(-Hhi);
+    GhHhi_CSR = sp_utils.full2CSR(-Gh*Hhi);
+    HhiGh_CSR = sp_utils.full2CSR(-Hhi*Gh');
+    Hhi_CSR = sp_utils.full2CSR(-Hhi);
     
     %% Create variables used in the sparse solver
     vars.dim = dim; % Dimension of primal variables z

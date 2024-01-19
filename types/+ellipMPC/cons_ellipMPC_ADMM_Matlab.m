@@ -49,7 +49,7 @@ function constructor = cons_ellipMPC_ADMM_Matlab(recipe)
     constructor.files.mex_code.flags = {'$C_CODE_NAME$', constructor_C.files.code.dir.name};
     
     % Add the execution command for compiling the mex file
-    constructor.files.mex_code.exec_me = utils.get_generic_mex_exec(recipe.options);
+    constructor.files.mex_code.exec_me = sp_utils.get_generic_mex_exec(recipe.options);
     constructor.files.mex_code.args_exec = {'$C_CODE_PATH$', constructor_C.files.code.dir.path;...
                                             '$C_CODE_NAME$', constructor_C.files.code.dir.name};
     

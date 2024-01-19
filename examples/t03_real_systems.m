@@ -54,13 +54,13 @@ LBx = -UBx;
 UBu = 11;
 LBu = 8;
 
-% The non-linear ordinary differential equations of the model are provided in utils.Duffing_ode()
+% The non-linear ordinary differential equations of the model are provided in sp_utils.Duffing_ode()
 % Let us construct a linear state-space model of the system around the operating point:
 u0 = 10;
-x0 = fsolve(@(xx) utils.Duffing_ode(0, xx, u0, param), zeros(2, 1));
+x0 = fsolve(@(xx) sp_utils.Duffing_ode(0, xx, u0, param), zeros(2, 1));
 
 % We can do by using the following function, also provided in the toolbox utility functions:
-sysC = utils.Duffing_to_ss(param, x0, u0);
+sysC = sp_utils.Duffing_to_ss(param, x0, u0);
 
 % We then construct a discrete-time model using Matlab's builtin c2d() function:
 Ts = 0.2; % Sampling time
@@ -120,7 +120,7 @@ for i = 1:num_iter
     U = u + u0;
 
     % Simulate the "real" system
-    [tt, xx] = ode45(@(tt, xx) utils.Duffing_ode(tt, xx, U, param), [0, Ts], X);
+    [tt, xx] = ode45(@(tt, xx) sp_utils.Duffing_ode(tt, xx, U, param), [0, Ts], X);
     X = xx(end, :)';
 
     % Save values of X and U
@@ -195,7 +195,7 @@ Nu = 0.1; % We reduce the input by one order of magnitude
 % operating point (also in "engineering" units) and the scaling vectors Nx and Nu.
 % It returns the structure containing the matrices A and B of the new "scaled" model, as well as its constraints
 % and a copy of x0, u0, Nx and Nu (also required by spcies_gen_controller()).
-sysN = utils.scale_ss(sysD, UBx, LBx, UBu, LBu, x0, u0, Nx, Nu);
+sysN = sp_utils.scale_ss(sysD, UBx, LBx, UBu, LBu, x0, u0, Nx, Nu);
 
 % We now adjust the ingredients of the MPC controller to obtain a similar closed-loop behavior of the "real" system.
 Q = diag([1, 100]);
@@ -232,7 +232,7 @@ for i = 1:num_iter
     % tune the MPC solver to obtain a good performance in practice.
 
     % Simulate the "real" system
-    [tt, xx] = ode45(@(tt, xx) utils.Duffing_ode(tt, xx, U, param), [0, Ts], X);
+    [tt, xx] = ode45(@(tt, xx) sp_utils.Duffing_ode(tt, xx, U, param), [0, Ts], X);
     X = xx(end, :)';
 
     % Save values of X and U

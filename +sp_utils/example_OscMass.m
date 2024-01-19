@@ -20,7 +20,7 @@ function [sys, param] = example_OscMass()
     F = [1; zeros(p-2, 1); 1]; % Objects in which an external force is applied
 
     % Generate continuous-time model
-    sysC = utils.gen_oscillating_masses(M, K, F);
+    sysC = sp_utils.gen_oscillating_masses(M, K, F);
 
     n = size(sysC.A, 1); % For convenience, we save the size of the state dimension
     m = size(sysC.B, 2); % and of the input dimension

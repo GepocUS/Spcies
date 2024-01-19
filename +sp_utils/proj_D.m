@@ -18,6 +18,6 @@
 
 function z = proj_D(x, lb, ub)
 
-    z = utils.proj_SSOC( utils.proj_SSOC(x, 1, lb), -1, ub);
+    z = sp_utils.proj_SSOC( sp_utils.proj_SSOC(x, 1, lb), -1, ub);
     
 end

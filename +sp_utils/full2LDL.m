@@ -41,7 +41,7 @@ function varargout = full2LDL(M, for_LDLsolve)
     else
         
         % Compute CSC decomposition of (L - I)
-        L_CSC = utils.full2CSC(L - eye(size(L, 1)));
+        L_CSC = sp_utils.full2CSC(L - eye(size(L, 1)));
         
         % Compute inverse of D (in vector form)
         Dinv = 1./diag(D); % Vector containing the inverse of the diagonal elements of D

@@ -286,8 +286,8 @@ function var = compute_HMPC_ADMM_ingredients(controller, options, spcies_options
     var.G = G; % Equality constraints
     var.b = b;
     var.C = C; % Matrices for the cone constraints: relate x to s
-    var.C_CSR = utils.full2CSR(C);
-    var.Ct_CSR = utils.full2CSR(C');
+    var.C_CSR = sp_utils.full2CSR(C);
+    var.Ct_CSR = sp_utils.full2CSR(C');
     var.d = d;
     
     var.L_CSC = L_CSC;
