@@ -66,7 +66,7 @@ If you use Spcies in your own research, please cite it using the following refer
 
 All contributions are welcome. Please report any issues or bugs in the [Github issue tracker](https://github.com/GepocUS/Spcies/issues).
 
-Contributions are also welcome as [Pull Requests](https://github.com/GepocUS/Spcies/pulls). Developers wishing to contribute new code or modification to existing code are encouraged to clone the repository and work on the 'develop' branch, which contains the latest (possible non-stable) version of the toolbox. Merges to the 'master' branch are reserved for the latest stable version of the toolbox, typically associated with a new version number and release.
+Contributions are also welcome as [Pull Requests](https://github.com/GepocUS/Spcies/pulls). Developers wishing to contribute new code or modification to existing code are encouraged to clone the repository and work on the 'develop' branch, which contains the latest (possibly non-stable) version of the toolbox. Merges to the 'master' branch are reserved for the latest stable version of the toolbox, typically associated with a new version number and release.
 Documentation for developers can be obtained by executing `spcies('help', 'develop')`.
 
 ## License
