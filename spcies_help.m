@@ -16,7 +16,7 @@ function spcies_help(topic)
         topic = 'general';
     end
 
-    help_file = [spcies_get_root_directory() '/docs/' topic '.txt'];
+    help_file = [spcies_get_root_directory() '/docs/' topic '.md'];
     try
         type(help_file);
     catch ME
