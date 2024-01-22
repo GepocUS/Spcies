@@ -50,6 +50,7 @@ Thus, basic knowledge of git and GitHub are required. See "Using git" below.
   information to the user and for executing some useful commands.
 - spcies_gen_controller.m -> The entry point for solver generation. The user calls
   this function for generating MPC solvers.
+  This function can also be called as `spcies('gen', args)`.
 - spcies_public_functions.m -> Any other function that can be called by the user.
   By convention they are named as `spcies_function_name.m`.
   Functions that are not indented for public use should be put into `+sp_utils/`.

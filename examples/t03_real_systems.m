@@ -87,9 +87,9 @@ solver_options.rho = 1; % Value of the penalty parameter of the ADMM algorithm
 solver_options.k_max = 3000; % Maximum number of iterations of the solver
 solver_options.tol = 1e-5; % Exit tolerance of the solver
 
-spcies_clear;
-spcies_gen_controller('sys', sys, 'param', paramMPC, 'solver_options', solver_options,...
-                      'platform', 'Matlab', 'formulation', 'laxMPC');
+spcies('clear');
+spcies('gen', 'sys', sys, 'param', paramMPC, 'solver_options', solver_options,...
+       'platform', 'Matlab', 'formulation', 'laxMPC');
 
 % And then control the "real" system using the discrete-time model contained in sys.
 num_iter = 50; % Number of simulated sample times

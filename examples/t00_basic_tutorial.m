@@ -106,12 +106,18 @@ options.time = true; % This option tells Spcies to measure the time internally.
 % Since we are saving the solver into the default directory $SPCIES$/generated_solvers,
 % we recommend that you clear the directory of all previous controllers.
 % Controllers are overwritten by default, but it is best to be safe that sorry.
-% You can clear $SPCIES$/generated_solvers by running:
-spcies_clear;
+% You can clear $SPCIES$/generated_solvers/ by running:
+spcies('clear');
 
 % We now generate the mex file by calling the following function:
-spcies_gen_controller('sys', sys, 'param', param, 'solver_options', solver_options,...
-    'options', options, 'platform', 'Matlab', 'formulation', 'laxMPC');
+spcies('gen', 'sys', sys, 'param', param, 'solver_options', solver_options,...
+       'options', options, 'platform', 'Matlab', 'formulation', 'laxMPC');
+
+% As you can see, function spcies('func') can be used for various purposes, determined by
+% 'func'. In this case, we are calling the main functionality of the toolbox, which
+% the code-generation of MPC solvers. Before we used it to clear generated_solvers/
+% See the help for spcies() for additional options, which include the toolbox
+% documentation, accessible as spcies('help', 'topic').
 
 % Notice that we are indicating the 'platform' as 'Matlab', which is telling
 % the function to generate a mex file. This was not strictly needed, since

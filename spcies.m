@@ -5,25 +5,26 @@
 %
 % For information on the toolbox please visit https://github.com/GepocUS/Spcies
 %
-% This function can be used for various purposes:
+% This function can be used for various purposes (characters in [] indicate an
+% alternative way of calling the function, e.g., "spcies('h')"):
 %
-%   spcies('help')          % For the general help and the doc pages
+% > spcies('[h]elp')        % For the general help and the doc pages
 %                             Use spcies('help', 'topic') for displaying the help
 %                             page of 'topic'.
 %                             Use spcies('help') for general information and the
 %                             list of general topics.
 %                             Alternative call: spcies('h') or spcies('h', 'topic')
-% 
-%   spcies('version')       % Returns the version number of the toolbox. If git is
+% > spcies('[gen]erate')    % For generating an MPC controller. See spcies_gen_controller()
+% > spcies('install')       % Installs the toolbox.
+% > spcies('uninstall')     % Uninstalls the toolbox.
+% > spcies('[c]lear')       % Deletes the contents of 'generated_solvers/'
+% > spcies('root')          % Returns the directory where Spcies is installed
+% > spcies('[l]icense')     % Prints the license
+% > spcies('[v]ersion')     % Returns the version number of the toolbox. If git is
 %                             installed it also returns the git hash in the second
 %                             output, i.e., [version, hash] = spcies('version').
 %                             The first output is the latest version tag.
-%   spcies('license')       % Prints the license
-%
-%   spcies('install')       % Installs the toolbox.
-%   spcies('uninstall')     % Uninstalls the toolbox.
-%
-%   spcies('test')          % Tests the solvers in the toolbox.
+% > spcies('[t]est')        % Tests the solvers in the toolbox.
 % 
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
@@ -37,8 +38,7 @@ end
 
 switch varargin{1}
     
-    
-    % [version, git_hash] = spcies('version')
+    % [version, git_hash] = spcies('version') or spcies('v')
     %
     % Returns information of the version of the toolbox.
     % 
@@ -47,7 +47,7 @@ switch varargin{1}
     %   - git_hash: Current git hash of the toolbox. Only works if git
     %               is installed and the toolbox is being tracked.
     % 
-    case 'version'
+    case {'version', 'v'}
         
         varargout{1} = 'v0.3.9';
         
@@ -101,8 +101,21 @@ switch varargin{1}
         warning('on','MATLAB:rmpath:DirNotFound')
         savepath
         disp("Spcies: successfully uninstalled");
+
+    % spcies('generate', args) or spcies('gen', args)
+    % 
+    % Main functionality of the Spcies toolbox.
+    % This is an entry point to spcies_gen_controller(), which
+    % generates the solver for an MPC formulation.
+    % Execute 'help spcies_gen_controller' for information about
+    % its imputs and outputs.
+    % The args given to "spcies('generate', args)" are passed
+    % as spcies_gen_controller(args)
+    % 
+    case {'generate', 'gen'}
+        spcies_gen_controller(varargin{2:end});
     
-    % spcies('test')
+    % spcies('test') or spcies('t')
     %
     % Tests the solvers in the toolbox.
     %
@@ -112,15 +125,30 @@ switch varargin{1}
     case 'test'
         [varargout{1}, varargout{2}] = spcies_tester(varargin{2:end});
 
-    % spcies ('help')
+    % spcies('clear')
+    % 
+    % Deletes the contents of /generated_solvers/
+    % Calls spcies_clear();
+    %
+    case 'clear'
+        spcies_clear(varargin{2:end});
+
+    % spcies('root')
+    % 
+    % Returns the path to the directory where Spcies is installed
+    % Calls spcies_get_root_directory();
+    %
+    case 'root'
+        varargout{:} = spcies_get_root_directory(varargin{2:end});
+
+    % spcies ('help') or spcies('h')
     % 
     % Help pages of the toolbox.
     % 
     % spcies('help') - shows the general 'help' info, including the category list
     % spcies('help', 'topic') - shows the 'topic' help
-    case 'help'
-        spcies_help(varargin{2:end});
-    case 'h'
+    % 
+    case {'help', 'h'}
         spcies_help(varargin{2:end});
 
     % spcies('license')
@@ -140,7 +168,8 @@ switch varargin{1}
     
     % Command not recognized
     otherwise
-        varargout{1} = 'Command not recognized';    
+        error("spcies: command '" + varargin{1} + "' not recognized");
+        % varargout{1} = 'spcies: command not recognized';    
         
 end
 

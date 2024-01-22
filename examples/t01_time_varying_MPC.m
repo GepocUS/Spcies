@@ -50,9 +50,9 @@ if strcmp(options.method, 'FISTA')
     param.T = diag(diag(param.T)); % We include this because T must be diagonal in the FISTA solver
 end
 
-spcies_clear;
-spcies_gen_controller('sys', sys, 'param', param, 'solver_options', solver_options,...
-    'options', options, 'platform', 'Matlab');
+spcies('clear');
+spcies('gen', 'sys', sys, 'param', param, 'solver_options', solver_options,...
+       'options', options, 'platform', 'Matlab');
 
 %% STEP 3: Closed-loop simulation
 num_iter = 60; % Number of sample times

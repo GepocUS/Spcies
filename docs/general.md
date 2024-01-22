@@ -11,8 +11,8 @@ provided in the directory `examples/` of the toolbox (execute the command
 Tutorials are named as `tXX_name.m`. We recommend starting with `t00_basic_tutorial.m`
 and then continue in ascending order.
 
-For specific documentation on a particular topic, please execute: `spcies('help', 'topic')`.
-For the list of main topics please execute: `spcies('help', 'topics')`.
+For specific documentation on a particular topic, execute: `spcies('help', 'topic_name')`.
+For the list of main topics names please execute: `spcies('help', 'topics')`.
 
 For any further information or help please contact the developers at:
 https://github.com/GepocUS/Spcies

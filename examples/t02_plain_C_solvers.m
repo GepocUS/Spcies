@@ -31,8 +31,8 @@ options.directory = './cl_in_C/'; % We save the solver in the directory were we 
 options.time = true;
 
 % Generate the solver (note that we select the 'platform' as 'C')
-spcies_gen_controller('sys', sys, 'param', paramMPC, 'solver_options', solver_options,...
-    'options', options, 'platform', 'C', 'formulation', 'laxMPC');
+spcies('gen', 'sys', sys, 'param', paramMPC, 'solver_options', solver_options,...
+       'options', options, 'platform', 'C', 'formulation', 'laxMPC');
 
 %% STEP 3: Use the generated solver
 % Go to /examples/cl_in_C/
