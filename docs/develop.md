@@ -155,7 +155,7 @@ described in above section "Structure of the toolbox" within the `+formulations/
 The easiest way to go about this is to use an existing set of files as a guideline and make the
 necessary changes for the new formulation-method-submethod.
 
-The developer may also need to update `spcies_default_options.m` to indicate the default method and
+The developer may also need to update `sp_utils.default_options.m` to indicate the default method and
 submethod of a new formulation.
 
 Finally, the developer should add or modify the docs of the toolbox, i.e., the files in `docs/` to

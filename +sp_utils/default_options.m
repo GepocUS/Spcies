@@ -1,4 +1,4 @@
-%% spcies_default_options - Returns the default options of the Spcies toolbox
+%% default_options - Returns the default options of the Spcies toolbox
 % 
 % This function containts the default options of the Spcies toolbox.
 % It returns them in a structure that can be used as the argument
@@ -34,7 +34,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function [def_opt, def_method, def_submethod] = spcies_default_options()
+function [def_opt, def_method, def_submethod] = default_options()
     
     % Default options of the toolbox
     def_opt.formulation = ''; % Default formulation

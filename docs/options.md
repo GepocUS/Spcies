@@ -36,5 +36,5 @@ Execute `spcies('help', 'method')` for the list of available methods.
 SPCIES receives these options by using a structure whose fields are named as the
 above options list.
 A structure with the default options can be obtained using:
-`options = spcies_default_options();`
+`options = sp_utils.default_options();`
 

@@ -48,7 +48,7 @@
 %                     Default values are provided, so this argument is optional.
 %   - options: Options of the Spcies toolbox. These control aspects
 %              such as directories where files are saved, or the
-%              name of the saved files. See spcies_default_options
+%              name of the saved files. See default_options
 %              for a list of the available options. Not all fields
 %              need to be provided, since default options are given.
 %              The most important of its fields is .platform, which
@@ -71,7 +71,7 @@
 
 function spcies_gen_controller(varargin)
     %% Get default methods and submethod
-    [~, def_method, def_submethod] = spcies_default_options;
+    [~, def_method, def_submethod] = sp_utils.default_options;
     formulation_names = fieldnames(def_method);
     
     %% Import m files from ./formulations/*

@@ -33,7 +33,7 @@
 %                        Defaults to false.
 %              - .const_are_static: Boolean that determines if constants are defined as static variables.
 %                                   Defaults to true.
-%   - options: Structure containing the options of the toolbox. See Spcies_default_options.
+%   - options: Structure containing the options of the toolbox. See sp_utils.default_options().
 % 
 % OUTPUTS:
 %   - constructor: An instance of the Spcies_constructor class ready for file generation.
