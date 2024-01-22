@@ -73,6 +73,7 @@ switch varargin{1}
         root_path = spcies_get_root_directory();
         addpath(root_path);
         addpath([root_path '/formulations/']);
+        addpath([root_path '/classes/']);
         addpath([root_path '/platforms/']);
         addpath([root_path '/platforms/Matlab/']);
         addpath([root_path '/platforms/Matlab/personal/']);
@@ -91,6 +92,7 @@ switch varargin{1}
         warning('off','MATLAB:rmpath:DirNotFound')
         rmpath(root_path);
         rmpath([root_path '/formulations/']);
+        rmpath([root_path '/classes/']);
         rmpath([root_path '/platforms/']);
         rmpath([root_path '/platforms/Matlab/']);
         rmpath([root_path '/platforms/Matlab/personal/']);

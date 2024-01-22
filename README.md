@@ -25,7 +25,8 @@ Then move Matlab's current folder to 'spcies_root/' and execute `spcies('install
 Alternatively, you can manually add the following folders to Malab's path.
 
 > * spcies_root/
-> * spcies_root/formulaitons/
+> * spcies_root/formulations/
+> * spcies_root/classes/
 > * spcies_root/platforms/
 > * spcies_root/platforms/Matlab/
 > * spcies_root/platforms/Matlab/personal/

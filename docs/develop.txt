@@ -10,6 +10,9 @@ Thus, basic knowledge of git and GitHub are required. See "Using git" below.
     spcies_root/
     ├── +sp_utils/
     │   └── util_function.m
+    ├── classes/
+    │   ├── Spcies_constructor.m
+    │   └── Spcies_problem.m
     ├── docs/
     │   └── topic.txt
     ├── examples/
@@ -37,8 +40,6 @@ Thus, basic knowledge of git and GitHub are required. See "Using git" below.
     ├── README.md
     ├── spcies.m
     ├── spcies_gen_controller.m
-    ├── Spcies_constructor.m
-    ├── Spcies_problem.m
     └── spcies_public_functions.m
 
   Explanation of each directory/file:
@@ -46,13 +47,17 @@ Thus, basic knowledge of git and GitHub are required. See "Using git" below.
       information to the user and for executing some useful commands.
     - spcies_gen_controller.m -> The entry point for solver generation. The user calls
       this function for generating MPC solvers.
-    - Spcies_constructor.m -> Class that is used for the generation of the MPC solvers.
-      An instance is created in function spcies_gen_controller().
-    - Spcies_problem.m -> Class that is used to define the code-generation procedure.
-      Used in the class Spcies_constructor to define the files that need to be generated.
     - spcies_public_functions.m -> Any other function that can be called by the user.
       By convention they are named as 'spcies_function_name.m'.
       Functions that are not indented for public use should be put into '+sp_utils/'.
+      In general, all of these public functions can be called using 'spcies('name', [args])'.
+    - classes/ -> Folder that contains class definitions used by the toolbox. They are not
+      intended for public use, but instead used by the toolbox itself to define and generate
+      files. The two main classes are:
+        - Spcies_constructor.m -> Class that is used for the generation of the MPC solvers.
+          An instance is created in function spcies_gen_controller().
+        - Spcies_problem.m -> Class that is used to define the code-generation procedure.
+          Used in the class Spcies_constructor to define the files that need to be generated.
     - README.md -> General README file for the GitHub repository.
     - LICENSE -> LICENSE of the toolbox.
     - +sp_utils/ -> Directory containing any internal toolbox function, i.e., private functions
