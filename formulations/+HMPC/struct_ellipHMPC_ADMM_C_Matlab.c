@@ -20,9 +20,6 @@ void mexFunction(int nlhs, mxArray *plhs[],
     int k; // Local k
     int e_flag; // Local e_flag
     sol_$C_CODE_NAME$ sol;
-    // double *z_opt; // Local z_opt
-    // double *s_opt; // Local v_opt
-    // double *lambda_opt; // Local lambda_opt
 
     // Check inputs and outputs
 
@@ -78,16 +75,15 @@ void mexFunction(int nlhs, mxArray *plhs[],
     x0 = (double*) mxGetData(prhs[0]);
     xre = (double*) mxGetData(prhs[1]);
     xrs = (double*) mxGetData(prhs[2]);
-    xrc = (double*) mxGetData(prhs[2]);
-    ure = (double*) mxGetData(prhs[2]);
-    urs = (double*) mxGetData(prhs[2]);
-    urc = (double*) mxGetData(prhs[2]);
+    xrc = (double*) mxGetData(prhs[3]);
+    ure = (double*) mxGetData(prhs[4]);
+    urs = (double*) mxGetData(prhs[5]);
+    urc = (double*) mxGetData(prhs[6]);
 
     // Prepare output data
     mxArray *z_pt, *s_pt, *lambda_pt, *update_time_pt, *solve_time_pt, *polish_time_pt, *run_time_pt;
     double *z_out, *s_out, *lambda_out, *update_time_out, *solve_time_out, *polish_time_out, *run_time_out, *k_out, *e_flag_out;
 
-    // Prepare output data
     plhs[0] = mxCreateDoubleMatrix(mm, 1, mxREAL); // u_opt
     plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL); // k
     plhs[2] = mxCreateDoubleMatrix(1, 1, mxREAL); // e_flag
@@ -95,7 +91,6 @@ void mexFunction(int nlhs, mxArray *plhs[],
     u_opt = (double*) mxGetData(plhs[0]);
     k_out = (double*) mxGetData(plhs[1]);
     e_flag_out = (double*) mxGetData(plhs[2]);
-
 
     // Solution structure
     const char *field_names[] = {"z", "s", "lambda", "update_time", "solve_time", "polish_time", "run_time"};

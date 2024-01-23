@@ -23,8 +23,6 @@ typedef struct {
 
 void HMPC_ADMM(double *x0_in, double *xre_in, double *xrs_in, double *xrc_in, double *ure_in, double *urs_in, double *urc_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol);
 
-#endif
-
 #if MEASURE_TIME == 1
 spcies_snippet_get_elapsed_time();
 spcies_snippet_read_time();
@@ -32,3 +30,4 @@ spcies_snippet_read_time();
 
 spcies_snippet_proj_SOC3();
 
+#endif
