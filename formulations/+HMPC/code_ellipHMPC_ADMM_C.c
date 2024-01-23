@@ -2,37 +2,36 @@
  * ADMM or SADMM solver for the HMPC formulation.
  *
  * ARGUMENTS:
- * The current system state is given in "pointer_x0". Pointer to array of size nn.
+ * The current system state is given in "x0_in". Pointer to array of size nn.
  * The state reference is given in "pointer_xr". Pointer to array of size nn.
  * The input reference is given in "pointer_ur". Pointer to array of size mm.
  * The optimal control action is returned in "u_opt". Pointer to array of size mm.
- * The number of iterations is returned in "pointer_k". Pointer to int.
+ * The number of iterations is returned in "k_in". Pointer to int.
  * The exit flag is returned in "e_flag". Pointer to int.
  *       1: Algorithm converged successfully.
  *      -1: Algorithm did not converge within the maximum number of iterations. Returns current iterate.
  * The optimal decision variables and dual variables are returned in the solution structure sol.
- *
- * If CONF_MATLAB is defined, them the solver uses slightly different arguments for the mex file.
+ * Computation times are also returned in the structure sol.
  *
  */
 
-#ifdef CONF_MATLAB
+void HMPC_ADMM(double *x0_in, double *xre_in, double *xrs_in, double *xrc_in, double *ure_in, double *urs_in, double *urc_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
 
-void HMPC_ADMM(double *pointer_x0, double *pointer_xre, double *pointer_xrs, double *pointer_xrc, double *pointer_ure, double *pointer_urs, double *pointer_urc, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *s_opt, double *lambda_opt){
+#if MEASURE_TIME == 1
 
-#else
+#if WIN32
+static LARGE_INTEGER start, post_update, post_solve, post_polish;
+#else // If Linux
+struct timespec start, post_update, post_solve, post_polish;
+#endif
 
-void HMPC_ADMM(double *pointer_x0, double *pointer_xre, double *pointer_xrs, double *pointer_xrc, double *pointer_ure, double *pointer_urs, double *pointer_urc, double *u_opt, int *pointer_k, int *e_flag, solution *sol){
+read_time(&start);
 
 #endif
 
 // Initialize solver variables
 int done = 0; // Flag used to determine when the algorithm should exit
-#ifdef CONF_MATLAB
-double k = 0.0; // Number of iterations. In the Matlab case it is easier if it is defined as a double
-#else
 int k = 0; // Number of iterations
-#endif
 double x0[nn]; // Current system state
 double xre[nn] = {0.0}; // State reference
 double xrs[nn] = {0.0}; // State reference
@@ -61,7 +60,6 @@ double *s_cone = &s[n_box]; // Pointer to the first component of s with cone con
 unsigned int res_flag = 0; // Flag used to determine if the exit condition is satisfied
 double res_primal; // Variable used to determine if primal feasibility has been obtained
 double res_dual; // Variable used to determine if dual feasibility
-// $INSERT_VARIABLES$
 
 // Constant variables
 $INSERT_CONSTANTS$
@@ -69,7 +67,7 @@ $INSERT_CONSTANTS$
 // Obtain variables in scaled units
 #if in_engineering == 1
 for(unsigned int i = 0; i < nn; i++){
-    x0[i] = scaling_x[i]*( pointer_x0[i] - OpPoint_x[i] );
+    x0[i] = scaling_x[i]*( x0_in[i] - OpPoint_x[i] );
     xr[i] = scaling_x[i]*( pointer_xr[i] - OpPoint_x[i] );
 }
 for(unsigned int i = 0; i < mm; i++){
@@ -78,15 +76,15 @@ for(unsigned int i = 0; i < mm; i++){
 #endif
 #if in_engineering == 0
 for(unsigned int i = 0; i < nn; i++){
-    x0[i] = pointer_x0[i];
-    xre[i] = pointer_xre[i];
-    xrs[i] = pointer_xrs[i];
-    xrc[i] = pointer_xrc[i];
+    x0[i] = x0_in[i];
+    xre[i] = xre_in[i];
+    xrs[i] = xrs_in[i];
+    xrc[i] = xrc_in[i];
 }
 for(unsigned int i = 0; i < mm; i++){
-    ure[i] = pointer_ure[i];
-    urs[i] = pointer_urs[i];
-    urc[i] = pointer_urc[i];
+    ure[i] = ure_in[i];
+    urs[i] = urs_in[i];
+    urc[i] = urc_in[i];
 }
 #endif
 
@@ -130,6 +128,12 @@ for(unsigned int j = 0; j < mm; j++){
         q[(NN-1)*nm+3*nn+3*mm+j] -= Sh[j][i]*urc[i];
     }
 }
+
+// Measure time
+#if MEASURE_TIME == 1
+read_time(&post_update);
+get_elapsed_time(&sol->update_time, &post_update, &start);
+#endif
 
 // Algorithm
 while(done == 0){
@@ -266,22 +270,20 @@ while(done == 0){
     
     if(res_flag == 0){
         done = 1;
-        #ifdef CONF_MATLAB
-        e_flag[0] = 1.0;
-        #else
         *e_flag = 1;
-        #endif
     }
     else if( k >= k_max ){
         done = 1;
-        #ifdef CONF_MATLAB
-        e_flag[0] = -1.0;
-        #else
         *e_flag = -1;
-        #endif
     }
 
 }
+
+// Measure time
+#if MEASURE_TIME == 1
+read_time(&post_solve);
+get_elapsed_time(&sol->solve_time, &post_solve, &post_update);
+#endif
 
 // Control action
 #if in_engineering == 1
@@ -296,26 +298,10 @@ for(unsigned int j = 0; j < mm; j++){
 #endif
 
 // Return number of iterations
-#ifdef CONF_MATLAB
-pointer_k[0] = k;
-#else
-*pointer_k = k;
-#endif
+*k_in = k;
 
 // Save solution into structure
 #ifdef DEBUG
-
-#ifdef CONF_MATLAB
-
-for(unsigned int j = 0; j < dim; j++){
-    z_opt[j] = z[j];
-}
-for(unsigned int j = 0; j < n_s; j++){
-    s_opt[j] = s[j];
-    lambda_opt[j] = lambda[j];
-}
-
-#else
 
 for(unsigned int j = 0; j < dim; j++){
     sol->z[j] = z[j];
@@ -327,44 +313,22 @@ for(unsigned int j = 0; j < n_s; j++){
 
 #endif
 
+// Measure time
+#if MEASURE_TIME == 1
+read_time(&post_polish);
+get_elapsed_time(&sol->polish_time, &post_polish, &post_solve);
+get_elapsed_time(&sol->run_time, &post_polish, &start);
 #endif
 
 }
 
-//********** Projection to SOC **********//
-// Returns, in x, the projection of x onto the shifted-SOC given by alpha and d
-// The function assumes that the dimension of x is 3, which is the case in the HMPC solver
+#if MEASURE_TIME == 1
 
-void proj_SOC3(double *x, double alpha, double d){
+spcies_snippet_get_elapsed_time();
 
-    double x_0 = x[0];
-    double x_norm = 0.0;
-    double x_proj_step;
-    double corrected_x_0;
+spcies_snippet_read_time();
 
-    // Compute x_norm (the norm of the 2nd-to-last elements of x)
-    for(unsigned int j = 1; j < 3; j++){
-        x_norm += x[j]*x[j];
-    }
-    x_norm = sqrt(x_norm);
+#endif
 
-    // Compute auxliary term
-    corrected_x_0 = alpha*(x_0 - d);
-
-    // Project onto the shifted-SOC
-    if(x_norm <= corrected_x_0){
-    } else if(x_norm <= -corrected_x_0){
-        x[0] = d; 
-        for(unsigned int j = 1; j < 3; j++){
-            x[j] = 0.0;
-        }
-    } else{
-        x_proj_step = (corrected_x_0 + x_norm)/(2*x_norm);
-        x[0] = x_proj_step*x_norm*alpha + d;
-        for(unsigned int j = 1; j < 3; j++){
-            x[j] = x_proj_step*x[j];
-        }
-    }
-
-}
+spcies_snippet_proj_SOC3();
 

@@ -132,6 +132,9 @@ function constructor = cons_HMPC_ADMM_C(recipe)
     if solver_options.debug
         defCell = add_line(defCell, 'DEBUG', 1, 1, 'bool', 'define');
     end
+    if recipe.options.time
+        defCell = add_line(defCell, 'MEASURE_TIME', 1, 1, 'bool', 'define');
+    end
     if strcmp(solver_options.method, 'SADMM')
         defCell = add_line(defCell, 'alpha_SADMM', solver_options.alpha, 1, precision, 'define');
         defCell = add_line(defCell, 'IS_SYMMETRIC', 1, 1, precision, 'define');
