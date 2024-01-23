@@ -2,49 +2,46 @@
  * Sparse ADMM solver for the MPCT formulation using an extended state space
  *
  * ARGUMENTS:
- * The current system state is given in "pointer_x0". Pointer to array of size nn.
- * The state reference is given in "pointer_xr". Pointer to array of size nn.
- * The input reference is given in "pointer_ur". Pointer to array of size mm.
- * The optimal control action is returned in "u_opt". Pointer to array of size mm.
- * The number of iterations is returned in "pointer_k". Pointer to int.
+ * The current system state is given in "x0_in". Pointer to array of size nn_.
+ * The state reference is given in "xr_in". Pointer to array of size nn_.
+ * The input reference is given in "ur_in". Pointer to array of size mm_.
+ * The optimal control action is returned in "u_opt". Pointer to array of size mm_.
+ * The number of iterations is returned in "k_in". Pointer to int.
  * The exit flag is returned in "e_flag". Pointer to int.
  *       1: Algorithm converged successfully.
  *      -1: Algorithm did not converge within the maximum number of iterations. Returns current iterate.
  * The optimal decision variables and dual variables are returned in the solution structure sol.
- *
- * If CONF_MATLAB is defined, them the solver uses slightly different arguments for the mex file.
+ * Computation times are also returned in the structure sol.
  *
  */
 
-#include <stdio.h>
+void MPCT_ADMM_cs(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
 
-#ifdef CONF_MATLAB
+#if MEASURE_TIME == 1
 
-void MPCT_ADMM_cs(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *v_opt, double *lambda_opt){
+#if WIN32
+static LARGE_INTEGER start, post_update, post_solve, post_polish;
+#else // If Linux
+struct timespec start, post_update, post_solve, post_polish;
+#endif
 
-#else
-
-void MPCT_ADMM_cs(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *u_opt, int *pointer_k, int *e_flag, solution_MPCT_ess *sol){
+read_time(&start);
 
 #endif
 
 // Initialize solver variables
 int done = 0; // Flag used to determine when the algorithm should exit
-#ifdef CONF_MATLAB
-double k = 0.0; // Number of iterations. In the Matlab case it is easier if it is defined as a double
-#else
 int k = 0; // Number of iterations
-#endif
-double xr[nn] = {0.0}; // State reference
-double ur[mm] = {0.0}; // Control input reference
-double z[NN*dnm] = {0.0}; // Decision variable z
-double v[NN*dnm] = {0.0}; // Decision variable v
-double lambda[NN*dnm] = {0.0}; // Decision variable lambda
-double v1[NN*dnm] = {0.0}; // Value of z at the last iteration
-double b[nn] = {0.0}; // First nn components of vector b (the rest are known to be zero)
-double q[dnm] = {0.0}; // Cost function vector of P1 (contains xr and ur information)
-double q_hat[NN*dnm] = {0.0}; // Vector used to compute z
-double aux[NN*dnm] = {0.0}; // Vector used to compute z
+double xr[nn_] = {0.0}; // State reference
+double ur[mm_] = {0.0}; // Control input reference
+double z[NN_*dnm_] = {0.0}; // Decision variable z
+double v[NN_*dnm_] = {0.0}; // Decision variable v
+double lambda[NN_*dnm_] = {0.0}; // Decision variable lambda
+double v1[NN_*dnm_] = {0.0}; // Value of z at the last iteration
+double b[nn_] = {0.0}; // First nn_ components of vector b (the rest are known to be zero)
+double q[dnm_] = {0.0}; // Cost function vector of P1 (contains xr and ur information)
+double q_hat[NN_*dnm_] = {0.0}; // Vector used to compute z
+double aux[NN_*dnm_] = {0.0}; // Vector used to compute z
 double rhs[nrow_AHi] = {0.0}; // Vector for storing the right-hand-side of the W system of equations
 double mu[nrow_AHi] = {0.0}; // Solution of the W system os equations
 
@@ -57,35 +54,41 @@ $INSERT_CONSTANTS$
 
 // Obtain variables in scaled units
 #if in_engineering == 1
-for(unsigned int i = 0; i < nn; i++){
-    b[i] = scaling_x[i]*( pointer_x0[i] - OpPoint_x[i] );
-    xr[i] = scaling_x[i]*( pointer_xr[i] - OpPoint_x[i] );
+for(unsigned int i = 0; i < nn_; i++){
+    b[i] = scaling_x[i]*( x0_in[i] - OpPoint_x[i] );
+    xr[i] = scaling_x[i]*( xr_in[i] - OpPoint_x[i] );
 }
-for(unsigned int i = 0; i < mm; i++){
-    ur[i] = scaling_u[i]*( pointer_ur[i] - OpPoint_u[i] );
+for(unsigned int i = 0; i < mm_; i++){
+    ur[i] = scaling_u[i]*( ur_in[i] - OpPoint_u[i] );
 }
 #endif
 #if in_engineering == 0
-for(unsigned int i = 0; i < nn; i++){
-    b[i] = pointer_x0[i];
-    xr[i] = pointer_xr[i];
+for(unsigned int i = 0; i < nn_; i++){
+    b[i] = x0_in[i];
+    xr[i] = xr_in[i];
 }
-for(unsigned int i = 0; i < mm; i++){
-    ur[i] = pointer_ur[i];
+for(unsigned int i = 0; i < mm_; i++){
+    ur[i] = ur_in[i];
 }
 #endif
 
 // Update vector q with the reference
-for(unsigned int j = 0; j < nn; j++){
-    for(unsigned int i = 0; i < nn; i++){
-        q[j+nn] += Tz[j][i]*xr[i];
+for(unsigned int j = 0; j < nn_; j++){
+    for(unsigned int i = 0; i < nn_; i++){
+        q[j+nn_] += Tz[j][i]*xr[i];
     }
 }
-for(unsigned int j = 0; j < mm; j++){
-    for(unsigned int i = 0; i < mm; i++){
-        q[j+2*nn+mm] += Sz[j][i]*ur[i];
+for(unsigned int j = 0; j < mm_; j++){
+    for(unsigned int i = 0; i < mm_; i++){
+        q[j+2*nn_+mm_] += Sz[j][i]*ur[i];
     }
 }
+
+// Measure time
+#if MEASURE_TIME == 1
+read_time(&post_update);
+get_elapsed_time(&sol->update_time, &post_update, &start);
+#endif
 
 // Algorithm
 while(done == 0){
@@ -93,16 +96,16 @@ while(done == 0){
     k += 1; // Increment iteration counter
 
     // Save the value of v into variable v1
-    memcpy(v1, v, sizeof(double)*NN*dnm);
+    memcpy(v1, v, sizeof(double)*NN_*dnm_);
 
     //********** Update z **********//
 
     // Compute q_hat = q + lambda - rho*v
-    for(unsigned int j = 0; j < NN*dnm; j++){
+    for(unsigned int j = 0; j < NN_*dnm_; j++){
         #ifdef SCALAR_RHO
-        q_hat[j] = q[j %% dnm] + lambda[j] - rho*v[j];
+        q_hat[j] = q[j %% dnm_] + lambda[j] - rho*v[j];
         #else
-        q_hat[j] = q[j %% dnm] + lambda[j] - rho[j]*v[j];
+        q_hat[j] = q[j %% dnm_] + lambda[j] - rho[j]*v[j];
         #endif
     }
 
@@ -114,7 +117,7 @@ while(done == 0){
             rhs[i] += AHi_val[j]*q_hat[AHi_col[j]];            
         }
     }
-    for(unsigned int j = 0; j < nn; j++){
+    for(unsigned int j = 0; j < nn_; j++){
         rhs[j] -= b[j];
     }
 
@@ -148,7 +151,7 @@ while(done == 0){
 
     // Add the Hi*q_hat term
 
-    for(unsigned int i = 0; i < NN*dnm; i++){
+    for(unsigned int i = 0; i < NN_*dnm_; i++){
             z[i] = 0.0;
         for(unsigned int j = Hi_row[i]; j < Hi_row[i+1]; j++){
             z[i] += Hi_val[j]*q_hat[Hi_col[j]];            
@@ -164,7 +167,7 @@ while(done == 0){
 
     //********** Update v **********//
 
-    for(unsigned int j = 0; j < NN*dnm; j++){
+    for(unsigned int j = 0; j < NN_*dnm_; j++){
         #ifdef SCALAR_RHO
         v[j] = z[j] + rho_i*lambda[j];
         #else
@@ -176,7 +179,7 @@ while(done == 0){
     
     //********** Update lambda **********//
 
-    for(unsigned int j = 0; j < NN*dnm; j++){
+    for(unsigned int j = 0; j < NN_*dnm_; j++){
         #ifdef SCALAR_RHO
         lambda[j] = lambda[j] + rho*( z[j] - v[j] );
         #else
@@ -188,7 +191,7 @@ while(done == 0){
 
     res_flag = 0; // Reset the residual flag
 
-    for(unsigned int j = 0; j < NN*dnm; j++){
+    for(unsigned int j = 0; j < NN_*dnm_; j++){
         res_fixed_point = v1[j] - v[j];
         res_primal_feas = z[j] - v[j];
         // Obtain absolute values
@@ -204,64 +207,61 @@ while(done == 0){
     
     if(res_flag == 0){
         done = 1;
-        #ifdef CONF_MATLAB
-        e_flag[0] = 1.0;
-        #else
         *e_flag = 1;
-        #endif
     }
     else if( k >= k_max ){
         done = 1;
-        #ifdef CONF_MATLAB
-        e_flag[0] = -1.0;
-        #else
         *e_flag = -1;
-        #endif
     }
 
 }
 
+// Measure time
+#if MEASURE_TIME == 1
+read_time(&post_solve);
+get_elapsed_time(&sol->solve_time, &post_solve, &post_update);
+#endif
+
 // Control action
 #if in_engineering == 1
-for(unsigned int j = 0; j < mm; j++){
-    u_opt[j] = v[2*nn+j]*scaling_i_u[j] + OpPoint_u[j];
+for(unsigned int j = 0; j < mm_; j++){
+    u_opt[j] = v[2*nn_+j]*scaling_i_u[j] + OpPoint_u[j];
 }
 #endif
 #if in_engineering == 0
-for(unsigned int j = 0; j < mm; j++){
-    u_opt[j] = v[2*nn+j];
+for(unsigned int j = 0; j < mm_; j++){
+    u_opt[j] = v[2*nn_+j];
 }
 #endif
 
 // Return number of iterations
-#ifdef CONF_MATLAB
-pointer_k[0] = k;
-#else
-*pointer_k = k;
-#endif
+*k_in = k;
 
 // Save solution into structure
 #ifdef DEBUG
 
-#ifdef CONF_MATLAB
-
-for(unsigned int j = 0; j < NN*dnm; j++){
-    z_opt[j] = z[j];
-    v_opt[j] = v[j];
-    lambda_opt[j] = lambda[j];
-}
-
-#else
-
-for(unsigned int j = 0; j < NN*dnm; j++){
-    sol.z[j] = z[j];
-    sol.v[j] = v[j];
-    sol.lambda[j] = lambda[j];
+for(unsigned int j = 0; j < NN_*dnm_; j++){
+    sol->z[j] = z[j];
+    sol->v[j] = v[j];
+    sol->lambda[j] = lambda[j];
 }
 
 #endif
 
+// Measure time
+#if MEASURE_TIME == 1
+read_time(&post_polish);
+get_elapsed_time(&sol->polish_time, &post_polish, &post_solve);
+get_elapsed_time(&sol->run_time, &post_polish, &start);
 #endif
 
 }
+
+#if MEASURE_TIME == 1
+
+spcies_snippet_get_elapsed_time();
+
+spcies_snippet_read_time();
+
+#endif
 

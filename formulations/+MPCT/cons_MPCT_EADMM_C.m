@@ -1,4 +1,4 @@
-%% cons_MPCT_EADMM_C
+%% cons_MPCT_EADMM_C // Optimal z3
 % 
 % Generates the constructor for C of the EADMM-based solver for the MPCT formulation
 % 
@@ -84,15 +84,18 @@ function constructor = cons_MPCT_EADMM_C(recipe)
 
     % Defines
     defCell = [];
-    defCell = add_line(defCell, 'nn', n, 1, 'uint', 'define');
-    defCell = add_line(defCell, 'mm', m, 1, 'uint', 'define');
-    defCell = add_line(defCell, 'nm', n+m, 1, 'uint', 'define');
-    defCell = add_line(defCell, 'NN', N, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'nn_', n, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'mm_', m, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'nm_', n+m, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'NN_', N, 1, 'uint', 'define');
     defCell = add_line(defCell, 'k_max', solver_options.k_max, 1, 'uint', 'define');
     defCell = add_line(defCell, 'tol', solver_options.tol, 1, 'float', 'define');
     defCell = add_line(defCell, 'in_engineering', solver_options.in_engineering, 1, 'bool', 'define');
     if solver_options.debug
         defCell = add_line(defCell, 'DEBUG', 1, 1, 'bool', 'define');
+    end
+    if recipe.options.time
+        defCell = add_line(defCell, 'MEASURE_TIME', 1, 1, 'bool', 'define');
     end
     
     % Constants

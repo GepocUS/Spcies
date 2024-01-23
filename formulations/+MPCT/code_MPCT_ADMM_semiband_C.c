@@ -11,39 +11,21 @@
  *       1: Algorithm converged succesfully.
  *      -1: Algorithm did not converge within the maximum number of iterations. Returns current iterate.
  * The optimal decision variables and dual variables are returned in the solution structure sol.
+ * Computation times are also returned in the structure sol.
  * 
  */
 
-#include <stdio.h>
-
-#if MEASURE_TIME == 1
-
-#if WIN32
-#include <Windows.h>
-#else // If Linux
-#include <time.h>
-#endif
-
-#endif
-
-void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int *k_in, int *e_flag, solution_MPCT *sol){
+void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
 
     #if MEASURE_TIME == 1
 
     #if WIN32
-    static LARGE_INTEGER frequency, start, post_update, post_solve, post_polish;
-    __int64 t_update_time, t_solve_time, t_polish_time, t_run_time; // Time in nano-seconds
-
-    if (frequency.QuadPart == 0){
-    QueryPerformanceFrequency(&frequency);}
-
-    QueryPerformanceCounter(&start); // Get time at the start
-
+    static LARGE_INTEGER start, post_update, post_solve, post_polish;
     #else // If Linux
-    // Initialize time variables
     struct timespec start, post_update, post_solve, post_polish;
-    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
     #endif
+
+    read_time(&start);
 
     #endif
 
@@ -114,16 +96,8 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
     // Measure time
     #if MEASURE_TIME == 1
-
-    #if WIN32
-    QueryPerformanceCounter(&post_update); // Get time after the update    
-    t_update_time = 1000000000ULL * (post_update.QuadPart - start.QuadPart) / frequency.QuadPart;
-    sol->update_time = t_update_time/(double)1e+9;
-    #else // If Linux
-    clock_gettime(CLOCK_MONOTONIC_RAW, &post_update);
-    sol->update_time = (double) ( (post_update.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_update.tv_nsec - start.tv_nsec) / 1000000.0 );
-    #endif
-
+    read_time(&post_update);
+    get_elapsed_time(&sol->update_time, &post_update, &start);
     #endif
 
     // Algorithm
@@ -156,7 +130,6 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
             p[i+NN_*nm_] += q[i];
 
         }
-
 
         /****** Compute xi from eq. (9a) using Alg. 2 from the article ******/
 
@@ -747,32 +720,20 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         // Exit condition
         if (res_flag == 0){
-
             done = 1;
             *e_flag = 1;
-
         }
         else if (k >= k_max){
-
             done = 1;
             *e_flag = -1;        
-
         }
 
     }
 
     // Measure time
     #if MEASURE_TIME == 1
-    
-    #if WIN32
-    QueryPerformanceCounter(&post_solve); // Get time after solving
-    t_solve_time = 1000000000ULL * (post_solve.QuadPart - post_update.QuadPart) / frequency.QuadPart;
-    sol->solve_time = t_solve_time/(double)1e+9;
-    #else // If Linux
-    clock_gettime(CLOCK_MONOTONIC_RAW, &post_solve);
-    sol->solve_time = (double) ( (post_solve.tv_sec - post_update.tv_sec) * 1000.0 ) + (double) ( (post_solve.tv_nsec - post_update.tv_nsec) / 1000000.0 );
-    #endif
-    
+    read_time(&post_solve);
+    get_elapsed_time(&sol->solve_time, &post_solve, &post_update);
     #endif
 
     // Control action
@@ -809,24 +770,12 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
     // Measure time
     #if MEASURE_TIME == 1
-    
-    #if WIN32
-    QueryPerformanceCounter(&post_polish); // Get time after polishing
-    t_run_time = 1000000000ULL * (post_polish.QuadPart - start.QuadPart) / frequency.QuadPart;
-    t_polish_time = 1000000000ULL * (post_polish.QuadPart - post_solve.QuadPart) / frequency.QuadPart;
-    sol->run_time = t_run_time/(double)1e+9;
-    sol->polish_time = t_polish_time/(double)1e+9;
-    #else // If Linux
-    clock_gettime(CLOCK_MONOTONIC_RAW, &post_polish);
-    sol->run_time = (double) ( (post_polish.tv_sec - start.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - start.tv_nsec) / 1000000.0 );
-    sol->polish_time = (double) ( (post_polish.tv_sec - post_solve.tv_sec) * 1000.0 ) + (double) ( (post_polish.tv_nsec - post_solve.tv_nsec) / 1000000.0 );
-    #endif
-    
+    read_time(&post_polish);
+    get_elapsed_time(&sol->polish_time, &post_polish, &post_solve);
+    get_elapsed_time(&sol->run_time, &post_polish, &start);
     #endif
 
 }
-
-
 
 void solve_banded_Chol(const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_][nn_], double *d){
 
@@ -1002,4 +951,14 @@ void solve_banded_QRST_sys(const double (*Q_rho_i)[nn_][nn_], const double (*R_r
 
     }
 }
+
 #endif
+
+#if MEASURE_TIME == 1
+
+spcies_snippet_get_elapsed_time();
+
+spcies_snippet_read_time();
+
+#endif
+
