@@ -197,6 +197,7 @@ Git commit messages should use start with one of the following tags:
 
 - 'feat:' when adding or working on a new feature.
 - 'fix:' or 'bug:' when fixing some issue or bug.
+- 'update:' when updating some formulatio/method to the latest changes or updates.
 - 'refactor:' when refactoring code that neither fixed bug nor adds a feature.
 - 'docs:' when updating documentation or README files.
 - 'style:' when making changes in style/formatting.
