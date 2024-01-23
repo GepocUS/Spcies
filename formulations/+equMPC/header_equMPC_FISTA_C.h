@@ -3,6 +3,14 @@
 
 $INSERT_DEFINES$
 
+#if MEASURE_TIME == 1
+#if WIN32
+#include <Windows.h>
+#else // If Linux
+#include <time.h>
+#endif
+#endif
+
 typedef struct {
     double z[(NN_-1)*nm_+mm_]; // Optimal z
     double lambda[NN_*nn_]; // Optimal lambda
@@ -26,6 +34,11 @@ void compute_residual_vector_equMPC_FISTA(double (*res_vec)[nn_], double *z_0, d
 void solve_W_matrix_form(double (*mu)[nn_], double (*Alpha)[nn_][nn_], double (*Beta)[nn_][nn_]);
 #else
 void solve_W_matrix_form(double (*mu)[nn_], const double (*Alpha)[nn_][nn_], const double (*Beta)[nn_][nn_]);
+#endif
+
+#if MEASURE_TIME == 1
+spcies_snippet_get_elapsed_time();
+spcies_snippet_read_time();
 #endif
 
 #endif
