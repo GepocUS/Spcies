@@ -66,7 +66,7 @@ function [def_opt, def_method, def_submethod] = default_options()
     def_submethod.MPCT.EADMM = '';
     def_submethod.MPCT.ADMM = 'cs';
     def_submethod.HMPC.ADMM = '';
-    def_submethod.HMPC.SADMM = '';
+    def_submethod.HMPC.SADMM = 'split';
     def_submethod.Other = '';
      
 end

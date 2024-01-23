@@ -75,7 +75,7 @@ function constructor = cons_HMPC_ADMM_split_C(recipe)
     end
     
     %% Compute the ingredients of the controller
-    if strcmp(recipe.options.method, 'SADMM_split')
+    if strcmp(recipe.options.method, 'SADMM')
         vars = HMPC.compute_HMPC_SADMM_split_ingredients(recipe.controller, solver_options, recipe.options);
     else
         vars = HMPC.compute_HMPC_ADMM_split_ingredients(recipe.controller, solver_options, recipe.options);
@@ -139,7 +139,10 @@ function constructor = cons_HMPC_ADMM_split_C(recipe)
     if solver_options.debug
         defCell = add_line(defCell, 'DEBUG', 1, 1, 'bool', 'define');
     end
-    if strcmp(recipe.options.method, 'SADMM_split')
+    if recipe.options.time
+        defCell = add_line(defCell, 'MEASURE_TIME', 1, 1, 'bool', 'define');
+    end
+    if strcmp(recipe.options.method, 'SADMM')
         defCell = add_line(defCell, 'alpha_SADMM', solver_options.alpha, 1, precision, 'define');
         defCell = add_line(defCell, 'IS_SYMMETRIC', 1, 1, precision, 'define');
     end
