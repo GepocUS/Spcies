@@ -23,7 +23,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     double *u_opt; // Local u_opt
     int k; // Local k
     int e_flag; // Local e_flag
-    sol_equMPC_FISTA sol;
+    sol_$C_CODE_NAME$ sol;
 
     // Check inputs and outputs
 

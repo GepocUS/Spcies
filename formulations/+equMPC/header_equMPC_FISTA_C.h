@@ -18,12 +18,12 @@ typedef struct {
     double solve_time; // Time spent in solving the optimization problem
     double polish_time; // Time taken for extra stuff
     double run_time; // Time taken in the execution of the whole MPC solver function, equal to the sum of all other times
-} sol_equMPC_FISTA;
+} sol_$INSERT_NAME$;
 
 #if TIME_VARYING  == 1
-void equMPC_FISTA(double *x0_in, double *xr_in, double *ur_in, double *A_in, double *B_in, double *Q_in, double *R_in, double *LB_in, double *UB_in, double *u_opt, int *k_in, int *e_flag, sol_equMPC_FISTA *sol);
+void equMPC_FISTA(double *x0_in, double *xr_in, double *ur_in, double *A_in, double *B_in, double *Q_in, double *R_in, double *LB_in, double *UB_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol);
 #else
-void equMPC_FISTA(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int *k_in, int *e_flag, sol_equMPC_FISTA *sol);
+void equMPC_FISTA(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol);
 #endif
 
 void compute_z_lambda_equMPC_FISTA(double *z_0, double (*z)[nm_], double (*lambda)[nn_], double *q, const double *QRi, const double (*AB)[nm_], const double *LB, const double *UB);

@@ -23,7 +23,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     double *u_opt; // Local u_opt
     int k; // Local k
     int e_flag; // Local e_flag
-    solution sol;
+    sol_$C_CODE_NAME$ sol;
 
     // Check number of inputs
     #if TIME_VARYING == 1
