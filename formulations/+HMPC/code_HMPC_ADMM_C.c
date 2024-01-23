@@ -2,10 +2,10 @@
  * ADMM or SADMM solver for the HMPC formulation.
  *
  * ARGUMENTS:
- * The current system state is given in "x0_in". Pointer to array of size nn.
- * The state reference is given in "xr_in". Pointer to array of size nn.
- * The input reference is given in "ur_in". Pointer to array of size mm.
- * The optimal control action is returned in "u_opt". Pointer to array of size mm.
+ * The current system state is given in "x0_in". Pointer to array of size nn_.
+ * The state reference is given in "xr_in". Pointer to array of size nn_.
+ * The input reference is given in "ur_in". Pointer to array of size mm_.
+ * The optimal control action is returned in "u_opt". Pointer to array of size mm_.
  * The number of iterations is returned in "k_in". Pointer to int.
  * The exit flag is returned in "e_flag". Pointer to int.
  *       1: Algorithm converged successfully.
@@ -32,9 +32,9 @@ read_time(&start);
 // Initialize solver variables
 int done = 0; // Flag used to determine when the algorithm should exit
 int k = 0; // Number of iterations
-double x0[nn]; // Current system state
-double xr[nn] = {0.0}; // State reference
-double ur[mm] = {0.0}; // Control input reference
+double x0[nn_]; // Current system state
+double xr[nn_] = {0.0}; // State reference
+double ur[mm_] = {0.0}; // Control input reference
 
 // For solving the system of equations
 double q[dim] = {0.0}; // Cost function vector
@@ -43,7 +43,7 @@ double z[dim]; // Vector of primal decision variables z
 double s[n_s] = {0.0}; // Vector of primal decision variables s
 double s_proj[n_s] = {0.0}; // Vector of primal decision variables s
 double q_hat[dim]; // Vector q_hat, which is the first part of rhs
-double b[nn] = {0.0}; // Vector of the equality constraints
+double b[nn_] = {0.0}; // Vector of the equality constraints
 double Cz[n_s]; // Auxiliary vector for storing C*z and C*z + s
 
 double s_ant[n_s]; // Vector containing the value of primal at iteration k-1
@@ -62,46 +62,46 @@ $INSERT_CONSTANTS$
 
 // Obtain variables in scaled units
 #if in_engineering == 1
-for(unsigned int i = 0; i < nn; i++){
+for(unsigned int i = 0; i < nn_; i++){
     x0[i] = scaling_x[i]*( x0_in[i] - OpPoint_x[i] );
     xr[i] = scaling_x[i]*( xr_in[i] - OpPoint_x[i] );
 }
-for(unsigned int i = 0; i < mm; i++){
+for(unsigned int i = 0; i < mm_; i++){
     ur[i] = scaling_u[i]*( ur_in[i] - OpPoint_u[i] );
 }
 #endif
 #if in_engineering == 0
-for(unsigned int i = 0; i < nn; i++){
+for(unsigned int i = 0; i < nn_; i++){
     x0[i] = x0_in[i];
     xr[i] = xr_in[i];
 }
-for(unsigned int i = 0; i < mm; i++){
+for(unsigned int i = 0; i < mm_; i++){
     ur[i] = ur_in[i];
 }
 #endif
 
 // Update the elements of rhs corresponding to the current system state
-for(unsigned int j = 0; j < nn; j++){
+for(unsigned int j = 0; j < nn_; j++){
     b[j] = 0.0;
-    for(unsigned int i = 0; i < nn; i++){
+    for(unsigned int i = 0; i < nn_; i++){
         b[j] -= A[j][i]*x0[i];
     }
 }
 
 // Update the elements of q corresponding to the reference
-for(unsigned int j = 0; j < nn; j++){
-    for(unsigned int i = 0; i < nn; i++){
-        q[(NN-1)*nm+mm+j] -= Te[j][i]*xr[i] + QQ[j][i]*x0[i];
+for(unsigned int j = 0; j < nn_; j++){
+    for(unsigned int i = 0; i < nn_; i++){
+        q[(NN_-1)*nm_+mm_+j] -= Te[j][i]*xr[i] + QQ[j][i]*x0[i];
     }
 }
-for(unsigned int j = 0; j < nn; j++){
-    for(unsigned int i = 0; i < nn; i++){
-        q[(NN-1)*nm+2*nn+mm+j] -= QQ[j][i]*x0[i];
+for(unsigned int j = 0; j < nn_; j++){
+    for(unsigned int i = 0; i < nn_; i++){
+        q[(NN_-1)*nm_+2*nn_+mm_+j] -= QQ[j][i]*x0[i];
     }
 }
-for(unsigned int j = 0; j < mm; j++){
-    for(unsigned int i = 0; i < mm; i++){
-        q[(NN-1)*nm+3*nn+mm+j] -= Se[j][i]*ur[i];
+for(unsigned int j = 0; j < mm_; j++){
+    for(unsigned int i = 0; i < mm_; i++){
+        q[(NN_-1)*nm_+3*nn_+mm_+j] -= Se[j][i]*ur[i];
     }
 }
 
@@ -146,7 +146,7 @@ while(done == 0){
         z[i] = 0.0;
     }
     for(unsigned int i = 0; i < dim; i++){
-        for(unsigned int j = 0; j < nn; j++){
+        for(unsigned int j = 0; j < nn_; j++){
             z[i] += M2[i][j]*b[j];
         }
     }
@@ -169,7 +169,7 @@ while(done == 0){
         }
     }
 
-    //********** Update dual in symmetric ADMM **********//
+    //********** Update dual in symm_etric ADMM **********//
 
     #ifdef IS_SYMMETRIC
     // Update lambda
@@ -263,12 +263,12 @@ get_elapsed_time(&sol->solve_time, &post_solve, &post_update);
 
 // Control action
 #if in_engineering == 1
-for(unsigned int j = 0; j < mm; j++){
+for(unsigned int j = 0; j < mm_; j++){
     u_opt[j] = z[j]*scaling_i_u[j] + OpPoint_u[j];
 }
 #endif
 #if in_engineering == 0
-for(unsigned int j = 0; j < mm; j++){
+for(unsigned int j = 0; j < mm_; j++){
     u_opt[j] = z[j];
 }
 #endif

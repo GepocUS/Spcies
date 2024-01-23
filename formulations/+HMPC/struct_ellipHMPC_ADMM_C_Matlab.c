@@ -36,37 +36,37 @@ void mexFunction(int nlhs, mxArray *plhs[],
     }
 
     // Check that x0 is of the correct dimension
-    if( !mxIsDouble(prhs[0]) || mxGetNumberOfElements(prhs[0]) != nn ){
+    if( !mxIsDouble(prhs[0]) || mxGetNumberOfElements(prhs[0]) != nn_ ){
         mexErrMsgIdAndTxt("Spcies:HMPC:nrhs:x0",
                           "x0 must be of dimension nn");
     }
     // Check that xre is of the correct dimension
-    if( !mxIsDouble(prhs[1]) || mxGetNumberOfElements(prhs[1]) != nn ){
+    if( !mxIsDouble(prhs[1]) || mxGetNumberOfElements(prhs[1]) != nn_ ){
         mexErrMsgIdAndTxt("Spcies:HMPC:nrhs:xre",
                           "xre must be of dimension nn");
     }
     // Check that xrs is of the correct dimension
-    if( !mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != nn ){
+    if( !mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != nn_ ){
         mexErrMsgIdAndTxt("Spcies:HMPC:nrhs:xrs",
                           "xrs must be of dimension nn");
     }
     // Check that xrc is of the correct dimension
-    if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != nn ){
+    if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != nn_ ){
         mexErrMsgIdAndTxt("Spcies:HMPC:nrhs:xrc",
                           "xrc must be of dimension nn");
     }
     // Check that ure is of the correct dimension
-    if( !mxIsDouble(prhs[4]) || mxGetNumberOfElements(prhs[4]) != mm ){
+    if( !mxIsDouble(prhs[4]) || mxGetNumberOfElements(prhs[4]) != mm_ ){
         mexErrMsgIdAndTxt("Spcies:HMPC:nrhs:ure",
                           "ure must be of dimension mm");
     }
     // Check that urs is of the correct dimension
-    if( !mxIsDouble(prhs[5]) || mxGetNumberOfElements(prhs[5]) != mm ){
+    if( !mxIsDouble(prhs[5]) || mxGetNumberOfElements(prhs[5]) != mm_ ){
         mexErrMsgIdAndTxt("Spcies:HMPC:nrhs:urs",
                           "urs must be of dimension mm");
     }
     // Check that urc is of the correct dimension
-    if( !mxIsDouble(prhs[6]) || mxGetNumberOfElements(prhs[6]) != mm ){
+    if( !mxIsDouble(prhs[6]) || mxGetNumberOfElements(prhs[6]) != mm_ ){
         mexErrMsgIdAndTxt("Spcies:HMPC:nrhs:urc",
                           "urc must be of dimension mm");
     }
@@ -84,7 +84,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     mxArray *z_pt, *s_pt, *lambda_pt, *update_time_pt, *solve_time_pt, *polish_time_pt, *run_time_pt;
     double *z_out, *s_out, *lambda_out, *update_time_out, *solve_time_out, *polish_time_out, *run_time_out, *k_out, *e_flag_out;
 
-    plhs[0] = mxCreateDoubleMatrix(mm, 1, mxREAL); // u_opt
+    plhs[0] = mxCreateDoubleMatrix(mm_, 1, mxREAL); // u_opt
     plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL); // k
     plhs[2] = mxCreateDoubleMatrix(1, 1, mxREAL); // e_flag
 

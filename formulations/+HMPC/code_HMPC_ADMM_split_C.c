@@ -3,10 +3,10 @@
  * This version of the ADMM-bases solver splits the decision variables as (z_hat, s_hat) = (z, s).
  *
  * ARGUMENTS:
- * The current system state is given in "x0_in". Pointer to array of size nn.
- * The state reference is given in "xr_in". Pointer to array of size nn.
- * The input reference is given in "ur_in". Pointer to array of size mm.
- * The optimal control action is returned in "u_opt". Pointer to array of size mm.
+ * The current system state is given in "x0_in". Pointer to array of size nn_.
+ * The state reference is given in "xr_in". Pointer to array of size nn_.
+ * The input reference is given in "ur_in". Pointer to array of size mm_.
+ * The optimal control action is returned in "u_opt". Pointer to array of size mm_.
  * The number of iterations is returned in "k_in". Pointer to int.
  * The exit flag is returned in "e_flag". Pointer to int.
  *       1: Algorithm converged successfully.
@@ -33,9 +33,9 @@ read_time(&start);
 // Initialize solver variables
 int done = 0; // Flag used to determine when the algorithm should exit
 int k = 0; // Number of iterations
-double x0[nn]; // Current system state
-double xr[nn] = {0.0}; // State reference
-double ur[mm] = {0.0}; // Control input reference
+double x0[nn_]; // Current system state
+double xr[nn_] = {0.0}; // State reference
+double ur[mm_] = {0.0}; // Control input reference
 
 // For solving the system of equations
 double q[dim] = {0.0}; // Cost function vector
@@ -63,7 +63,7 @@ double *mu = &dual[dim]; // Dual variable mu
 double s_norm; // Norm of the second-to-the-last elements of s
 double s_proj_step; // Variable used to project s onto the SOCs
 #ifdef COUPLED_CONSTRAINTS
-double *s_cone = &s[NN*n_y]; // Pointer to the first component of s with cone constraints
+double *s_cone = &s[NN_*n_y]; // Pointer to the first component of s with cone constraints
 #endif
 
 unsigned int res_flag = 0; // Flag used to determine if the exit condition is satisfied
@@ -76,55 +76,55 @@ $INSERT_CONSTANTS$
 
 // Obtain variables in scaled units
 #if in_engineering == 1
-for(unsigned int i = 0; i < nn; i++){
+for(unsigned int i = 0; i < nn_; i++){
     x0[i] = scaling_x[i]*( x0_in[i] - OpPoint_x[i] );
     xr[i] = scaling_x[i]*( xr_in[i] - OpPoint_x[i] );
 }
-for(unsigned int i = 0; i < mm; i++){
+for(unsigned int i = 0; i < mm_; i++){
     ur[i] = scaling_u[i]*( ur_in[i] - OpPoint_u[i] );
 }
 #endif
 #if in_engineering == 0
-for(unsigned int i = 0; i < nn; i++){
+for(unsigned int i = 0; i < nn_; i++){
     x0[i] = x0_in[i];
     xr[i] = xr_in[i];
 }
-for(unsigned int i = 0; i < mm; i++){
+for(unsigned int i = 0; i < mm_; i++){
     ur[i] = ur_in[i];
 }
 #endif
 
 // Update the elements of rhs corresponding to the current system state
 #ifdef NON_SPARSE
-for(unsigned int j = 0; j < nn; j++){
+for(unsigned int j = 0; j < nn_; j++){
     bh[j] = 0.0;
-    for(unsigned int i = 0; i < nn; i++){
+    for(unsigned int i = 0; i < nn_; i++){
         bh[j] -= A[j][i]*x0[i];
     }
 }
 #else
-for(unsigned int j = 0; j < nn; j++){
+for(unsigned int j = 0; j < nn_; j++){
     bh[idx_x0[j]] = 0.0;
-    for(unsigned int i = 0; i < nn; i++){
+    for(unsigned int i = 0; i < nn_; i++){
         bh[idx_x0[j]] -= A[j][i]*x0[i];
     }
 }
 #endif
 
 // Update the elements of q corresponding to the reference
-for(unsigned int j = 0; j < nn; j++){
-    for(unsigned int i = 0; i < nn; i++){
-        q[(NN-1)*nm+mm+j] -= Te[j][i]*xr[i] + QQ[j][i]*x0[i];
+for(unsigned int j = 0; j < nn_; j++){
+    for(unsigned int i = 0; i < nn_; i++){
+        q[(NN_-1)*nm_+mm_+j] -= Te[j][i]*xr[i] + QQ[j][i]*x0[i];
     }
 }
-for(unsigned int j = 0; j < nn; j++){
-    for(unsigned int i = 0; i < nn; i++){
-        q[(NN-1)*nm+2*nn+mm+j] -= QQ[j][i]*x0[i];
+for(unsigned int j = 0; j < nn_; j++){
+    for(unsigned int i = 0; i < nn_; i++){
+        q[(NN_-1)*nm_+2*nn_+mm_+j] -= QQ[j][i]*x0[i];
     }
 }
-for(unsigned int j = 0; j < mm; j++){
-    for(unsigned int i = 0; i < mm; i++){
-        q[(NN-1)*nm+mm+3*nn+j] -= Se[j][i]*ur[i];
+for(unsigned int j = 0; j < mm_; j++){
+    for(unsigned int i = 0; i < mm_; i++){
+        q[(NN_-1)*nm_+mm_+3*nn_+j] -= Se[j][i]*ur[i];
     }
 }
 
@@ -210,7 +210,7 @@ while(done == 0){
 
     #endif
 
-    //********** Update dual in symmetric ADMM **********//
+    //********** Update dual in symm_etric ADMM **********//
 
     #ifdef IS_SYMMETRIC
     // Update lambda
@@ -232,7 +232,7 @@ while(done == 0){
     }
     #ifndef COUPLED_CONSTRAINTS
     // Upper and lower bounds
-    for(unsigned int j = 0; j < dim-3*nn-3*mm; j++){
+    for(unsigned int j = 0; j < dim-3*nn_-3*mm_; j++){
         z[j] = (z[j] > LB[j]) ? z[j] : LB[j]; // maximum between z and the lower bound
         z[j] = (z[j] > UB[j]) ? UB[j] : z[j]; // minimum between z and the upper bound
     }
@@ -252,7 +252,7 @@ while(done == 0){
     }
     #else
     // Project onto the SOC
-    for(unsigned int j = 0; j < nm; j++){
+    for(unsigned int j = 0; j < nm_; j++){
         proj_SOC3( &s[3*j], 1.0, LBy[j]);
         proj_SOC3( &s[3*j], -1.0, UBy[j]);
     }
@@ -261,7 +261,7 @@ while(done == 0){
     #else
 
     // Project onto the box constraints
-    for(unsigned int j = 0; j < NN; j++){
+    for(unsigned int j = 0; j < NN_; j++){
         for(unsigned int i = 0; i < n_y; i++){
             s[j*n_y+i] = (s[j*n_y+i] > LBy[i]) ? s[j*n_y+i] : LBy[i]; // maximum between s and the lower bound
             s[j*n_y+i] = (s[j*n_y+i] > UBy[i]) ? UBy[i] : s[j*n_y+i]; // minimum between s and the upper bound
@@ -354,12 +354,12 @@ get_elapsed_time(&sol->solve_time, &post_solve, &post_update);
 
 // Control action
 #if in_engineering == 1
-for(unsigned int j = 0; j < mm; j++){
+for(unsigned int j = 0; j < mm_; j++){
     u_opt[j] = z[j]*scaling_i_u[j] + OpPoint_u[j];
 }
 #endif
 #if in_engineering == 0
-for(unsigned int j = 0; j < mm; j++){
+for(unsigned int j = 0; j < mm_; j++){
     u_opt[j] = z[j];
 }
 #endif

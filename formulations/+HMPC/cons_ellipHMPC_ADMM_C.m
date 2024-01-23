@@ -112,10 +112,10 @@ function constructor = cons_HMPC_ADMM_C(recipe)
     
     % Defines
     defCell = [];
-    defCell = add_line(defCell, 'nn', n, 1, 'uint', 'define');
-    defCell = add_line(defCell, 'mm', m, 1, 'uint', 'define');
-    defCell = add_line(defCell, 'nm', n+m, 1, 'uint', 'define');
-    defCell = add_line(defCell, 'NN', N, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'nn_', n, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'mm_', m, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'nm_', n+m, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'NN_', N, 1, 'uint', 'define');
     defCell = add_line(defCell, 'dim', dim, 1, 'uint', 'define');
     defCell = add_line(defCell, 'n_s', n_s, 1, 'uint', 'define');
     defCell = add_line(defCell, 'n_eq', n_eq, 1, 'uint', 'define');

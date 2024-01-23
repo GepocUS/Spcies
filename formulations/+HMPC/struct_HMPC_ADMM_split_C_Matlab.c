@@ -32,17 +32,17 @@ void mexFunction(int nlhs, mxArray *plhs[],
     }
 
     // Check that x0 is of the correct dimension
-    if( !mxIsDouble(prhs[0]) || mxGetNumberOfElements(prhs[0]) != nn ){
+    if( !mxIsDouble(prhs[0]) || mxGetNumberOfElements(prhs[0]) != nn_ ){
         mexErrMsgIdAndTxt("Spcies:HMPC:nrhs:x0",
                           "x0 must be of dimension nn");
     }
     // Check that xr is of the correct dimension
-    if( !mxIsDouble(prhs[1]) || mxGetNumberOfElements(prhs[1]) != nn ){
+    if( !mxIsDouble(prhs[1]) || mxGetNumberOfElements(prhs[1]) != nn_ ){
         mexErrMsgIdAndTxt("Spcies:HMPC:nrhs:xr",
                           "xr must be of dimension nn");
     }
     // Check that ur is of the correct dimension
-    if( !mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != mm ){
+    if( !mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != mm_ ){
         mexErrMsgIdAndTxt("Spcies:HMPC:nrhs:ur",
                           "ur must be of dimension mm");
     }
@@ -57,7 +57,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     double *z_out, *z_hat_out, *s_out, *s_hat_out, *lambda_out, *mu_out, *update_time_out, *solve_time_out, *polish_time_out, *run_time_out, *k_out, *e_flag_out;
 
     // Prepare output data
-    plhs[0] = mxCreateDoubleMatrix(mm, 1, mxREAL); // u_opt
+    plhs[0] = mxCreateDoubleMatrix(mm_, 1, mxREAL); // u_opt
     plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL); // k
     plhs[2] = mxCreateDoubleMatrix(1, 1, mxREAL); // e_flag
 
