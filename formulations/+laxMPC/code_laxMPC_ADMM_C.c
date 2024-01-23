@@ -11,13 +11,14 @@
  *       1: Algorithm converged successfully.
  *      -1: Algorithm did not converge within the maximum number of iterations. Returns current iterate.
  * The optimal decision variables and dual variables are returned in the solution structure sol.
+ * Computation times are also returned in the structure sol.
  *
  */
     
 #if TIME_VARYING == 1
-void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *A_in, double *B_in, double *Q_in, double *R_in, double *LB_in, double *UB_in, double *u_opt, int *k_in, int *e_flag, solution *sol){
+void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *A_in, double *B_in, double *Q_in, double *R_in, double *LB_in, double *UB_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
 #else
-void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int *k_in, int *e_flag, solution *sol){
+void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
 #endif
 
     #if MEASURE_TIME == 1
@@ -194,7 +195,6 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
 
         }
     }
-
 
     // Beta{1} to Beta{N-2}
     for(unsigned int h = 1; h < NN_-1 ; h++){
