@@ -89,10 +89,10 @@ function constructor = cons_ellipMPC_ADMM_soc_C(recipe)
     defCell = add_line(defCell, 'dim', vars.dim, 1, 'uint', 'define');
     defCell = add_line(defCell, 'n_s', vars.n_s, 1, 'uint', 'define');
     defCell = add_line(defCell, 'n_eq', vars.n_eq, 1, 'uint', 'define');
-    defCell = add_line(defCell, 'nn', n, 1, 'uint', 'define');
-    defCell = add_line(defCell, 'mm', m, 1, 'uint', 'define');
-    defCell = add_line(defCell, 'nm', n+m, 1, 'uint', 'define');
-    defCell = add_line(defCell, 'NN', N, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'nn_', n, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'mm_', m, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'nm_', n+m, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'NN_', N, 1, 'uint', 'define');
     defCell = add_line(defCell, 'nrow_GhHhi', vars.GhHhi_CSR.nrow, 1, 'uint', 'define');
     defCell = add_line(defCell, 'nrow_HhiGh', vars.HhiGh_CSR.nrow, 1, 'uint', 'define');
     defCell = add_line(defCell, 'nrow_Hhi', vars.Hhi_CSR.nrow, 1, 'uint', 'define');
@@ -102,6 +102,9 @@ function constructor = cons_ellipMPC_ADMM_soc_C(recipe)
     defCell = add_line(defCell, 'in_engineering', solver_options.in_engineering, 1, 'bool', 'define');
     if solver_options.debug
         defCell = add_line(defCell, 'DEBUG', 1, 1, 'bool', 'define');
+    end
+    if recipe.options.time
+        defCell = add_line(defCell, 'MEASURE_TIME', 1, 1, 'bool', 'define');
     end
     
     % Constants

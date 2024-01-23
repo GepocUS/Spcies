@@ -3,41 +3,40 @@
  * This version imposes the terminal constraint using a second order cone constraint.
  *
  * ARGUMENTS:
- * The current system state is given in "pointer_x0". Pointer to array of size nn.
- * The state reference is given in "pointer_xr". Pointer to array of size nn.
- * The input reference is given in "pointer_ur". Pointer to array of size mm.
+ * The current system state is given in "x0_in". Pointer to array of size nn_.
+ * The state reference is given in "xr_in". Pointer to array of size nn_.
+ * The input reference is given in "ur_in". Pointer to array of size mm_.
  * The "size" of the terminal constraints "pointer_r". Pointer to a double.
- * The optimal control action is returned in "u_opt". Pointer to array of size mm.
- * The number of iterations is returned in "pointer_k". Pointer to int.
+ * The optimal control action is returned in "u_opt". Pointer to array of size mm_.
+ * The number of iterations is returned in "k_in". Pointer to int.
  * The exit flag is returned in "e_flag". Pointer to int.
  *       1: Algorithm converged successfully.
  *      -1: Algorithm did not converge within the maximum number of iterations. Returns current iterate.
  * The optimal decision variables and dual variables are returned in the solution structure sol.
- *
- * If CONF_MATLAB is defined, them the solver uses slightly different arguments for the mex file.
+ * Computation times are also returned in the structure sol.
  *
  */
 
-#ifdef CONF_MATLAB
+void ellipMPC_ADMM_soc(double *x0_in, double *xr_in, double *ur_in, double *r_ellip, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
 
-void ellipMPC_ADMM_soc(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *r_ellip, double *u_opt, double *pointer_k, double *e_flag, double *z_opt, double *s_opt, double *z_hat_opt, double *s_hat_opt, double *lambda_opt, double *mu_opt){
+#if MEASURE_TIME == 1
 
-#else
+#if WIN32
+static LARGE_INTEGER start, post_update, post_solve, post_polish;
+#else // If Linux
+struct timespec start, post_update, post_solve, post_polish;
+#endif
 
-void ellipMPC_ADMM_soc(double *pointer_x0, double *pointer_xr, double *pointer_ur, double *r_ellip, double *u_opt, int *pointer_k, int *e_flag, solution *sol){
+read_time(&start);
 
 #endif
 
 // Initialize solver variables
 int done = 0; // Flag used to determine when the algorithm should exit
-#ifdef CONF_MATLAB
-double k = 0.0; // Number of iterations. In the Matlab case it is easier if it is defined as a double
-#else
 int k = 0; // Number of iterations
-#endif
-double x0[nn]; // Current system state
-double xr[nn] = {0.0}; // State reference
-double ur[mm] = {0.0}; // Control input reference
+double x0[nn_]; // Current system state
+double xr[nn_] = {0.0}; // State reference
+double ur[mm_] = {0.0}; // Control input reference
 double primal[dim+n_s] = {0.0}; // Vector of primal decision variables primal = (z, s)
 double primal_ant[dim+n_s] = {0.0}; // Vector containing the value of primal at iteration k-1
 double primal_hat[dim+n_s] = {0.0}; // Vector of primal decision variables primal_hat = (z_hat, s_hat)
@@ -63,28 +62,28 @@ $INSERT_CONSTANTS$
 
 // Obtain variables in scaled units
 #if in_engineering == 1
-for(unsigned int i = 0; i < nn; i++){
-    x0[i] = scaling_x[i]*( pointer_x0[i] - OpPoint_x[i] );
-    xr[i] = scaling_x[i]*( pointer_xr[i] - OpPoint_x[i] );
+for(unsigned int i = 0; i < nn_; i++){
+    x0[i] = scaling_x[i]*( x0_in[i] - OpPoint_x[i] );
+    xr[i] = scaling_x[i]*( xr_in[i] - OpPoint_x[i] );
 }
-for(unsigned int i = 0; i < mm; i++){
-    ur[i] = scaling_u[i]*( pointer_ur[i] - OpPoint_u[i] );
+for(unsigned int i = 0; i < mm_; i++){
+    ur[i] = scaling_u[i]*( ur_in[i] - OpPoint_u[i] );
 }
 #endif
 #if in_engineering == 0
-for(unsigned int i = 0; i < nn; i++){
-    x0[i] = pointer_x0[i];
-    xr[i] = pointer_xr[i];
+for(unsigned int i = 0; i < nn_; i++){
+    x0[i] = x0_in[i];
+    xr[i] = xr_in[i];
 }
-for(unsigned int i = 0; i < mm; i++){
-    ur[i] = pointer_ur[i];
+for(unsigned int i = 0; i < mm_; i++){
+    ur[i] = ur_in[i];
 }
 #endif
 
-// Update first nn elements of bh
-for(unsigned int j = 0; j < nn; j++){
+// Update first nn_ elements of bh
+for(unsigned int j = 0; j < nn_; j++){
     bh[j] = 0.0;
-    for(unsigned int i = 0; i < nn; i++){
+    for(unsigned int i = 0; i < nn_; i++){
         bh[j] -= A[j][i]*x0[i];
     }
 }
@@ -92,44 +91,49 @@ for(unsigned int j = 0; j < nn; j++){
 // Introduce r into bh
 bh[n_eq-1] = *r_ellip;
 
-// Update the last nn elements of bh
-for(unsigned int j = 0; j < nn; j++){
+// Update the last nn_ elements of bh
+for(unsigned int j = 0; j < nn_; j++){
     bh[n_eq + 1 + j] = 0.0;
-    for(unsigned int i = 0; i < nn; i++){
+    for(unsigned int i = 0; i < nn_; i++){
         bh[n_eq + 1 + j] -= PhiP[j][i]*xr[i];
     }
 }
 
-// Update q: First mm elements
-for(unsigned int j = 0; j < mm; j++){
-    for(unsigned int i = 0; i < mm; i++){
+// Update q: First mm_ elements
+for(unsigned int j = 0; j < mm_; j++){
+    for(unsigned int i = 0; i < mm_; i++){
         q[j] += R[j][i]*ur[i];
     }
 }
 
-// Update q: All other elements except the last nn
-for(unsigned int k = 0; k < NN-1; k++){
+// Update q: All other elements except the last nn_
+for(unsigned int k = 0; k < NN_-1; k++){
     // Reference xr
-    for(unsigned int j = 0; j < nn; j++){
-        for(unsigned int i = 0; i < nn; i++){
-           q[mm+k*nm+j] += Q[j][i]*xr[i];
+    for(unsigned int j = 0; j < nn_; j++){
+        for(unsigned int i = 0; i < nn_; i++){
+           q[mm_+k*nm_+j] += Q[j][i]*xr[i];
         }
     }
     // Reference ur
-    for(unsigned int j = 0; j < mm; j++){
-        for(unsigned int i = 0; i < mm; i++){
-           q[nm+k*nm+j] += R[j][i]*ur[i];
+    for(unsigned int j = 0; j < mm_; j++){
+        for(unsigned int i = 0; i < mm_; i++){
+           q[nm_+k*nm_+j] += R[j][i]*ur[i];
         }
     }
 }
 
-// Update q: Last nn elements
-for(unsigned int j = 0; j < nn; j++){
-    for(unsigned int i = 0; i < nn; i++){
-        q[mm+(NN-1)*nm+j] += T[j][i]*xr[i];
+// Update q: Last nn_ elements
+for(unsigned int j = 0; j < nn_; j++){
+    for(unsigned int i = 0; i < nn_; i++){
+        q[mm_+(NN_-1)*nm_+j] += T[j][i]*xr[i];
     }
 }
 
+// Measure time
+#if MEASURE_TIME == 1
+read_time(&post_update);
+get_elapsed_time(&sol->update_time, &post_update, &start);
+#endif
 
 // Algorithm
 while(done == 0){
@@ -207,7 +211,7 @@ while(done == 0){
         z[j] = z_hat[j] + sigma_i*lambda[j];
     }
     // Upper and lower bounds
-    for(unsigned int j = 0; j < dim-nn-1; j++){
+    for(unsigned int j = 0; j < dim-nn_-1; j++){
         z[j] = (z[j] > LB[j]) ? z[j] : LB[j]; // maximum between v and the lower bound
         z[j] = (z[j] > UB[j]) ? UB[j] : z[j]; // minimum between v and the upper bound
     }
@@ -269,62 +273,38 @@ while(done == 0){
     
     if(res_flag == 0){
         done = 1;
-        #ifdef CONF_MATLAB
-        e_flag[0] = 1.0;
-        #else
         *e_flag = 1;
-        #endif
     }
     else if( k >= k_max ){
         done = 1;
-        #ifdef CONF_MATLAB
-        e_flag[0] = -1.0;
-        #else
         *e_flag = -1;
-        #endif
     }
 
 }
 
+// Measure time
+#if MEASURE_TIME == 1
+read_time(&post_solve);
+get_elapsed_time(&sol->solve_time, &post_solve, &post_update);
+#endif
+
 // Control action
 #if in_engineering == 1
-for(unsigned int j = 0; j < mm; j++){
+for(unsigned int j = 0; j < mm_; j++){
     u_opt[j] = z[j]*scaling_i_u[j] + OpPoint_u[j];
 }
 #endif
 #if in_engineering == 0
-for(unsigned int j = 0; j < mm; j++){
+for(unsigned int j = 0; j < mm_; j++){
     u_opt[j] = z[j];
 }
 #endif
 
 // Return number of iterations
-#ifdef CONF_MATLAB
-pointer_k[0] = k;
-#else
-*pointer_k = k;
-#endif
+*k_in = k;
 
 // Save solution into structure
 #ifdef DEBUG
-
-#ifdef CONF_MATLAB
-
-for(unsigned int j = 0; j < dim; j++){
-    z_opt[j] = z[j];
-    z_hat_opt[j] = z_hat[j];
-    lambda_opt[j] = lambda[j];
-}
-// for(unsigned int j = 0; j < n_eq+n_s; j++){
-    // z_opt[j] = rhs[j];
-// }
-for(unsigned int j = 0; j < n_s; j++){
-    s_opt[j] = s[j];
-    s_hat_opt[j] = s_hat[j];
-    mu_opt[j] = mu[j];
-}
-
-#else
 
 for(unsigned int j = 0; j < dim; j++){
     sol->z[j] = z[j];
@@ -339,7 +319,20 @@ for(unsigned int j = 0; j < n_s; j++){
 
 #endif
 
+// Measure time
+#if MEASURE_TIME == 1
+read_time(&post_polish);
+get_elapsed_time(&sol->polish_time, &post_polish, &post_solve);
+get_elapsed_time(&sol->run_time, &post_polish, &start);
 #endif
 
 }
+
+#if MEASURE_TIME == 1
+
+spcies_snippet_get_elapsed_time();
+
+spcies_snippet_read_time();
+
+#endif
 

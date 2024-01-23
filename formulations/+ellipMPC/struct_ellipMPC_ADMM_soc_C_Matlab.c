@@ -9,20 +9,14 @@ void mexFunction(int nlhs, mxArray *plhs[],
                  int nrhs, const mxArray *prhs[]){
 
     // Variable declaration
-
     double *x0; // Local x0
     double *xr; // Local xr
     double *ur; // Local ur
     double *r; // Size of the ellipsoid
     double *u_opt; // Local u_opt
-    double *k; // Local k
-    double *e_flag; // Local e_flag
-    double *z_opt; // Local z_opt
-    double *s_opt; // Local v_opt
-    double *z_hat_opt; // Local z_hat_opt
-    double *s_hat_opt; // Local v_hat_opt
-    double *lambda_opt; // Local lambda_opt
-    double *mu_opt; // Local mu_opt
+    int k; // Local k
+    int e_flag; // Local e_flag
+    sol_$C_CODE_NAME$ sol;
 
     // Check inputs and outputs
 
@@ -39,17 +33,17 @@ void mexFunction(int nlhs, mxArray *plhs[],
     }
 
     // Check that x0 is of the correct dimension
-    if( !mxIsDouble(prhs[0]) || mxGetNumberOfElements(prhs[0]) != nn ){
+    if( !mxIsDouble(prhs[0]) || mxGetNumberOfElements(prhs[0]) != nn_ ){
         mexErrMsgIdAndTxt("Spcies:ellipMPC:nrhs:x0",
                           "x0 must be of dimension nn");
     }
     // Check that xr is of the correct dimension
-    if( !mxIsDouble(prhs[1]) || mxGetNumberOfElements(prhs[1]) != nn ){
+    if( !mxIsDouble(prhs[1]) || mxGetNumberOfElements(prhs[1]) != nn_ ){
         mexErrMsgIdAndTxt("Spcies:ellipMPC:nrhs:xr",
                           "xr must be of dimension nn");
     }
     // Check that ur is of the correct dimension
-    if( !mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != mm ){
+    if( !mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != mm_ ){
         mexErrMsgIdAndTxt("Spcies:ellipMPC:nrhs:ur",
                           "ur must be of dimension mm");
     }
@@ -60,111 +54,86 @@ void mexFunction(int nlhs, mxArray *plhs[],
     }
 
     // Read input data
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    x0 = mxGetDoubles(prhs[0]);
-    #else
-    x0 = mxGetPr(prhs[0]);
-    #endif
-
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    xr = mxGetDoubles(prhs[1]);
-    #else
-    xr = mxGetPr(prhs[1]);
-    #endif
-
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    ur = mxGetDoubles(prhs[2]);
-    #else
-    ur = mxGetPr(prhs[2]);
-    #endif
-
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    r = mxGetDoubles(prhs[3]);
-    #else
-    r = mxGetPr(prhs[3]);
-    #endif
+    x0 = (double*) mxGetData(prhs[0]);
+    xr = (double*) mxGetData(prhs[1]);
+    ur = (double*) mxGetData(prhs[2]);
+    r = (double*) mxGetData(prhs[3]);
 
     // Prepare output data
-    plhs[0] = mxCreateDoubleMatrix(mm, 1, mxREAL); // u_opt
+    mxArray *z_pt, *z_hat_pt, *s_pt, *s_hat_pt, *lambda_pt, *mu_pt, *update_time_pt, *solve_time_pt, *polish_time_pt, *run_time_pt;
+    double *z_out, *z_hat_out, *s_out, *s_hat_out, *lambda_out, *mu_out, *update_time_out, *solve_time_out, *polish_time_out, *run_time_out, *k_out, *e_flag_out;
+
+    // Prepare output data
+    plhs[0] = mxCreateDoubleMatrix(mm_, 1, mxREAL); // u_opt
     plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL); // k
     plhs[2] = mxCreateDoubleMatrix(1, 1, mxREAL); // e_flag
 
-    const char *field_names[] = {"z", "s", "z_hat", "s_hat", "lambda", "mu"};
-    plhs[3] = mxCreateStructMatrix(1, 1, 6, field_names);
+    u_opt = (double*) mxGetData(plhs[0]);
+    k_out = (double*) mxGetData(plhs[1]);
+    e_flag_out = (double*) mxGetData(plhs[2]);
 
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    u_opt = mxGetDoubles(plhs[0]);
-    #else
-    u_opt = mxGetData(plhs[0]);
-    #endif
+    // Solution structure
+    const char *field_names[] = {"z", "z_hat", "s", "s_hat", "lambda", "mu","update_time", "solve_time", "polish_time", "run_time"};
+    plhs[3] = mxCreateStructMatrix(1, 1, 10, field_names);
 
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    k = mxGetDoubles(plhs[1]);
-    #else
-    k = mxGetData(plhs[1]);
-    #endif
+    z_pt = mxCreateDoubleMatrix(dim, 1, mxREAL);
+    z_hat_pt = mxCreateDoubleMatrix(dim, 1, mxREAL);
+    s_pt = mxCreateDoubleMatrix(n_s, 1, mxREAL);
+    s_hat_pt = mxCreateDoubleMatrix(n_s, 1, mxREAL);
+    lambda_pt = mxCreateDoubleMatrix(dim, 1, mxREAL);
+    mu_pt = mxCreateDoubleMatrix(n_s, 1, mxREAL);
+    update_time_pt = mxCreateDoubleMatrix(1, 1, mxREAL);
+    solve_time_pt = mxCreateDoubleMatrix(1, 1, mxREAL);
+    polish_time_pt = mxCreateDoubleMatrix(1, 1, mxREAL);
+    run_time_pt = mxCreateDoubleMatrix(1, 1, mxREAL);
 
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    e_flag = mxGetDoubles(plhs[2]);
-    #else
-    e_flag = mxGetData(plhs[2]);
-    #endif
+    z_out = (double*) mxGetData(z_pt);
+    z_hat_out = (double*) mxGetData(z_hat_pt);
+    s_out = (double*) mxGetData(s_pt);
+    s_hat_out = (double*) mxGetData(s_hat_pt);
+    lambda_out = (double*) mxGetData(lambda_pt);
+    mu_out = (double*) mxGetData(mu_pt);
+    update_time_out = (double*) mxGetData(update_time_pt);
+    solve_time_out = (double*) mxGetData(solve_time_pt);
+    polish_time_out = (double*) mxGetData(polish_time_pt);
+    run_time_out = (double*) mxGetData(run_time_pt);
 
-    mxArray *z, *s, *z_hat, *s_hat, *lambda, *mu;
-    z = mxCreateDoubleMatrix(dim, 1, mxREAL);
-    s = mxCreateDoubleMatrix(n_s, 1, mxREAL);
-    z_hat = mxCreateDoubleMatrix(dim, 1, mxREAL);
-    s_hat = mxCreateDoubleMatrix(n_s, 1, mxREAL);
-    lambda = mxCreateDoubleMatrix(dim, 1, mxREAL);
-    mu = mxCreateDoubleMatrix(n_s, 1, mxREAL);
-
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    z_opt = mxGetDoubles(z);
-    #else
-    z_opt = mxGetData(z);
-    #endif
-
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    s_opt = mxGetDoubles(s);
-    #else
-    s_opt = mxGetData(s);
-    #endif
-
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    z_hat_opt = mxGetDoubles(z_hat);
-    #else
-    z_hat_opt = mxGetData(z_hat);
-    #endif
-
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    s_hat_opt = mxGetDoubles(s_hat);
-    #else
-    s_hat_opt = mxGetData(s_hat);
-    #endif
-
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    lambda_opt = mxGetDoubles(lambda);
-    #else
-    lambda_opt = mxGetData(lambda);
-    #endif
-
-    #if MX_HAS_INTERLEAVED_COMPLEX
-    mu_opt = mxGetDoubles(mu);
-    #else
-    mu_opt = mxGetData(mu);
-    #endif
-
-    mxSetField(plhs[3], 0, "z", z);
-    mxSetField(plhs[3], 0, "s", s);
-    mxSetField(plhs[3], 0, "z_hat", z_hat);
-    mxSetField(plhs[3], 0, "s_hat", s_hat);
-    mxSetField(plhs[3], 0, "lambda", lambda);
-    mxSetField(plhs[3], 0, "mu", mu);
+    mxSetField(plhs[3], 0, "z", z_pt);
+    mxSetField(plhs[3], 0, "z_hat", z_hat_pt);
+    mxSetField(plhs[3], 0, "s", s_pt);
+    mxSetField(plhs[3], 0, "s_hat", s_hat_pt);
+    mxSetField(plhs[3], 0, "lambda", lambda_pt);
+    mxSetField(plhs[3], 0, "mu", mu_pt);
+    mxSetField(plhs[3], 0, "update_time", update_time_pt);
+    mxSetField(plhs[3], 0, "solve_time", solve_time_pt);
+    mxSetField(plhs[3], 0, "polish_time", polish_time_pt);
+    mxSetField(plhs[3], 0, "run_time", run_time_pt);
 
     // Call solver
-    ellipMPC_ADMM_soc(x0, xr, ur, r, u_opt, k, e_flag, z_opt, s_opt, z_hat_opt, s_hat_opt, lambda_opt, mu_opt);
+    ellipMPC_ADMM_soc(x0, xr, ur, r, u_opt, &k, &e_flag, &sol);
+
+    // Set output values
+    *k_out = (double) k;
+    *e_flag_out = (double) e_flag;
+    *update_time_out = sol.update_time;
+    *solve_time_out = sol.solve_time;
+    *polish_time_out = sol.polish_time;
+    *run_time_out = sol.run_time;
+
+    #ifdef DEBUG
+
+    for (unsigned int i = 0; i < dim; i++) {
+        z_out[i] = sol.z[i];
+        z_hat_out[i] = sol.z_hat[i];
+        lambda_out[i] = sol.lambda[i];
+    }
+    for (unsigned int i = 0; i < n_s; i++) {
+        s_out[i] = sol.s[i];
+        s_hat_out[i] = sol.s_hat[i];
+        mu_out[i] = sol.mu[i];
+    }
+
+    #endif
 
 }
-
-// This code is generated by the Spcies toolbox: https://github.com/GepocUS/Spcies
 
