@@ -12,12 +12,12 @@ $INSERT_DEFINES$
 #endif
 
 typedef struct {
-    double z[dim+n_s]; // Optimal z
-    double s[dim+n_s]; // Optimal s
-    double z_hat[dim+n_s]; // Optimal z_hat
-    double s_hat[dim+n_s]; // Optimal s_hat
-    double lambda[dim+n_s]; // Optimal lambda
-    double mu[dim+n_s]; // Optimal mu
+    double z[dim]; // Optimal z
+    double s[n_s]; // Optimal s
+    double z_hat[dim]; // Optimal z_hat
+    double s_hat[n_s]; // Optimal s_hat
+    double lambda[dim]; // Optimal lambda
+    double mu[n_s]; // Optimal mu
     double update_time; // Time taken for the update of the ingredients of the optimization solver
     double solve_time; // Time spent in solving the optimization problem
     double polish_time; // Time taken for extra stuff

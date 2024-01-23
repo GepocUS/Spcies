@@ -69,23 +69,23 @@ void mexFunction(int nlhs, mxArray *plhs[],
     const char *field_names[] = {"z", "z_hat", "s", "s_hat", "lambda", "mu","update_time", "solve_time", "polish_time", "run_time"};
     plhs[3] = mxCreateStructMatrix(1, 1, 10, field_names);
 
-    z_pt = mxCreateDoubleMatrix(dim+n_s, 1, mxREAL);
-    z_hat_pt = mxCreateDoubleMatrix(dim+n_s, 1, mxREAL);
-    s_pt = mxCreateDoubleMatrix(dim+n_s, 1, mxREAL);
-    s_hat_pt = mxCreateDoubleMatrix(dim+n_s, 1, mxREAL);
-    lambda_pt = mxCreateDoubleMatrix(dim+n_s, 1, mxREAL);
-    mu_pt = mxCreateDoubleMatrix(dim+n_s, 1, mxREAL);
+    z_pt = mxCreateDoubleMatrix(dim, 1, mxREAL);
+    z_hat_pt = mxCreateDoubleMatrix(dim, 1, mxREAL);
+    s_pt = mxCreateDoubleMatrix(n_s, 1, mxREAL);
+    s_hat_pt = mxCreateDoubleMatrix(n_s, 1, mxREAL);
+    lambda_pt = mxCreateDoubleMatrix(dim, 1, mxREAL);
+    mu_pt = mxCreateDoubleMatrix(n_s, 1, mxREAL);
     update_time_pt = mxCreateDoubleMatrix(1, 1, mxREAL);
     solve_time_pt = mxCreateDoubleMatrix(1, 1, mxREAL);
     polish_time_pt = mxCreateDoubleMatrix(1, 1, mxREAL);
     run_time_pt = mxCreateDoubleMatrix(1, 1, mxREAL);
 
     z_out = (double*) mxGetData(z_pt);
-    z_hat_out = (double*) mxGetData(z_pt);
+    z_hat_out = (double*) mxGetData(z_hat_pt);
     s_out = (double*) mxGetData(s_pt);
-    s_hat_out = (double*) mxGetData(s_pt);
+    s_hat_out = (double*) mxGetData(s_hat_pt);
     lambda_out = (double*) mxGetData(lambda_pt);
-    mu_out = (double*) mxGetData(lambda_pt);
+    mu_out = (double*) mxGetData(mu_pt);
     update_time_out = (double*) mxGetData(update_time_pt);
     solve_time_out = (double*) mxGetData(solve_time_pt);
     polish_time_out = (double*) mxGetData(polish_time_pt);
@@ -115,12 +115,14 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     #ifdef DEBUG
 
-    for (unsigned int i = 0; i < dim+n_s; i++) {
+    for (unsigned int i = 0; i < dim; i++) {
         z_out[i] = sol.z[i];
         z_hat_out[i] = sol.z_hat[i];
+        lambda_out[i] = sol.lambda[i];
+    }
+    for (unsigned int i = 0; i < n_s; i++) {
         s_out[i] = sol.s[i];
         s_hat_out[i] = sol.s_hat[i];
-        lambda_out[i] = sol.lambda[i];
         mu_out[i] = sol.mu[i];
     }
 
