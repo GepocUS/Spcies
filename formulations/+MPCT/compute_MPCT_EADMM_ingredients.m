@@ -72,7 +72,7 @@ function [vars, vars_nonsparse] = compute_MPCT_EADMM_ingredients(controller, opt
             UBu = options.inf_bound*ones(m, 1);
         end
     end
-    
+
     %% Extract or compute rho
     if isfield(options, 'rho')
         options.rho_base = options.rho;
@@ -137,8 +137,23 @@ function [vars, vars_nonsparse] = compute_MPCT_EADMM_ingredients(controller, opt
     W3 = Az3*inv(H3)*Az3';
     W3c = chol(W3);
     
-    % Ingredients with minimal memory consumption
-    H3i = 1./diag(H3);
+    % Save H3i to optimize algorithm efficiency 
+
+    % Detect if matrices Q and R are diagonal
+    if options.diag_QR && (isdiag(Q) && isdiag(R))
+        options.diag_QR = true;
+    else
+        options.diag_QR = false;
+    end
+
+    if options.diag_QR == true
+        H3i = 1./diag(H3);
+    else
+        Q_mult_inv = inv(Q + rho_mult*rho_base*eye(n));
+        R_mult_inv = inv(R + rho_mult*rho_base*eye(m));
+        Q_base_inv = inv(Q + rho_base*eye(n));
+        R_base_inv = inv(R + rho_base*eye(m));
+    end
        
     %% Warmstart
     
@@ -183,7 +198,17 @@ function [vars, vars_nonsparse] = compute_MPCT_EADMM_ingredients(controller, opt
     vars.n = n; % Dimension of state space
     vars.m = m; % Dimension of input space
     vars.H1i = reshape(H1i, m+n, N+1)'; % Inverse of diagonal of H1 in matrix form
-    vars.H3i = reshape(H3i, m+n, N+1)'; % Inverse of 
+    if options.diag_QR == true
+        vars.H3i = reshape(H3i, m+n, N+1)'; % Inverse of diagonal of H3 in matrix form
+    else
+        vars.Q_mult_inv = Q_mult_inv;
+        vars.Q_base_inv = Q_base_inv;
+        vars.R_mult_inv = R_mult_inv;
+        vars.R_base_inv = R_base_inv;
+        vars.AB_base_inv = [A B]*blkdiag(Q_base_inv, R_base_inv);
+        vars.AB_mult_inv = [A B]*blkdiag(Q_mult_inv, R_base_inv);
+    end
+
     vars.AB = [A B]; % Matrices of the system model
     vars.W2 = W2;
     vars.T = -T;

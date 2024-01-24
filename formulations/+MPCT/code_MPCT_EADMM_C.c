@@ -38,6 +38,9 @@ double ur[mm_] = {0.0}; // Control input reference
 double z1[NN_+1][nm_] = {{0.0}}; // Decision variable z1
 double z2[nm_] = {0.0}; // Decision variable z2
 double z3[NN_+1][nm_] = {{0.0}}; // Decision variable z3
+#ifndef DIAG_QR
+double z3_aux[NN_+1][nm_] = {{0.0}}; // Auxiliary vector for computing z3 when Q and R are non-diagonal
+#endif
 double z2_prev[nm_] = {0.0}; // Value of z2 in the previous iteration
 double z3_prev[NN_+1][nm_] = {{0.0}}; // Value of z3 in the previous iteration
 double lambda[NN_+3][nm_] = {{0.0}}; // Dual variables
@@ -167,8 +170,9 @@ while(done == 0){
         z3[NN_][j] = rho[NN_][j]*(z2[j] - z1[NN_][j]) + lambda[NN_+1][j];
     }
 
-    // Compute r.h.s of the Wc system of equations, i.e., -G3'*H3^(-1)*q3
+    // Compute r.h.s of the Wc system of equations, i.e., -G3*H3^(-1)*q3
     // I store it in mu to save a bit of memory
+    #if DIAG_QR == 1
     for(unsigned int l = 0; l < NN_; l++){
         for(unsigned int j = 0; j < nn_; j++){
             mu[l][j] = H3i[l+1][j]*z3[l+1][j];
@@ -177,6 +181,40 @@ while(done == 0){
             }
         }
     }
+    #else
+
+    // -eye(nn_) terms except the last one
+    for(unsigned int l = 0; l < NN_-1; l++){
+        for(unsigned int j = 0; j < nn_; j++){
+            mu[l][j] = 0.0;
+            for(unsigned int i = 0; i < nn_; i++){
+                mu[l][j] += Q_bi[j][i]*z3[l+1][i];
+            }
+        }
+    }
+    // Last -eye(nn_) term
+    for(unsigned int j = 0; j < nn_; j++){
+        mu[NN_-1][j] = 0.0;
+        for(unsigned int i = 0; i < nn_; i++){
+            mu[NN_-1][j] += Q_mi[j][i]*z3[NN_][i];
+        }
+    }
+    // AB terms for the first nn_ elements
+    for(unsigned int j = 0; j < nn_; j++){
+        for(unsigned int i = 0; i < nm_; i++){
+            mu[0][j] -= AB_mi[j][i]*z3[0][i];
+        }
+    }
+    // AB terms for all the other elements
+    for(unsigned int l = 1; l < NN_; l++){
+        for(unsigned int j = 0; j < nn_; j++){
+            for(unsigned int i = 0; i < nm_; i++){
+                mu[l][j] -= AB_bi[j][i]*z3[l][i];
+            }
+        }
+    }
+
+    #endif
 
     // Compute mu, the solution of the system of equations W*mu = -G3'*H3^(-1)*q3
 
@@ -255,7 +293,6 @@ while(done == 0){
         for(unsigned int i = 0; i <  nn_; i++){
             z3[0][j] = z3[0][j] + AB[i][j]*mu[0][i];
         }
-        z3[0][j] = -H3i[0][j]*z3[0][j];
     }
 
     // Compute all the other elements of z3 except for the last nm_
@@ -267,17 +304,66 @@ while(done == 0){
             for(unsigned int i = 0; i < nn_; i++){
                z3[l][j] = z3[l][j] + AB[i][j]*mu[l][i];
             }
-           z3[l][j] = -H3i[l][j]*z3[l][j];
         }
     }
 
     // Compute the last nm_ elements of z3
     for(unsigned int j = 0; j < nn_; j++){
-        z3[NN_][j] = H3i[NN_][j]*(mu[NN_-1][j] - z3[NN_][j]);
+        z3[NN_][j] =  z3[NN_][j] - mu[NN_-1][j];
     }
-    for(unsigned int j = nn_; j < nm_; j++){
-        z3[NN_][j] = -H3i[NN_][j]*z3[NN_][j];
+
+    #if DIAG_QR == 1
+    for(unsigned int l = 0; l < NN_+1; l++){
+        for(unsigned int j = 0; j < nm_; j++){
+            z3[l][j] = -H3i[l][j]*z3[l][j];
+        }
     }
+    #else
+
+    // Assign z3 to z3_aux
+    memcpy(z3_aux, z3, sizeof(double)*(NN_+1)*nm_);
+    // Assign zeros to z3
+    memset(z3, 0.0, sizeof(double)*(NN_+1)*nm_);
+
+    // Compute the first nm_ elements
+    for(unsigned int j = 0; j < nn_; j++){
+        for(unsigned int i = 0; i < nn_; i++){
+            z3[0][j] -= Q_mi[j][i]*z3_aux[0][i];
+        }
+    }
+    for(unsigned int j = 0; j < mm_; j++){
+        for(unsigned int i = 0; i < mm_; i++){
+            z3[0][j+nn_] -= R_bi[j][i]*z3_aux[0][i+nn_];
+        }
+    }
+
+    // Compute all other elements except the last nm_
+    for(unsigned int l = 1; l < NN_; l++){
+        for(unsigned int j = 0; j < nn_; j++){
+            for(unsigned int i = 0; i < nn_; i++){
+                z3[l][j] -= Q_bi[j][i]*z3_aux[l][i];
+            }
+        }
+        for(unsigned int j = 0; j < mm_; j++){
+            for(unsigned int i = 0; i < mm_; i++){
+                z3[l][j+nn_] -= R_bi[j][i]*z3_aux[l][i+nn_];
+            }
+        }
+    }
+
+    // Compute the last nm_ elements
+    for(unsigned int j = 0; j < nn_; j++){
+        for(unsigned int i = 0; i < nn_; i++){
+            z3[NN_][j] -= Q_mi[j][i]*z3_aux[NN_][i];
+        }
+    }
+    for(unsigned int j = 0; j < mm_; j++){
+        for(unsigned int i = 0; i < mm_; i++){
+            z3[NN_][j+nn_] -= R_mi[j][i]*z3_aux[NN_][i+nn_];
+        }
+    }
+
+    #endif
 
     //********** Residual and lambda **********//
 

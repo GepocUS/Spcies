@@ -59,6 +59,12 @@ function constructor = cons_MPCT_EADMM_C(recipe)
     
     %% Compute the ingredients of the controller
     vars = MPCT.compute_MPCT_EADMM_ingredients(recipe.controller, solver_options, recipe.options);
+    % Detect if Q and R are diagonal
+    if isfield(vars, 'H3i')
+        solver_options.diag_QR = true; 
+    else
+        solver_options.diag_QR = false; 
+    end
     
     %% Set save_name to formulation if none is provided
     if isempty(recipe.options.save_name)
@@ -97,6 +103,9 @@ function constructor = cons_MPCT_EADMM_C(recipe)
     if recipe.options.time
         defCell = add_line(defCell, 'MEASURE_TIME', 1, 1, 'bool', 'define');
     end
+    if solver_options.diag_QR
+        defCell = add_line(defCell, 'DIAG_QR', 1, 1, 'bool', 'define');
+    end
     
     % Constants
     constCell = [];
@@ -116,7 +125,16 @@ function constructor = cons_MPCT_EADMM_C(recipe)
     constCell = add_line(constCell, 'Beta', vars.Beta, 1, precision, var_options);
     constCell = add_line(constCell, 'H1i', vars.H1i, 1, precision, var_options);
     constCell = add_line(constCell, 'W2', vars.W2, 1, precision, var_options);
-    constCell = add_line(constCell, 'H3i', vars.H3i, 1, precision, var_options);
+    if solver_options.diag_QR
+        constCell = add_line(constCell, 'H3i', vars.H3i, 1, precision, var_options);
+    else
+        constCell = add_line(constCell, 'Q_bi', vars.Q_base_inv, 1, precision, var_options);
+        constCell = add_line(constCell, 'Q_mi', vars.Q_mult_inv, 1, precision, var_options);
+        constCell = add_line(constCell, 'R_bi', vars.R_base_inv, 1, precision, var_options);
+        constCell = add_line(constCell, 'R_mi', vars.R_mult_inv, 1, precision, var_options);
+        constCell = add_line(constCell, 'AB_bi', vars.AB_base_inv, 1, precision, var_options);
+        constCell = add_line(constCell, 'AB_mi', vars.AB_mult_inv, 1, precision, var_options);
+    end
     if solver_options.in_engineering
         constCell = add_line(constCell, 'scaling_x', vars.scaling_x, 1, precision, var_options);
         constCell = add_line(constCell, 'scaling_u', vars.scaling_u, 1, precision, var_options);

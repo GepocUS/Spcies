@@ -23,5 +23,6 @@ function def_options = def_options_MPCT_EADMM()
     def_options.k_max = 1000;
     def_options.in_engineering = false;
     def_options.debug = false;
+    def_options.diag_QR = true; % If true, then the solver is more efficient for diagonal Q and R
 
 end
