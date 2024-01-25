@@ -2,7 +2,7 @@
 
 #if WIN32
 void read_time(LARGE_INTEGER *current_time){
-    QueryPerformanceCounter(&current_time); // Get current time
+    QueryPerformanceCounter(current_time); // Get current time
 }
 #else // If Linux
 void read_time(struct timespec *current_time){

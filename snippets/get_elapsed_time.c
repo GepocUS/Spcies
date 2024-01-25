@@ -5,7 +5,6 @@ void get_elapsed_time(double *elapsed_time, LARGE_INTEGER *now, LARGE_INTEGER *b
     __int64 measured_time;
     LARGE_INTEGER frequency;
     QueryPerformanceFrequency(&frequency);
-    // QueryPerformanceCounter(&now); // Get current time
     measured_time = 1000000000ULL * (now->QuadPart - before->QuadPart) / frequency.QuadPart;
     *elapsed_time = measured_time/(double)1e+9;
 }
