@@ -22,24 +22,17 @@
 %                           - .Sh: Cost function matrix Sh.
 %                           - .N: Prediction horizon.
 %                           - .w: Base frequency.
-%       - solver_options: Structure containing options of the solver.
-%                         Default values provided in def_options_HMPC_SADMM.m
+%       - options: Instance of Spcies_options. Solver specific options are:
 %              - .sigma: Penalty parameter sigma. Scalar.
 %              - .rho: Penalty parameter rho. Scalar.
 %              - .alpha: Relaxation parameter of the SADMM algorithm.
 %              - .tol_p: Primal exit tolerance of the solver.
 %              - .tol_d: Dual exit tolerance of the solver.
 %              - .k_max: Maximum number of iterations of the solver.
-%              - .in_engineering: Boolean that determines if the arguments of the solver are given in
-%                                 engineering units (true) or incremental ones (false - default).
-%              - .debug: Boolean that determines if debugging options are enables in the solver.
-%                        Defaults to false.
 %              - sparse: Boolean that determines if the system os equations is solved using the sparse
 %                        LDL approach (if true) or the non-sparse approach (if false).
 %              - use_soc: Boolean that determines if the SOC constraints are grouped into the "diamond"
 %                         sets (if false) or if they are all considered (if true).
-%              - .const_are_static: Boolean that determines if constants are defined as static variables.
-%                                   Defaults to true.
 % 
 % OUTPUTS:
 %   - constructor: An instance of the Spcies_constructor class ready for file generation.

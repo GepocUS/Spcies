@@ -11,8 +11,7 @@
 %
 % INPUTS:
 %   - controller: Contains the information of the controller.
-%   - options: Structure containing options of the ADMM solver.
-%   - spcies_options: Structure containing the options of the toolbox.
+%   - opt: Structure containing options of the solver.
 % 
 % OUTPUTS:
 %   - vars: Structure containing the ingredients required by the solver.
@@ -20,7 +19,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 %
 
-function vars = compute_equMPC_ADMM_ingredients(controller, options, spcies_options)
+function vars = compute_equMPC_ADMM_ingredients(controller, opt)
 
     %% Extract from controller
     if isa(controller, 'EqualityMPC')
@@ -51,10 +50,10 @@ function vars = compute_equMPC_ADMM_ingredients(controller, options, spcies_opti
     end
     
     %% Turn rho into a vector
-    if isscalar(options.rho) && options.force_vector_rho
-        rho = options.rho*ones(N*(n+m) - n, 1);
+    if isscalar(opt.solver.rho) && opt.solver.force_vector_rho
+        rho = opt.solver.rho*ones(N*(n+m) - n, 1);
     else
-        rho = options.rho;
+        rho = opt.solver.rho;
     end
     if isscalar(rho)
         vars.rho_is_scalar = true;
@@ -86,7 +85,7 @@ function vars = compute_equMPC_ADMM_ingredients(controller, options, spcies_opti
     Aeq = Aeq(:,1:end-n);
     
     %% Compute matrix W
-    if ~options.time_varying
+    if ~opt.time_varying
         Hinv = inv(Hhat);
         W = Aeq*Hinv*Aeq';
         Wc = chol(W);
@@ -104,7 +103,7 @@ function vars = compute_equMPC_ADMM_ingredients(controller, options, spcies_opti
     vars.n = n;
     vars.m = m;
     vars.N = N;
-    if ~options.time_varying
+    if ~opt.time_varying
         vars.Hi_0 = diag(Hinv(1:m, 1:m));
         vars.Hi = reshape(diag(Hinv(m+(1:(N-1)*(n+m)),m+(1:(N-1)*(n+m)))), n+m, N-1)';
         vars.AB = [A B];
@@ -164,7 +163,7 @@ function vars = compute_equMPC_ADMM_ingredients(controller, options, spcies_opti
     vars.Beta = zeros(n,n,N);
     vars.Alpha = zeros(n,n,N-1);
 
-    if ~options.time_varying
+    if ~opt.time_varying
         for i = 1:N
             vars.Beta(:,:,i) = Wc((i-1)*n+(1:n),(i-1)*n+(1:n));
             for j = 1:n

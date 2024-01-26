@@ -7,8 +7,7 @@
 % 
 % INPUTS:
 %   - controller: Contains the information of the controller.
-%   - options: Structure containing options of the EADMM solver.
-%   - spcies_options: Structure containing the options of the toolbox.
+%   - opt: Structure containing options of the solver.
 % 
 % OUTPUTS:
 %   - vars: Structure containing the ingredients required by the solver.
@@ -16,7 +15,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function vars = compute_MPCT_ADMM_cs_ingredients(controller, options, spcies_options)
+function vars = compute_MPCT_ADMM_cs_ingredients(controller, opt)
 
     %% Extract from controller
     if isa(controller, 'TrackingMPC')
@@ -50,30 +49,30 @@ function vars = compute_MPCT_ADMM_cs_ingredients(controller, options, spcies_opt
         try
             LBx = controller.sys.LBx;
         catch
-            LBx = -options.inf_bound*ones(n, 1);
+            LBx = -opt.inf_value*ones(n, 1);
         end
         try
             UBx = controller.sys.UBx;
         catch
-            UBx = options.inf_bound*ones(n, 1);
+            UBx = opt.inf_value*ones(n, 1);
         end
         try
             LBu = controller.sys.LBu;
         catch
-            LBu = -options.inf_bound*ones(m, 1);
+            LBu = -opt.inf_value*ones(m, 1);
         end
         try
             UBu = controller.sys.UBu;
         catch
-            UBu = options.inf_bound*ones(m, 1);
+            UBu = opt.inf_value*ones(m, 1);
         end
     end
     
     %% Turn rho into a vector
-    if isscalar(options.rho) && options.force_vector_rho
-        rho = options.rho*ones(N*(n+m), 1);
+    if isscalar(opt.solver.rho) && opt.solver.force_vector_rho
+        rho = opt.solver.rho*ones(N*(n+m), 1);
     else
-        rho = options.rho;
+        rho = opt.solver.rho;
     end
     if isscalar(rho)
         vars.rho_is_scalar = true;
@@ -114,10 +113,10 @@ function vars = compute_MPCT_ADMM_cs_ingredients(controller, options, spcies_opt
     beq = zeros(2*n+(2*n+m)*(N-1)+n, 1);
     
     %% Compute upper and lower bounds
-    LBz = [LBx; LBx + options.epsilon_x*ones(n, 1)]; % z_j = [x_j; x_s];
-    UBz = [UBx; UBx - options.epsilon_x*ones(n, 1)];
-    LBv = [LBu; LBu + options.epsilon_u*ones(m, 1)]; % v_j = [u_j; u_s];
-    UBv = [UBu; UBu - options.epsilon_u*ones(m, 1)];
+    LBz = [LBx; LBx + opt.solver.epsilon_x*ones(n, 1)]; % z_j = [x_j; x_s];
+    UBz = [UBx; UBx - opt.solver.epsilon_x*ones(n, 1)];
+    LBv = [LBu; LBu + opt.solver.epsilon_u*ones(m, 1)]; % v_j = [u_j; u_s];
+    UBv = [UBu; UBu - opt.solver.epsilon_u*ones(m, 1)];
     
     LB = kron(ones(N, 1), [LBz; LBv]);
     UB = kron(ones(N, 1), [UBz; UBv]);

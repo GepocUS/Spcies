@@ -105,9 +105,7 @@ function [u, k, e_flag, Hist] = spcies_ellipMPC_ADMM_soc_solver(x0, xr, ur, vara
     else
         options = par.Results.options;
     end
-    
-    % Add default values
-    options = sp_utils.add_default_options_to_struct(options, def_options);
+    options = Spcies_options('formulation', 'ellipMPC', 'method', 'ADMM', 'options', options);
     
     % Create the controller structure
     if isempty(par.Results.controller)
@@ -126,16 +124,16 @@ function [u, k, e_flag, Hist] = spcies_ellipMPC_ADMM_soc_solver(x0, xr, ur, vara
     if verbose < 0; verbose = 0; end
     
     %% Generate ingredients of the solver
-    var = ellipMPC.compute_ellipMPC_ADMM_soc_ingredients(controller, options, []);
+    var = ellipMPC.compute_ellipMPC_ADMM_soc_ingredients(controller, options);
     N = var.N;
     n = var.n;
     m = var.m;
     dim = var.dim; % Number of decision variables
     n_eq = var.n_eq; % Number of constraints: equality + box + cone (a single cone is 3)
     n_s = var.n_s; % Number of rows of matrix C
-    k_max = options.k_max;
-    tol_p = options.tol_p;
-    tol_d = options.tol_d;
+    k_max = options.solver.k_max;
+    tol_p = options.solver.tol_p;
+    tol_d = options.solver.tol_d;
     
     %% Algorithm
     

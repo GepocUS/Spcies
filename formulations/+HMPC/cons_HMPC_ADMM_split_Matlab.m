@@ -20,13 +20,8 @@
 
 function constructor = cons_HMPC_ADMM_split_Matlab(recipe)
 
-    %% Add a name
-    if isempty(recipe.options.save_name)
-        recipe.options.save_name = recipe.options.formulation;
-    end
-
     %% Construct the C files
-    recipe_C = recipe;
+    recipe_C = recipe.copy();
     recipe_C.options.platform = 'C';
     recipe_C.options.directory = '$SPCIES$';
     recipe_C.options.override = true;

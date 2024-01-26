@@ -111,8 +111,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_EADMM_solver(x0, xr, ur, varargin)
     else
         options = par.Results.options;
     end
-    % Add default values
-    options = sp_utils.add_default_options_to_struct(options, def_options);
+    options = Spcies_options('formulation', 'MPCT', 'method', 'EADMM', 'options', options);
 
     % Create the controller structure
     if isempty(par.Results.controller)
@@ -134,7 +133,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_EADMM_solver(x0, xr, ur, varargin)
     if verbose < 0; verbose = 0; end
     
     %% Generate ingredients of the solver
-    [~, var] = compute_MPCT_EADMM_ingredients(controller, options, []);
+    [~, var] = compute_MPCT_EADMM_ingredients(controller, options);
     N = var.N;
     n = var.n;
     m = var.m;
@@ -153,15 +152,15 @@ function [u, k, e_flag, Hist] = spcies_MPCT_EADMM_solver(x0, xr, ur, varargin)
     
     % Historics
     if genHist > 0
-        hNRes_pf = zeros(1, options.k_max);
-        hNRes_z2 = zeros(1, options.k_max);
-        hNRes_z3 = zeros(1, options.k_max);
+        hNRes_pf = zeros(1, options.solver.k_max);
+        hNRes_z2 = zeros(1, options.solver.k_max);
+        hNRes_z3 = zeros(1, options.solver.k_max);
     end
     if genHist > 1
-        hZ1 = zeros((N+1)*(n+m), options.k_max);
-        hZ2 = zeros(m+n, options.k_max);
-        hZ3 = zeros((N+1)*(n+m), options.k_max);
-        hLambda = zeros((N+2)*(n+m) + n, options.k_max);
+        hZ1 = zeros((N+1)*(n+m), options.solver.k_max);
+        hZ2 = zeros(m+n, options.solver.k_max);
+        hZ3 = zeros((N+1)*(n+m), options.solver.k_max);
+        hLambda = zeros((N+2)*(n+m) + n, options.solver.k_max);
     end
     
     % Obtain x0, xr and ur
@@ -218,10 +217,10 @@ function [u, k, e_flag, Hist] = spcies_MPCT_EADMM_solver(x0, xr, ur, varargin)
         lambda = lambda + var.rho.*res_pf;
         
         %% Exit condition
-        if n_res_pf <= options.tol && n_res_z2 <= options.tol && n_res_z3 <= options.tol
+        if n_res_pf <= options.solver.tol && n_res_z2 <= options.solver.tol && n_res_z3 <= options.solver.tol
             done = true;
             e_flag = 1;
-        elseif k >= options.k_max
+        elseif k >= options.solver.k_max
             done = true;
             e_flag = -1;
         end

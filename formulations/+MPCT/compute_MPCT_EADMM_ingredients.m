@@ -10,8 +10,7 @@
 % 
 % INPUTS:
 %   - controller: Contains the information of the controller.
-%   - options: Structure containing options of the EADMM solver.
-%   - spcies_options: Structure containing the options of the toolbox.
+%   - opt: Structure containing options of the solver.
 % 
 % OUTPUTS:
 %   - vars: Structure containing the ingredients required by the solver.
@@ -20,7 +19,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function [vars, vars_nonsparse] = compute_MPCT_EADMM_ingredients(controller, options, spcies_options)
+function [vars, vars_nonsparse] = compute_MPCT_EADMM_ingredients(controller, opt)
 
     %% Extract from controller
     if isa(controller, 'TrackingMPC')
@@ -54,33 +53,33 @@ function [vars, vars_nonsparse] = compute_MPCT_EADMM_ingredients(controller, opt
         try
             LBx = controller.sys.LBx;
         catch
-            LBx = -options.inf_bound*ones(n, 1);
+            LBx = -opt.inf_value*ones(n, 1);
         end
         try
             UBx = controller.sys.UBx;
         catch
-            UBx = options.inf_bound*ones(n, 1);
+            UBx = opt.inf_value*ones(n, 1);
         end
         try
             LBu = controller.sys.LBu;
         catch
-            LBu = -options.inf_bound*ones(m, 1);
+            LBu = -opt.inf_value*ones(m, 1);
         end
         try
             UBu = controller.sys.UBu;
         catch
-            UBu = options.inf_bound*ones(m, 1);
+            UBu = opt.inf_value*ones(m, 1);
         end
     end
 
     %% Extract or compute rho
-    if isfield(options, 'rho')
-        options.rho_base = options.rho;
-        options.rho_mult = 1;
+    if isfield(opt.solver, 'rho')
+        opt.solver.rho_base = options.rho;
+        opt.solver.rho_mult = 1;
     end
 
-    rho_base = options.rho_base;
-    rho_mult = options.rho_mult;
+    rho_base = opt.solver.rho_base;
+    rho_mult = opt.solver.rho_mult;
     rho = rho_base*ones((N+1)*(n+m) + n + 1*(n+m), 1);
     % Penalize constraints related to x
     rho(1:n) = 1*rho_mult*rho_base; % Initial constraint: x_0 = x. (6b)
@@ -140,13 +139,13 @@ function [vars, vars_nonsparse] = compute_MPCT_EADMM_ingredients(controller, opt
     % Save H3i to optimize algorithm efficiency 
 
     % Detect if matrices Q and R are diagonal
-    if options.diag_QR && (isdiag(Q) && isdiag(R))
-        options.diag_QR = true;
+    if opt.force_diagonal && (isdiag(Q) && isdiag(R))
+        opt.force_diagonal = true;
     else
-        options.diag_QR = false;
+        opt.force_diagonal = false;
     end
 
-    if options.diag_QR == true
+    if opt.force_diagonal == true
         H3i = 1./diag(H3);
     else
         Q_mult_inv = inv(Q + rho_mult*rho_base*eye(n));
@@ -198,7 +197,7 @@ function [vars, vars_nonsparse] = compute_MPCT_EADMM_ingredients(controller, opt
     vars.n = n; % Dimension of state space
     vars.m = m; % Dimension of input space
     vars.H1i = reshape(H1i, m+n, N+1)'; % Inverse of diagonal of H1 in matrix form
-    if options.diag_QR == true
+    if opt.force_diagonal == true
         vars.H3i = reshape(H3i, m+n, N+1)'; % Inverse of diagonal of H3 in matrix form
     else
         vars.Q_mult_inv = Q_mult_inv;
@@ -214,15 +213,15 @@ function [vars, vars_nonsparse] = compute_MPCT_EADMM_ingredients(controller, opt
     vars.T = -T;
     vars.S = -S;
     vars.LB = [LBx; LBu];
-    vars.LB(isinf(vars.LB)) = -options.inf_bound;
+    vars.LB(isinf(vars.LB)) = -opt.inf_value;
     vars.UB = [UBx; UBu];
-    vars.UB(isinf(vars.UB)) = options.inf_bound;
-    vars.LBs = [LBx + options.epsilon_x*ones(n, 1); LBu + options.epsilon_u*ones(m, 1)];
-    vars.LBs(isinf(vars.LBs)) = -options.inf_bound;
-    vars.UBs = [UBx - options.epsilon_x*ones(n, 1); UBu - options.epsilon_u*ones(m, 1)];
-    vars.UBs(isinf(vars.UBs)) = options.inf_bound;
-    vars.LB0 = [-options.inf_bound*ones(n,1); LBu];
-    vars.UB0 = [options.inf_bound*ones(n,1); UBu];
+    vars.UB(isinf(vars.UB)) = opt.inf_value;
+    vars.LBs = [LBx + opt.solver.epsilon_x*ones(n, 1); LBu + opt.solver.epsilon_u*ones(m, 1)];
+    vars.LBs(isinf(vars.LBs)) = -opt.inf_value;
+    vars.UBs = [UBx - opt.solver.epsilon_x*ones(n, 1); UBu - opt.solver.epsilon_u*ones(m, 1)];
+    vars.UBs(isinf(vars.UBs)) = opt.inf_value;
+    vars.LB0 = [-opt.inf_value*ones(n,1); LBu];
+    vars.UB0 = [opt.inf_value*ones(n,1); UBu];
     
     % Penalty parameter
     vars.rho = reshape(rho(n+1:end-n-m), m+n, N+1)';

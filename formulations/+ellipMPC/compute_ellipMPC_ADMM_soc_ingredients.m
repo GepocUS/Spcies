@@ -12,8 +12,7 @@
 % 
 % INPUTS:
 %   - controller: Contains the information of the controller.
-%   - options: Structure containing options of the ADMM solver.
-%   - spcies_options: Structure containing the options of the toolbox.
+%   - opt: Structure containing options of the solver.
 % 
 % OUTPUTS:
 %   - vars: Structure containing the ingredients required by the solver.

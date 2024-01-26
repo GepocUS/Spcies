@@ -3,7 +3,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function exists = find_in_cell(value, cell_array)
+function [exists, indx] = find_in_cell(value, cell_array)
 
     if isa(value, 'char') || isa(value, 'string')
         indx = find(strcmp(value, cell_array));

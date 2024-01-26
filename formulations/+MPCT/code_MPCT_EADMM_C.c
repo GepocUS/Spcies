@@ -38,7 +38,7 @@ double ur[mm_] = {0.0}; // Control input reference
 double z1[NN_+1][nm_] = {{0.0}}; // Decision variable z1
 double z2[nm_] = {0.0}; // Decision variable z2
 double z3[NN_+1][nm_] = {{0.0}}; // Decision variable z3
-#ifndef DIAG_QR
+#ifndef IS_DIAG
 double z3_aux[NN_+1][nm_] = {{0.0}}; // Auxiliary vector for computing z3 when Q and R are non-diagonal
 #endif
 double z2_prev[nm_] = {0.0}; // Value of z2 in the previous iteration
@@ -172,7 +172,7 @@ while(done == 0){
 
     // Compute r.h.s of the Wc system of equations, i.e., -G3*H3^(-1)*q3
     // I store it in mu to save a bit of memory
-    #if DIAG_QR == 1
+    #if IS_DIAG == 1
     for(unsigned int l = 0; l < NN_; l++){
         for(unsigned int j = 0; j < nn_; j++){
             mu[l][j] = H3i[l+1][j]*z3[l+1][j];
@@ -312,7 +312,7 @@ while(done == 0){
         z3[NN_][j] =  z3[NN_][j] - mu[NN_-1][j];
     }
 
-    #if DIAG_QR == 1
+    #if IS_DIAG == 1
     for(unsigned int l = 0; l < NN_+1; l++){
         for(unsigned int j = 0; j < nm_; j++){
             z3[l][j] = -H3i[l][j]*z3[l][j];

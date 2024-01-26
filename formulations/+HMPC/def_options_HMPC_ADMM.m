@@ -12,21 +12,21 @@
 % Pablo Krupa, Daniel Limon, Alberto Bemporad, Teodoro Alamo, "Efficiently
 % solving the hamonic model predictive control formulation", arXiv: 2202.06629, 2022.
 %
+% INPUT:
+%   - submethod: string containing the submethod name (can be used for returning different default values)
 % OUTPUT:
 %   - def_options: Structure containing the default options of the solver.
 %
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function def_options = def_options_HMPC_ADMM()
+function def_options = def_options_HMPC_ADMM(submethod)
     
     def_options.rho = 1e-2;
     def_options.sigma = 1e-2;
     def_options.tol_p = 1e-4;
     def_options.tol_d = 1e-4;
     def_options.k_max = 1000;
-    def_options.in_engineering = false;
-    def_options.debug = true;
     def_options.box_constraints = [];
     def_options.sparse = false;
     def_options.use_soc = false;

@@ -26,24 +26,17 @@
 %                           - .Sh: Cost function matrix Sh.
 %                           - .N: Prediction horizon.
 %                           - .w: Base frequency.
-%       - solver_options: Structure containing options of the solver.
-%                         Default values provided in def_options_HMPC_SADMM.m
+%       - options: Instance of Spcies_options. Solver specific options are:
 %              - .sigma: Penalty parameter sigma. Scalar.
 %              - .rho: Penalty parameter rho. Scalar.
 %              - .alpha: Relaxation parameter of the SADMM algorithm.
 %              - .tol_p: Primal exit tolerance of the solver.
 %              - .tol_d: Dual exit tolerance of the solver.
 %              - .k_max: Maximum number of iterations of the solver.
-%              - .in_engineering: Boolean that determines if the arguments of the solver are given in
-%                                 engineering units (true) or incremental ones (false - default).
-%              - .debug: Boolean that determines if debugging options are enables in the solver.
-%                        Defaults to false.
 %              - sparse: Boolean that determines if the system os equations is solved using the sparse
 %                        LDL approach (if true) or the non-sparse approach (if false).
 %              - use_soc: Boolean that determines if the SOC constraints are grouped into the "diamond"
 %                         sets (if false) or if they are all considered (if true).
-%              - .const_are_static: Boolean that determines if constants are defined as static variables.
-%                                   Defaults to true.
 % 
 % OUTPUTS:
 %   - constructor: An instance of the Spcies_constructor class ready for file generation.
@@ -59,13 +52,6 @@ function constructor = cons_HMPC_ADMM_C(recipe)
     % Get path to this directory
     full_path = mfilename('fullpath');
     this_path = fileparts(full_path);
-
-    %% Default solver options
-    def_solver_options = HMPC.def_options_HMPC_ADMM();
-    
-    % Fill recipe.solver_options with the defaults
-    solver_options = sp_utils.add_default_options_to_struct(recipe.solver_options, def_solver_options);
-    recipe.solver_options = solver_options;
     
     %% Determine which solver to use: box-constrained or coupled-inputs
     if isempty(recipe.solver_options.box_constraints)
@@ -77,13 +63,8 @@ function constructor = cons_HMPC_ADMM_C(recipe)
     end
     
     %% Compute the ingredients of the controller
-    vars = HMPC.compute_HMPC_ADMM_ingredients(recipe.controller, solver_options, recipe.options);
+    vars = HMPC.compute_HMPC_ADMM_ingredients(recipe.controller, recipe.options);
     
-    %% Set save_name to formulation if none is provided
-    if isempty(recipe.options.save_name)
-        recipe.options.save_name = recipe.options.formulation;
-    end
-
     %% Rename variables for convenience
     n = vars.n;
     m = vars.m;
@@ -104,14 +85,13 @@ function constructor = cons_HMPC_ADMM_C(recipe)
         var_options_penalty = {'constant'};
     end
     
-    
     % Determine if float or double variables are used
     precision = recipe.options.precision;
     
     %% Create vars cell matrix: Name, value, initialize, type(int, float, etc), class(variable, constant, define, etc)
     
     % Defines
-    defCell = [];
+    defCell = recipe.options.default_defCell();
     defCell = add_line(defCell, 'nn_', n, 1, 'uint', 'define');
     defCell = add_line(defCell, 'mm_', m, 1, 'uint', 'define');
     defCell = add_line(defCell, 'nm_', n+m, 1, 'uint', 'define');
@@ -125,18 +105,11 @@ function constructor = cons_HMPC_ADMM_C(recipe)
     defCell = add_line(defCell, 'nrow_C', vars.C_CSR.nrow, 1, 'uint', 'define');
     defCell = add_line(defCell, 'nrow_Ct', vars.Ct_CSR.nrow, 1, 'uint', 'define');
     
-    defCell = add_line(defCell, 'k_max', solver_options.k_max, 1, 'uint', 'define');
-    defCell = add_line(defCell, 'tol_p', solver_options.tol_p, 1, precision, 'define');
-    defCell = add_line(defCell, 'tol_d', solver_options.tol_d, 1, precision, 'define');
-    defCell = add_line(defCell, 'in_engineering', solver_options.in_engineering, 1, 'bool', 'define');
-    if solver_options.debug
-        defCell = add_line(defCell, 'DEBUG', 1, 1, 'bool', 'define');
-    end
-    if recipe.options.time
-        defCell = add_line(defCell, 'MEASURE_TIME', 1, 1, 'bool', 'define');
-    end
+    defCell = add_line(defCell, 'k_max', recipe.options.solver.k_max, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'tol_p', recipe.options.solver.tol_p, 1, precision, 'define');
+    defCell = add_line(defCell, 'tol_d', recipe.options.solver.tol_d, 1, precision, 'define');
     if strcmp(solver_options.method, 'SADMM')
-        defCell = add_line(defCell, 'alpha_SADMM', solver_options.alpha, 1, precision, 'define');
+        defCell = add_line(defCell, 'alpha_SADMM', recipe.options.solver.alpha, 1, precision, 'define');
         defCell = add_line(defCell, 'IS_SYMMETRIC', 1, 1, precision, 'define');
     end
     if solver_options.use_soc
@@ -165,14 +138,14 @@ function constructor = cons_HMPC_ADMM_C(recipe)
     constCell = add_line(constCell, 'UB', vars.UB, 1, precision, var_options);
     constCell = add_line(constCell, 'LBy', vars.LBy, 1, precision, var_options);
     constCell = add_line(constCell, 'UBy', vars.UBy, 1, precision, var_options);
-    if solver_options.use_soc
+    if recipe.options.solver.use_soc
         constCell = add_line(constCell, 'd', vars.d, 1, precision, var_options);
     end
 
     constCell = add_line(constCell, 'M1', vars.M1, 1, precision, var_options);
     constCell = add_line(constCell, 'M2', vars.M2, 1, precision, var_options);
            
-    if solver_options.in_engineering
+    if recipe.options.in_engineering
         constCell = add_line(constCell, 'scaling_x', vars.scaling_x, 1, precision, var_options);
         constCell = add_line(constCell, 'scaling_u', vars.scaling_u, 1, precision, var_options);
         constCell = add_line(constCell, 'scaling_i_u', vars.scaling_i_u, 1, precision, var_options);

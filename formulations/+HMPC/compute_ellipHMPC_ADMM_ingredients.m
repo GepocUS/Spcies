@@ -9,8 +9,7 @@
 % 
 % INPUTS:
 %   - controller: Contains the information of the controller.
-%   - options: Structure containing options of the ADMM solver.
-%   - spcies_options: Structure containing the options of the toolbox.
+%   - opt: Structure containing options of the solver.
 % 
 % OUTPUTS:
 %   - vars: Structure containing the ingredients required by the solver
@@ -18,7 +17,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 %
 
-function var = compute_ellipHMPC_ADMM_ingredients(controller, options, spcies_options)
+function var = compute_ellipHMPC_ADMM_ingredients(controller, opt)
 
     %% Extract from controller
     
@@ -146,7 +145,7 @@ function var = compute_ellipHMPC_ADMM_ingredients(controller, options, spcies_op
     
     %% Cone constraints
         
-    if options.use_soc
+    if opt.solver.use_soc
 
         C_aux = [];
         dsoc = [];
@@ -180,7 +179,7 @@ function var = compute_ellipHMPC_ADMM_ingredients(controller, options, spcies_op
     n_s = size(C, 1); % Dimension of s
     
     %% Solver ingredients
-    Hh = H + options.rho*(C'*C);
+    Hh = H + opt.solver.rho*(C'*C);
     
     % Matrices for solving the system of equations sparsely
     M = [Hh, G'; G, zeros(n_eq)];
@@ -200,8 +199,8 @@ function var = compute_ellipHMPC_ADMM_ingredients(controller, options, spcies_op
     M2 = Hhi*G'*inv(W);
     M2 = M2(:, 1:n);
     
-    if strcmp(options.method, 'ADMM')
-        options.alpha = 1;
+    if strcmp(opt.method, 'ADMM')
+        opt.solver.alpha = 1;
     end
     
     %% Return variables for the solver
@@ -224,8 +223,8 @@ function var = compute_ellipHMPC_ADMM_ingredients(controller, options, spcies_op
     var.A = A;
     var.LB = LB;
     var.UB = UB;
-    var.LBy = LBy + options.sigma*ones(length(LBy), 1);
-    var.UBy = UBy - options.sigma*ones(length(LBy), 1);
+    var.LBy = LBy + opt.solver.sigma*ones(length(LBy), 1);
+    var.UBy = UBy - opt.solver.sigma*ones(length(LBy), 1);
     var.E = E;
     var.F = F;
     
@@ -253,11 +252,11 @@ function var = compute_ellipHMPC_ADMM_ingredients(controller, options, spcies_op
     var.M1 = M1;
     var.M2 = M2(:, 1:n);
     
-    var.rho = options.rho; % Penalty parameter rho
-    var.rho_i = 1/options.rho;
-    var.k_max = options.k_max; % Maximum number of iterations
-    var.tol_p = options.tol_p; % Absolute tolerance
-    var.tol_d = options.tol_d; % Relative tolerance
+    var.rho = opt.solver.rho; % Penalty parameter rho
+    var.rho_i = 1/opt.solver.rho;
+    var.k_max = opt.solver.k_max; % Maximum number of iterations
+    var.tol_p = opt.solver.tol_p; % Absolute tolerance
+    var.tol_d = opt.solver.tol_d; % Relative tolerance
     
     % Scaling vectors and operating point
     if isfield(controller.sys, 'Nx')

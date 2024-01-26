@@ -9,8 +9,7 @@
 %
 % INPUTS:
 %   - controller: Contains the information of the controller.
-%   - options: Structure containing options of the EADMM solver.
-%   - spcies_options: Structure containing the options of the toolbox.
+%   - opt: Structure containing options of the solver.
 % 
 % OUTPUTS:
 %   - vars: Structure containing the ingredients required by the solver.
@@ -18,7 +17,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, options, spcies_options)
+function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
 
     %% Extract from controller
     if isa(controller, 'TrackingMPC')
@@ -57,25 +56,25 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, options, sp
         try
             UBx = controller.sys.UBx;
         catch
-            UBx = options.inf_bound*ones(n, 1);
+            UBx = opt.inf_value*ones(n, 1);
         end
         try
             LBu = controller.sys.LBu;
         catch
-            LBu = -options.inf_bound*ones(m, 1);
+            LBu = -opt.inf_value*ones(m, 1);
         end
         try
             UBu = controller.sys.UBu;
         catch
-            UBu = options.inf_bound*ones(m, 1);
+            UBu = opt.inf_value*ones(m, 1);
         end
     end
 
     %% Turn rho into a vector
-    if isscalar(options.rho) && options.force_vector_rho
-        rho = options.rho*ones((N+1)*(n+m), 1);
+    if isscalar(opt.solver.rho) && opt.solver.force_vector_rho
+        rho = opt.solver.rho*ones((N+1)*(n+m), 1);
     else
-        rho = options.rho;
+        rho = opt.solver.rho;
     end
     if isscalar(rho)
         vars.rho_is_scalar = true;
@@ -269,7 +268,7 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, options, sp
     end
 
     % Passing the inverse of the diagonal of Beta's so that we multiply by them instead
-    % of divinding. Used in solve_banded_Chol() function in C
+    % of dividing. Used in solve_banded_Chol() function in C
     for i = 1 : n 
         vars.Beta(i,i,:) = 1/vars.Beta(i,i,:);
     end

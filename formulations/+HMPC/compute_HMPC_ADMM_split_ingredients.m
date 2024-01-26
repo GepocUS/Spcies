@@ -10,8 +10,7 @@
 % 
 % INPUTS:
 %   - controller: Contains the information of the controller.
-%   - options: Structure containing options of the ADMM solver.
-%   - spcies_options: Structure containing the options of the toolbox.
+%   - opt: Structure containing options of the solver.
 % 
 % OUTPUTS:
 %   - vars: Structure containing the ingredients required by the solver
@@ -19,7 +18,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 %
 
-function var = compute_HMPC_ADMM_split_ingredients(controller, options, spcies_options)
+function var = compute_HMPC_ADMM_split_ingredients(controller, opt)
 
     %% Extract from controller
     
@@ -33,7 +32,7 @@ function var = compute_HMPC_ADMM_split_ingredients(controller, options, spcies_o
     n = size(A, 1);
     m = size(B, 2);
     % Constraints
-    if ~options.box_constraints
+    if ~opt.solver.box_constraints
         if isa(controller.sys, 'ssModel')
             E = controller.sys.Cc;
             F = controller.sys.Dcu;
@@ -145,9 +144,9 @@ function var = compute_HMPC_ADMM_split_ingredients(controller, options, spcies_o
     b = [-A*zeros(n, 1); zeros(n*(N+2), 1)];
     
     %% Cone constraints
-    if ~options.box_constraints
+    if ~opt.solver.box_constraints
         
-        if options.use_soc
+        if opt.solver.use_soc
             
             C_aux = [];
             dsoc = [];
@@ -177,7 +176,7 @@ function var = compute_HMPC_ADMM_split_ingredients(controller, options, spcies_o
         
     else
         
-        if options.use_soc
+        if opt.solver.use_soc
             
             C_aux = [];
             dsoc = [];
@@ -219,7 +218,7 @@ function var = compute_HMPC_ADMM_split_ingredients(controller, options, spcies_o
     n_s = size(C, 1); % Dimension of s
     
     %% Solver ingredients
-    Hh = blkdiag(H + options.sigma*eye(dim), options.rho*eye(n_s));
+    Hh = blkdiag(H + opt.solver.sigma*eye(dim), opt.solver.rho*eye(n_s));
     Gh = [G, zeros(n_eq, n_s); C, eye(n_s)];
     bh = [b; d];
     
@@ -274,7 +273,7 @@ function var = compute_HMPC_ADMM_split_ingredients(controller, options, spcies_o
     var.C = C; % Matrices for the cone constraints: relate x to s
     var.d = d;
     var.Gh = Gh; % Ao = [A 0; C I]
-    if options.sparse
+    if opt.solver.sparse
         aux = Pldl'*[zeros(dim+n_s, 1); bh];
         var.bh = aux(dim+n_s+1:end);
     else
@@ -288,13 +287,13 @@ function var = compute_HMPC_ADMM_split_ingredients(controller, options, spcies_o
     var.M1 = M1;
     var.M2 = M2;
     
-    var.rho = options.rho; % Penalty parameter rho
-    var.rho_i = 1/options.rho;
-    var.sigma = options.sigma; % Penalty parameter sigma
-    var.sigma_i = 1/options.sigma;
-    var.k_max = options.k_max; % Maximum number of iterations
-    var.tol_p = options.tol_p; % Absolute tolerance
-    var.tol_d = options.tol_d; % Relative tolerance
+    var.rho = opt.solver.rho; % Penalty parameter rho
+    var.rho_i = 1/opt.solver.rho;
+    var.sigma = opt.solver.sigma; % Penalty parameter sigma
+    var.sigma_i = 1/opt.solver.sigma;
+    var.k_max = opt.solver.k_max; % Maximum number of iterations
+    var.tol_p = opt.solver.tol_p; % Absolute tolerance
+    var.tol_d = opt.solver.tol_d; % Relative tolerance
     
     % Scaling vectors and operating point
     if isfield(controller.sys, 'Nx')

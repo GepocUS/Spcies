@@ -70,39 +70,42 @@
 % 
 
 function spcies_gen_controller(varargin)
-    %% Get default methods and submethod
-    [~, def_method, def_submethod] = sp_utils.default_options;
-    formulation_names = fieldnames(def_method);
+
+    %% Process varargin
+
+    % Extract 'sys' and 'param' from varargin
+    [is_sys, indx_sys] = sp_utils.find_in_cell('sys', varargin);
+    if ~is_sys
+        error("spcies_gen_controller: a 'sys' structure must be provided");
+    else
+        sys = varargin(indx_sys+1);
+        sys = sys{:};
+        varargin([indx_sys, indx_sys+1]) = []; % Remove 'sys' from varargin
+    end
+
+    [is_param, indx_param] = sp_utils.find_in_cell('param', varargin);
+    if ~is_sys
+        error("spcies_gen_controller: a 'param' structure must be provided");
+    else
+        param = varargin(indx_param+1);
+        param = param{:};
+        varargin([indx_param, indx_param+1]) = []; % Remove 'sys' from varargin
+    end
+
+    % Generate options
+    options = Spcies_options(varargin{:});
     
     %% Import m files from ./formulations/*
-    to_import = strcat(formulation_names, '.*');
+    to_import = strcat(Spcies_options.valid_formulation, '.*');
     import(to_import{:})
     import personal.*
     
     %% Instantiate the Spcies_problem object
-    recipe = Spcies_problem(varargin{:});
+    recipe = Spcies_problem(sys, param, options);
     
     %% A formulation must be given
     if isempty(recipe.options.formulation)
         error('Spcies:input_error:no_formulation', 'The formulation field of options is empty. I do not know what to create.');
-    end
-    
-    %% Determine formulation, method and submethod fields
-    
-        % Method
-    if isempty(recipe.options.method)
-        recipe.options.method = def_method.(recipe.options.formulation);
-    end
-    
-        % Submethod
-    if isempty(recipe.options.submethod) && ~isempty(recipe.options.method)
-        try
-            recipe.options.submethod = def_submethod.(recipe.options.formulation).(recipe.options.method);
-        catch ME
-            if (strcmp(ME.identifier, 'MATLAB:UndefinedFunction'))
-                recipe.options.submethod = '';
-            end
-        end            
     end
     
     %% Determine name of constructor function
@@ -130,3 +133,4 @@ function spcies_gen_controller(varargin)
     constructor.construct(recipe.options);
 
 end
+

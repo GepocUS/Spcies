@@ -83,12 +83,12 @@ R = 0.1*eye(m);
 N = 10;
 paramMPC = struct('Q', Q, 'R', R, 'T', T, 'N', N);
 
-solver_options.rho = 1; % Value of the penalty parameter of the ADMM algorithm
-solver_options.k_max = 3000; % Maximum number of iterations of the solver
-solver_options.tol = 1e-5; % Exit tolerance of the solver
+options.rho = 1; % Value of the penalty parameter of the ADMM algorithm
+options.k_max = 3000; % Maximum number of iterations of the solver
+options.tol = 1e-5; % Exit tolerance of the solver
 
 spcies('clear');
-spcies('gen', 'sys', sys, 'param', paramMPC, 'solver_options', solver_options,...
+spcies('gen', 'sys', sys, 'param', paramMPC,...
        'platform', 'Matlab', 'formulation', 'laxMPC');
 
 % And then control the "real" system using the discrete-time model contained in sys.
@@ -207,8 +207,8 @@ paramMPC = struct('Q', Q, 'R', R, 'T', T, 'N', N);
 % Finally, we regenerate the LaxMPC controller to use the new "scaled" system.
 % IMPORTANT: We need to tell Spcies that we want it to generate a solver whose inputs and outputs are
 % provided/returned in "engineering" units. To do so, we need to set the "in_engineering" solver options to true.
-solver_options.in_engineering = true;
-spcies_gen_controller('sys', sysN, 'param', paramMPC, 'solver_options', solver_options,...
+options.in_engineering = true;
+spcies_gen_controller('sys', sysN, 'param', paramMPC, 'options', options,...
                       'platform', 'Matlab', 'formulation', 'laxMPC', 'save_name', 'laxMPC_scaled');
 
 % We can now rerun the closed-loop simulation
@@ -222,7 +222,7 @@ X = X0; % Set the state of the "real" system to its initial state
 for i = 1:num_iter
 
     % Call the laxMPC solver.
-    % Note that, since we set solver_options.in_engineering = true, the solver function
+    % Note that, since we set options.in_engineering = true, the solver function
     % receives the system state and reference in "engineering" units and also returns
     % the control input in these units, so we don't need to manually make the transformation.
     [U, hK(i), hE(i), info] = laxMPC_scaled(X, Xr, Ur);

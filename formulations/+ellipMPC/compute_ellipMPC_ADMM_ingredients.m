@@ -9,8 +9,7 @@
 % 
 % INPUTS:
 %   - controller: Contains the information of the controller.
-%   - options: Structure containing options of the EADMM solver.
-%   - spcies_options: Structure containing the options of the toolbox.
+%   - opt: Structure containing options of the solver.
 % 
 % OUTPUTS:
 %   - vars: Structure containing the ingredients required by the solver
@@ -19,7 +18,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 %
 
-function [vars, vars_nonsparse] = compute_ellipMPC_ADMM_ingredients(controller, options, spcies_options)
+function [vars, vars_nonsparse] = compute_ellipMPC_ADMM_ingredients(controller, opt)
 
     %% Extract from controller
     if isa(controller, 'ellipMPC')
@@ -66,10 +65,10 @@ function [vars, vars_nonsparse] = compute_ellipMPC_ADMM_ingredients(controller, 
     end
     
     %% Turn rho into a vector
-    if isscalar(options.rho) && options.force_vector_rho
+    if isscalar(opt.solver.rho) && opt.solver.force_vector_rho
         rho = options.rho*ones(N*(n+m), 1);
     else
-        rho = options.rho;
+        rho = opt.solver.rho;
     end
     if isscalar(rho)
         vars.rho_is_scalar = true;

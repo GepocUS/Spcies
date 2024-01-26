@@ -21,17 +21,17 @@ clear; clc;
 
 %% STEP 2: Generate the solver in plain C
 
-% Select the solver options
-solver_options.rho = 15; % Value of the penalty parameter of the ADMM algorithm
-solver_options.k_max = 5000; % Maximum number of iterations of the solver
-solver_options.tol = 1e-3; % Exit tolerance of the solver
+% Select the options
+options.rho = 15; % Value of the penalty parameter of the ADMM algorithm
+options.k_max = 5000; % Maximum number of iterations of the solver
+options.tol = 1e-3; % Exit tolerance of the solver
 
 options.save_name = 'myMPCsolver';
 options.directory = './cl_in_C/'; % We save the solver in the directory were we have the main()
 options.time = true;
 
 % Generate the solver (note that we select the 'platform' as 'C')
-spcies('gen', 'sys', sys, 'param', paramMPC, 'solver_options', solver_options,...
+spcies('gen', 'sys', sys, 'param', paramMPC,...
        'options', options, 'platform', 'C', 'formulation', 'laxMPC');
 
 %% STEP 3: Use the generated solver

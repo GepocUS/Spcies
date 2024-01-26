@@ -14,8 +14,7 @@
 % 
 % INPUTS:
 %   - controller: Contains the information of the controller.
-%   - options: Structure containing options of the SADMM solver.
-%   - spcies_options: Structure containing the options of the toolbox.
+%   - opt: Structure containing options of the solver.
 % 
 % OUTPUTS:
 %   - vars: Structure containing the ingredients required by the solver
@@ -23,7 +22,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 %
 
-function var = compute_HMPC_ADMM_ingredients(controller, options, spcies_options)
+function var = compute_HMPC_ADMM_ingredients(controller, opt)
 
     %% Extract from controller
     
@@ -37,7 +36,7 @@ function var = compute_HMPC_ADMM_ingredients(controller, options, spcies_options
     n = size(A, 1);
     m = size(B, 2);
     % Constraints
-    if ~options.box_constraints
+    if ~opt.solver.box_constraints
         if isa(controller.sys, 'ssModel')
             E = controller.sys.Cc;
             F = controller.sys.Dcu;
@@ -153,9 +152,9 @@ function var = compute_HMPC_ADMM_ingredients(controller, options, spcies_options
     b = [-A*zeros(n, 1); zeros(n*(N+2), 1)];
     
     %% Cone constraints
-    if ~options.box_constraints
+    if ~opt.solver.box_constraints
         
-        if options.use_soc
+        if opt.solver.use_soc
             
             C_aux = [];
             dsoc = [];
@@ -188,7 +187,7 @@ function var = compute_HMPC_ADMM_ingredients(controller, options, spcies_options
         
     else
         
-        if options.use_soc
+        if opt.solver.use_soc
             
             C_aux = [];
             dsoc = [];
@@ -234,7 +233,7 @@ function var = compute_HMPC_ADMM_ingredients(controller, options, spcies_options
     n_s = size(C, 1); % Dimension of s
     
     %% Solver ingredients
-    Hh = H + options.rho*(C'*C);
+    Hh = H + opt.solver.rho*(C'*C);
     
     % Matrices for solving the system of equations sparsely
     M = [Hh, G'; G, zeros(n_eq)];
@@ -254,8 +253,8 @@ function var = compute_HMPC_ADMM_ingredients(controller, options, spcies_options
     M2 = Hhi*G'*inv(W);
     M2 = M2(:, 1:n);
     
-    if strcmp(options.method, 'ADMM')
-        options.alpha = 1;
+    if strcmp(opt.method, 'ADMM')
+        opt.solver.alpha = 1;
     end
     
     %% Return variables for the solver
@@ -297,11 +296,11 @@ function var = compute_HMPC_ADMM_ingredients(controller, options, spcies_options
     var.M1 = M1;
     var.M2 = M2(:, 1:n);
     
-    var.rho = options.rho; % Penalty parameter rho
-    var.rho_i = 1/options.rho;
-    var.k_max = options.k_max; % Maximum number of iterations
-    var.tol_p = options.tol_p; % Absolute tolerance
-    var.tol_d = options.tol_d; % Relative tolerance
+    var.rho = opt.solver.rho; % Penalty parameter rho
+    var.rho_i = 1/opt.solver.rho;
+    var.k_max = opt.solver.k_max; % Maximum number of iterations
+    var.tol_p = opt.solver.tol_p; % Absolute tolerance
+    var.tol_d = opt.solver.tol_d; % Relative tolerance
     
     % Scaling vectors and operating point
     if isfield(controller.sys, 'Nx')

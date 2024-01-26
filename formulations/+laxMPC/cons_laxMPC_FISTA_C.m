@@ -44,24 +44,12 @@ function constructor = cons_laxMPC_FISTA_C(recipe)
     full_path = mfilename('fullpath');
     this_path = fileparts(full_path);
     
-    %% Default solver options
-    def_solver_options = laxMPC.def_options_laxMPC_FISTA();
-    
-    % Fill recipe.solver_options with the defaults
-    solver_options = sp_utils.add_default_options_to_struct(recipe.solver_options, def_solver_options);
-    recipe.solver_options = solver_options;
-    
     %% Compute the ingredients of the controller
-    vars = laxMPC.compute_laxMPC_FISTA_ingredients(recipe.controller, solver_options, recipe.options);
+    vars = laxMPC.compute_laxMPC_FISTA_ingredients(recipe.controller, recipe.options);
 
     % Check that the options are allowed
-    if solver_options.time_varying && size(vars.LB, 2) > 1
+    if recipe.options.time_varying && size(vars.LB, 2) > 1
         error("LaxMPC FISTA time varying solver only allows fixed bounds along the prediction horizon");
-    end
-    
-    %% Set save_name to formulation if none is provided
-    if isempty(recipe.options.save_name)
-        recipe.options.save_name = recipe.options.formulation;
     end
     
     %% Rename variables for convenience
@@ -82,21 +70,13 @@ function constructor = cons_laxMPC_FISTA_C(recipe)
     %% Create vars cell matrix: Name, value, initialize, type(int, float, etc), class(variable, constant, define, etc)
     
     % Defines
-    defCell = [];
+    defCell = recipe.options.default_defCell();
     defCell = add_line(defCell, 'nn_', n, 1, 'uint', 'define');
     defCell = add_line(defCell, 'mm_', m, 1, 'uint', 'define');
     defCell = add_line(defCell, 'nm_', n+m, 1, 'uint', 'define');
     defCell = add_line(defCell, 'NN_', N, 1, 'uint', 'define');
-    defCell = add_line(defCell, 'k_max', solver_options.k_max, 1, 'uint', 'define');
-    defCell = add_line(defCell, 'tol', solver_options.tol, 1, 'float', 'define');
-    defCell = add_line(defCell, 'in_engineering', solver_options.in_engineering, 1, 'int', 'define');
-    defCell= add_line(defCell, 'TIME_VARYING', solver_options.time_varying, 1, 'int', 'define');
-    if solver_options.debug
-        defCell = add_line(defCell, 'DEBUG', 1, 1, 'bool', 'define');
-    end
-    if recipe.options.time
-        defCell = add_line(defCell, 'MEASURE_TIME', 1, 1, 'bool', 'define');
-    end
+    defCell = add_line(defCell, 'k_max', recipe.options.solver.k_max, 1, 'uint', 'define');
+    defCell = add_line(defCell, 'tol', recipe.options.solver.tol, 1, 'float', 'define');
     
     % Constants
     constCell = [];
@@ -110,12 +90,12 @@ function constructor = cons_laxMPC_FISTA_C(recipe)
         constCell = add_line(constCell, 'UBN', vars.UB(1:n, end)', 1, precision, var_options);
         defCell = add_line(defCell, 'VAR_BOUNDS', 1, 1, 'int', 'define');
     else
-        if ~solver_options.time_varying
+        if ~recipe.options.time_varying
             constCell = add_line(constCell, 'LB', vars.LB, 1, precision, var_options);
             constCell = add_line(constCell, 'UB', vars.UB, 1, precision, var_options);
         end
     end
-    if ~solver_options.time_varying
+    if ~recipe.options.time_varying
         constCell = add_line(constCell, 'AB', vars.AB, 1, precision, var_options);
         constCell = add_line(constCell, 'Alpha', vars.Alpha, 1, precision, var_options);
         constCell = add_line(constCell, 'Beta', vars.Beta, 1, precision, var_options);
@@ -125,7 +105,7 @@ function constructor = cons_laxMPC_FISTA_C(recipe)
     end
     constCell = add_line(constCell, 'T', vars.T, 1, precision, var_options);
     constCell = add_line(constCell, 'Ti', vars.Ti, 1, precision, var_options);
-    if solver_options.in_engineering
+    if recipe.options.in_engineering
         constCell = add_line(constCell, 'scaling_x', vars.scaling_x, 1, precision, var_options);
         constCell = add_line(constCell, 'scaling_u', vars.scaling_u, 1, precision, var_options);
         constCell = add_line(constCell, 'scaling_i_u', vars.scaling_i_u, 1, precision, var_options);

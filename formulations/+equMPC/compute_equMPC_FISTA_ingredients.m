@@ -11,8 +11,7 @@
 %
 % INPUTS:
 %   - controller: Contains the information of the controller.
-%   - options: Structure containing options of the FISTA solver.
-%   - spcies_options: Structure containing the options of the toolbox.
+%   - opt: Structure containing options of the solver.
 % 
 % OUTPUTS:
 %   - vars: Structure containing the ingredients required by the solver.
@@ -20,8 +19,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 %
 
-function vars = compute_equMPC_FISTA_ingredients(controller, options, spcies_options)
-
+function vars = compute_equMPC_FISTA_ingredients(controller, opt)
 
     %% Extract from controller
     if isa(controller, 'EqualityMPC')
@@ -67,7 +65,7 @@ function vars = compute_equMPC_FISTA_ingredients(controller, options, spcies_opt
     Aeq = Aeq(:,1:end-n);
     
     %% Compute matrix W
-    if ~options.time_varying
+    if ~opt.time_varying
         Hinv = inv(H);
         W = Aeq*Hinv*Aeq';
         Wc = chol(W);
@@ -85,7 +83,7 @@ function vars = compute_equMPC_FISTA_ingredients(controller, options, spcies_opt
     vars.n = n;
     vars.m = m;
     vars.N = N;
-    if ~options.time_varying
+    if ~opt.time_varying
         vars.AB = [A B];
         vars.Q = -diag(Q);
         vars.R = -diag(R);
@@ -133,7 +131,7 @@ function vars = compute_equMPC_FISTA_ingredients(controller, options, spcies_opt
     vars.Beta = zeros(n,n,N);
     vars.Alpha = zeros(n,n,N-1);
 
-    if ~options.time_varying
+    if ~opt.time_varying
         vars.Beta = zeros(n,n,N);
         vars.Alpha = zeros(n,n,N-1);
         for i = 1:N

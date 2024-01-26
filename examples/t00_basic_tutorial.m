@@ -84,11 +84,11 @@ param = struct('Q', Q, 'R', R, 'T', T, 'N', N);
 % on its value.
 % To set the options we must create a structure with the appropriate fields.
 % We will set some options. For a full list of the available options, please
-% consult the laxMPC documentation.
+% consult the toolbox documentation.
 
-solver_options.rho = 15; % Value of the penalty parameter of the ADMM algorithm
-solver_options.k_max = 5000; % Maximum number of iterations of the solver
-solver_options.tol = 1e-3; % Exit tolerance of the solver
+options.rho = 15; % Value of the penalty parameter of the ADMM algorithm
+options.k_max = 5000; % Maximum number of iterations of the solver
+options.tol = 1e-3; % Exit tolerance of the solver
 
 % Next, we can set some of the options of the toolbox, such as the name of the
 % MEX file that will be generated, or the directory where the solver is saved.
@@ -110,8 +110,8 @@ options.time = true; % This option tells Spcies to measure the time internally.
 spcies('clear');
 
 % We now generate the mex file by calling the following function:
-spcies('gen', 'sys', sys, 'param', param, 'solver_options', solver_options,...
-       'options', options, 'platform', 'Matlab', 'formulation', 'laxMPC');
+spcies('gen', 'sys', sys, 'param', param, 'options', options,  ...
+       'platform', 'Matlab', 'formulation', 'laxMPC');
 
 % As you can see, function spcies('func') can be used for various purposes, determined by
 % 'func'. In this case, we are calling the main functionality of the toolbox, which

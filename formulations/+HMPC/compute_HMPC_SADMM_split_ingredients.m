@@ -10,8 +10,7 @@
 % 
 % INPUTS:
 %   - controller: Contains the information of the controller.
-%   - options: Structure containing options of the SADMM solver.
-%   - spcies_options: Structure containing the options of the toolbox.
+%   - opt: Structure containing options of the solver.
 % 
 % OUTPUTS:
 %   - vars: Structure containing the ingredients required by the solver
@@ -19,8 +18,8 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 %
 
-function var = compute_HMPC_SADMM_split_ingredients(controller, options, spcies_options)
+function var = compute_HMPC_SADMM_split_ingredients(controller, opt)
 
-    var = HMPC.compute_HMPC_ADMM_split_ingredients(controller, options, spcies_options);
+    var = HMPC.compute_HMPC_ADMM_split_ingredients(controller, opt);
     
 end

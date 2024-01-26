@@ -18,13 +18,8 @@
 
 function constructor = cons_MPCT_ADMM_semiband_Matlab(recipe)
 
-    %% Add a name
-    if isempty(recipe.options.save_name)
-        recipe.options.save_name = recipe.options.type;
-    end
-
     %% Construct the C files
-    recipe_C = recipe;
+    recipe_C = recipe.copy();
     recipe_C.options.platform = 'C';
     recipe_C.options.directory = '$SPCIES$';
     recipe_C.options.override = true;
