@@ -74,8 +74,8 @@ function [vars, vars_nonsparse] = compute_MPCT_EADMM_ingredients(controller, opt
 
     %% Extract or compute rho
     if isfield(opt.solver, 'rho')
-        opt.solver.rho_base = options.rho;
-        opt.solver.rho_mult = 1;
+        opt.set('rho_base', opt.solver.rho);
+        opt.set('rho_mult', 1);
     end
 
     rho_base = opt.solver.rho_base;

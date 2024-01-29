@@ -12,7 +12,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function def_options = def_options_MPCT_ADMM(submethod)
+function def_options = def_options_MPCT_ADMM_cs(submethod)
 
     def_options.rho = 1e-2;
     def_options.epsilon_x = 1e-6;
