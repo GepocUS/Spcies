@@ -495,6 +495,9 @@ classdef Spcies_options < matlab.mixin.Copyable
             if ~isempty(method)
                 func_name = strcat(func_name, ['_' method]);
             end
+            if ~isempty(submethod)
+                func_name = strcat(func_name, ['_' submethod]);
+            end
 
             try
                 opt = eval([func_name '(self)']);
