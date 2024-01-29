@@ -107,8 +107,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
     else
         options = par.Results.options;
     end
-    % Add default values
-    options = utils.add_default_options_to_struct(options, def_options);
+    options = Spcies_options('formulation', 'MPCT', 'method', 'ADMM', 'submethod', 'semiband', 'options', options);
 
     % Create the controller structure
     if isempty(par.Results.controller)
@@ -130,7 +129,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
     if verbose < 0; verbose = 0; end
     
     %% Generate ingredients of the solver
-    var = compute_MPCT_ADMM_semiband_ingredients(controller, options, []);
+    var = compute_MPCT_ADMM_semiband_ingredients(controller, options);
     N = var.N;
     n = var.n; % Dimension of state space
     m = var.m; % Dimension of input space
@@ -147,13 +146,13 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
 
     % Historics
     if genHist > 0
-        hRp = zeros(1, options.k_max); % Primal residual
-        hRd = zeros(1, options.k_max); % Dual residual
+        hRp = zeros(1, options.solver.k_max); % Primal residual
+        hRd = zeros(1, options.solver.k_max); % Dual residual
     end
     if genHist > 1
-        hZ = zeros((N+1)*(n+m), options.k_max);
-        hV = zeros((N+1)*(n+m), options.k_max);
-        hLambda = zeros((N+1)*(n+m), options.k_max);
+        hZ = zeros((N+1)*(n+m), options.solver.k_max);
+        hV = zeros((N+1)*(n+m), options.solver.k_max);
+        hLambda = zeros((N+1)*(n+m), options.solver.k_max);
     end
     
     % Obtain x0, xr and ur
@@ -276,7 +275,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
 
         % Obtaining v^{k+1}
         for i = 1:n
-            v(i) = min(max(v(i),-options.inf_bound),options.inf_bound);
+            v(i) = min(max(v(i),-options.inf_value),options.inf_value);
         end
 
         for i = n+1:n+m
@@ -290,11 +289,11 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         end
 
         for i = N*(n+m)+1:N*(n+m)+n
-            v(i) = min(max(v(i),(var.LB(i-N*(n+m))+options.epsilon_x)),(var.UB(i-N*(n+m))-options.epsilon_x));
+            v(i) = min(max(v(i),(var.LB(i-N*(n+m))+options.solver.epsilon_x)),(var.UB(i-N*(n+m))-options.solver.epsilon_x));
         end
 
         for i = N*(n+m)+n+1:(N+1)*(n+m)
-            v(i) = min(max(v(i),(var.LB(i-(N*(n+m)))+options.epsilon_u)),(var.UB(i-(N*(n+m)))-options.epsilon_u));
+            v(i) = min(max(v(i),(var.LB(i-(N*(n+m)))+options.solver.epsilon_u)),(var.UB(i-(N*(n+m)))-options.solver.epsilon_u));
         end
         
         % Update lambda
@@ -305,10 +304,10 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         r_d = norm(v - v_old,'inf'); % Dual residual
 
         % Check exit condition
-        if (r_p <= options.tol && r_d <= options.tol) % Infinity norm
+        if (r_p <= options.solver.tol && r_d <= options.solver.tol) % Infinity norm
             done = true;
             e_flag = 1;
-        elseif (k >= options.k_max)
+        elseif (k >= options.solver.k_max)
             done = true;
             e_flag = -1;
         end

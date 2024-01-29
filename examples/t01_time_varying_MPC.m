@@ -22,26 +22,26 @@
 clear; clc
 
 %% STEP 1: Construct the system
-[sys, param] = utils.example_OscMass();
+[sys, param] = sp_utils.example_OscMass();
 n = size(sys.A, 1); % For convenience, we save the size of the state dimension
 m = size(sys.B, 2); % and of the input dimension
 
 %% STEP 2: Generate the solver for its use in Matlab
-% The important option in this tutorial is the solver_option 'time_varying', which, if
+% The important option in this tutorial is the option 'time_varying', which, if
 % true, indicates that a "time-varying" solver should be generated.
 % By default this option is set to 'false', so don't forget to set it to 'true' if you
 % what to be able to change the MPC ingredients online.
 
 % Select the solver options
-solver_options.rho = 15; % Value of the penalty parameter of the ADMM algorithm
-solver_options.k_max = 5000; % Maximum number of iterations of the solver
-solver_options.tol = 1e-4; % Exit tolerance of the solver
-solver_options.debug = true; % To get additional information from the solver
-solver_options.time_varying = true;
+options.rho = 15; % Value of the penalty parameter of the ADMM algorithm
+options.k_max = 5000; % Maximum number of iterations of the solver
+options.tol = 1e-4; % Exit tolerance of the solver
+options.debug = true; % To get additional information from the solver
+options.time_varying = true; % To select the time-varying solver
 
 options.save_name = 'myMPCsolver';
 options.time = true; % To measure computation times
-options.type = 'equMPC'; % The 'laxMPC' formulation also has time-varying solvers. Check it out!
+options.formulation = 'equMPC'; % The 'laxMPC' formulation also has time-varying solvers. Check it out!
 % In this tutorial we use the ADMM solver, as selected below, but a time-varying version
 % of the FISTA solver is also available.
 options.method = 'ADMM'; % Try the FISTA version by changing this to 'FISTA'
@@ -50,9 +50,9 @@ if strcmp(options.method, 'FISTA')
     param.T = diag(diag(param.T)); % We include this because T must be diagonal in the FISTA solver
 end
 
-spcies_clear;
-spcies_gen_controller('sys', sys, 'param', param, 'solver_options', solver_options,...
-    'options', options, 'platform', 'Matlab');
+spcies('clear');
+spcies('gen', 'sys', sys, 'param', param, ...
+       'options', options, 'platform', 'Matlab');
 
 %% STEP 3: Closed-loop simulation
 num_iter = 60; % Number of sample times

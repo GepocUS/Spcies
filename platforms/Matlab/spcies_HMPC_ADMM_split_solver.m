@@ -37,9 +37,7 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_split_solver(x0, xr, ur, vararg
     else
         options = par.Results.options;
     end
-    
-    % Add default values
-    options = utils.add_default_options_to_struct(options, def_options);
+    options = Spcies_options('formulation', 'HMPC', 'method', 'ADMM', 'submethod', 'split', 'options', options);
     
     % Create the controller structure
     if isempty(par.Results.controller)
@@ -58,16 +56,16 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_split_solver(x0, xr, ur, vararg
     if verbose < 0; verbose = 0; end
     
     % Determine which solver to use: box-constrained or coupled-inputs
-    if isempty(options.box_constraints)
+    if isempty(options.solver.box_constraints)
         if isfield(controller.sys, 'E')
-            options.box_constraints = false;
+            options.solver.box_constraints = false;
         else
-            options.box_constraints = true;
+            options.solver.box_constraints = true;
         end
     end
 
     %% Generate ingredients of the solver
-    var = HMPC.compute_HMPC_ADMM_split_ingredients(controller, options, []);
+    var = HMPC.compute_HMPC_ADMM_split_ingredients(controller, options);
     N = var.N;
     n = var.n;
     m = var.m;
@@ -76,9 +74,9 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_split_solver(x0, xr, ur, vararg
     dim = var.dim; % Number of decision variables
     n_eq = var.n_eq; % Number of constraints: equality + box + cone (a single cone is 3)
     n_s = var.n_s; % Number of rows of matrix C
-    k_max = options.k_max;
-    tol_p = options.tol_p;
-    tol_d = options.tol_d;
+    k_max = options.solver.k_max;
+    tol_p = options.solver.tol_p;
+    tol_d = options.solver.tol_d;
     
     %% Algorithm
     
@@ -129,11 +127,11 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_split_solver(x0, xr, ur, vararg
         q_hat = [q - var.sigma*z + lambda; mu - var.rho*s]; % Compute q_hat
         
         % Compute right hand side of the system of equations
-        if ~options.sparse
+        if ~options.solver.sparse
             rhs = var.M1*q_hat + var.M2*bh;
         else
-            %rhs = utils.LDLsolve(var.L_CSC.val, var.L_CSC.row, var.L_CSC.col, var.Dinv, var.Pldl'*[-q_hat; bh]);
-            rhs = utils.LDLsolve(var.L_CSC.val, var.L_CSC.row, var.L_CSC.col, var.Dinv, [-q_hat; bh]);
+            %rhs = sp_utils.LDLsolve(var.L_CSC.val, var.L_CSC.row, var.L_CSC.col, var.Dinv, var.Pldl'*[-q_hat; bh]);
+            rhs = sp_utils.LDLsolve(var.L_CSC.val, var.L_CSC.row, var.L_CSC.col, var.Dinv, [-q_hat; bh]);
         end
             
         z_hat = rhs(1:dim);
@@ -141,7 +139,7 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_split_solver(x0, xr, ur, vararg
 
         % Step 2: Compute z_{k+1}
         z = z_hat + lambda/var.sigma;
-        if options.box_constraints
+        if options.solver.box_constraints
             z(1:(N-1)*(n+m)+m) = max( min(z(1:(N-1)*(n+m)+m) , var.UB), var.LB);
         end
         
@@ -149,16 +147,16 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_split_solver(x0, xr, ur, vararg
         
         s_proj = s_hat + mu/var.rho;
         
-        if options.box_constraints
+        if options.solver.box_constraints
         
             % Projection for s subject to the SOC constraints
-            if options.use_soc
+            if options.solver.use_soc
                 for j = 1:n_soc
-                    s(3*(j-1) + (1:3)) = utils.proj_SOC(s_proj(3*(j-1) + (1:3)));
+                    s(3*(j-1) + (1:3)) = sp_utils.proj_SOC(s_proj(3*(j-1) + (1:3)));
                 end
             else
                 for j = 1:n+m
-                    s(3*(j-1) + (1:3)) = utils.proj_D(s_proj(3*(j-1) + (1:3)), var.LBy(j), var.UBy(j));
+                    s(3*(j-1) + (1:3)) = sp_utils.proj_D(s_proj(3*(j-1) + (1:3)), var.LBy(j), var.UBy(j));
                 end
             end
             
@@ -170,13 +168,13 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_split_solver(x0, xr, ur, vararg
             end
             
             % Projection for s subject to the SOC constraints
-            if options.use_soc
+            if options.solver.use_soc
                 for j = 1:n_soc
-                    s(N*n_y + 3*(j-1) + (1:3)) = utils.proj_SOC(s_proj(N*n_y + 3*(j-1) + (1:3)));
+                    s(N*n_y + 3*(j-1) + (1:3)) = sp_utils.proj_SOC(s_proj(N*n_y + 3*(j-1) + (1:3)));
                 end
             else
                 for j = 1:n_y
-                    s(N*n_y + 3*(j-1) + (1:3)) = utils.proj_D(s_proj(N*n_y + 3*(j-1) + (1:3)), var.LBy(j), var.UBy(j));
+                    s(N*n_y + 3*(j-1) + (1:3)) = sp_utils.proj_D(s_proj(N*n_y + 3*(j-1) + (1:3)), var.LBy(j), var.UBy(j));
                 end
             end
             

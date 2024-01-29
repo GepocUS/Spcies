@@ -33,7 +33,7 @@
 %            replaced by this argument, which must be an instance of
 %            a subclass of the ssMPC class of the GepocToolbox that is 
 %            supported by Spcies.
-%   - type: String that determines the type of MPC controller.
+%   - formulaiton: String that determines the MPC formulation.
 %           Currently, it can take the following values:
 %           - 'laxMPC': Standard MPC without terminal constraint.
 %           - 'equMPC': Standard MPC with terminal equality constraint.
@@ -41,14 +41,14 @@
 %           - 'MPCT_ess': MPCT using an extended state-space along ADMM.
 %           - 'ellipMPC': Standard MPC with a terminal quadratic constraint.
 %           If an empty string is provided, the function tries to determine
-%           the type automatically based on the other arguments.
+%           the formulation automatically based on the other arguments.
 %   - solver_options: Structure containing the options of the solver.
 %                     Its fields will depend on the chosen MPC formulation.
 %                     Please, refer to the documentation for additional help.
 %                     Default values are provided, so this argument is optional.
 %   - options: Options of the Spcies toolbox. These control aspects
 %              such as directories where files are saved, or the
-%              name of the saved files. See spcies_default_options
+%              name of the saved files. See default_options
 %              for a list of the available options. Not all fields
 %              need to be provided, since default options are given.
 %              The most important of its fields is .platform, which
@@ -70,54 +70,57 @@
 % 
 
 function spcies_gen_controller(varargin)
-    %% Get default methods and subclasses
-    [~, def_method, def_subclass] = spcies_default_options;
-    type_names = fieldnames(def_method);
+
+    %% Process varargin
+
+    % Extract 'sys' and 'param' from varargin
+    [is_sys, indx_sys] = sp_utils.find_in_cell('sys', varargin);
+    if ~is_sys
+        error("spcies_gen_controller: a 'sys' structure must be provided");
+    else
+        sys = varargin(indx_sys+1);
+        sys = sys{:};
+        varargin([indx_sys, indx_sys+1]) = []; % Remove 'sys' from varargin
+    end
+
+    [is_param, indx_param] = sp_utils.find_in_cell('param', varargin);
+    if ~is_sys
+        error("spcies_gen_controller: a 'param' structure must be provided");
+    else
+        param = varargin(indx_param+1);
+        param = param{:};
+        varargin([indx_param, indx_param+1]) = []; % Remove 'sys' from varargin
+    end
+
+    % Generate options
+    options = Spcies_options(varargin{:});
     
-    %% Import m files from ./types/*
-    to_import = strcat(type_names, '.*');
+    %% Import m files from ./formulations/*
+    to_import = strcat(Spcies_options.valid_formulation, '.*');
     import(to_import{:})
     import personal.*
     
     %% Instantiate the Spcies_problem object
-    recipe = Spcies_problem(varargin{:});
+    recipe = Spcies_problem(sys, param, options);
     
-    %% A type must be given
-    if isempty(recipe.options.type)
-        error('Spcies:input_error:no_type', 'The type field of options is empty. I do not know what to create.');
-    end
-    
-    %% Determine type, method and subclass fields
-    
-        % Method
-    if isempty(recipe.options.method)
-        recipe.options.method = def_method.(recipe.options.type);
-    end
-    
-        % Subclass
-    if isempty(recipe.options.subclass) && ~isempty(recipe.options.method)
-        try
-            recipe.options.subclass = def_subclass.(recipe.options.type).(recipe.options.method);
-        catch ME
-            if (strcmp(ME.identifier, 'MATLAB:UndefinedFunction'))
-                recipe.options.subclass = '';
-            end
-        end            
+    %% A formulation must be given
+    if isempty(recipe.options.formulation)
+        error('Spcies:input_error:no_formulation', 'The formulation field of options is empty. I do not know what to create.');
     end
     
     %% Determine name of constructor function
     
-    % Add the type
-    cons_name = ['cons_' recipe.options.type];
+    % Add the formulation
+    cons_name = ['cons_' recipe.options.formulation];
     
     % Add the method
     if ~isempty(recipe.options.method)
         cons_name = strcat(cons_name, ['_' recipe.options.method]);
     end
     
-    % Add the subclass
-    if ~isempty(recipe.options.subclass)
-        cons_name = strcat(cons_name, ['_' recipe.options.subclass]);
+    % Add the submethod
+    if ~isempty(recipe.options.submethod)
+        cons_name = strcat(cons_name, ['_' recipe.options.submethod]);
     end
     
     % Add the platform
@@ -130,3 +133,4 @@ function spcies_gen_controller(varargin)
     constructor.construct(recipe.options);
 
 end
+
