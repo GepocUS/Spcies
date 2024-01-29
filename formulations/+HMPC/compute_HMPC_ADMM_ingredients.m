@@ -254,7 +254,7 @@ function var = compute_HMPC_ADMM_ingredients(controller, opt)
     M2 = M2(:, 1:n);
     
     if strcmp(opt.method, 'ADMM')
-        opt.solver.alpha = 1;
+        opt.set('alpha', 1);
     end
     
     %% Return variables for the solver

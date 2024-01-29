@@ -54,11 +54,11 @@ function constructor = cons_HMPC_ADMM_C(recipe)
     this_path = fileparts(full_path);
     
     %% Determine which solver to use: box-constrained or coupled-inputs
-    if isempty(recipe.solver_options.box_constraints)
+    if isempty(recipe.options.solver.box_constraints)
         if isfield(recipe.controller.sys, 'E')
-            recipe.solver_options.box_constraints = false;
+            recipe.options.solver.box_constraints = false;
         else
-            recipe.solver_options.box_constraints = true;
+            recipe.options.solver.box_constraints = true;
         end
     end
     
@@ -108,11 +108,11 @@ function constructor = cons_HMPC_ADMM_C(recipe)
     defCell = add_line(defCell, 'k_max', recipe.options.solver.k_max, 1, 'uint', 'define');
     defCell = add_line(defCell, 'tol_p', recipe.options.solver.tol_p, 1, precision, 'define');
     defCell = add_line(defCell, 'tol_d', recipe.options.solver.tol_d, 1, precision, 'define');
-    if strcmp(solver_options.method, 'SADMM')
+    if strcmp(recipe.options.method, 'SADMM')
         defCell = add_line(defCell, 'alpha_SADMM', recipe.options.solver.alpha, 1, precision, 'define');
         defCell = add_line(defCell, 'IS_SYMMETRIC', 1, 1, precision, 'define');
     end
-    if solver_options.use_soc
+    if recipe.options.solver.use_soc
         defCell = add_line(defCell, 'USE_SOC', 1, 1, precision, 'define');
     end
     
