@@ -47,7 +47,7 @@ function constructor = cons_ellipMPC_ADMM_soc_C(recipe)
     this_path = fileparts(full_path);
     
     %% Compute the ingredients of the controller
-    vars = ellipMPC.compute_ellipMPC_ADMM_soc_ingredients(recipe.controller, solver_options, recipe.options);
+    vars = ellipMPC.compute_ellipMPC_ADMM_soc_ingredients(recipe.controller, recipe.options);
     
     %% Rename variables for convenience
     n = vars.n;

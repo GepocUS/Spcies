@@ -20,7 +20,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-function vars = compute_ellipMPC_ADMM_soc_ingredients(controller, options, spcies_options)
+function vars = compute_ellipMPC_ADMM_soc_ingredients(controller, opt)
 
     %% Extract from controller
     if isa(controller, 'ellipMPC')
@@ -128,7 +128,7 @@ function vars = compute_ellipMPC_ADMM_soc_ingredients(controller, options, spcie
     end
     
     %% Solver ingredients
-    Hh = blkdiag(H + options.sigma*eye(dim), options.rho*eye(n_s));
+    Hh = blkdiag(H + opt.solver.sigma*eye(dim), opt.solver.rho*eye(n_s));
     Gh = [G, zeros(n_eq, n_s); C, eye(n_s)];
     bh = [b; d];
 
@@ -164,10 +164,10 @@ function vars = compute_ellipMPC_ADMM_soc_ingredients(controller, options, spcie
     vars.T = -T;
     vars.LB = LB;
     vars.UB = UB;
-    vars.rho = options.rho;
-    vars.rho_i = 1./options.rho;
-    vars.sigma = options.sigma;
-    vars.sigma_i = 1./options.sigma;
+    vars.rho = opt.solver.rho;
+    vars.rho_i = 1./opt.solver.rho;
+    vars.sigma = opt.solver.sigma;
+    vars.sigma_i = 1./opt.solver.sigma;
     vars.L_CSC = L_CSC;
     vars.Dinv = Dinv;
     vars.GhHhi_CSR = GhHhi_CSR;
