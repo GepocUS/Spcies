@@ -8,7 +8,7 @@
 function spcies_clear()
 
     %% Extensions to be eliminated
-    extensions = {'c', 'h', 'mexw64', 'mexa64'};
+    extensions = {'c', 'h', 'mexw64', 'mexa64', 'mexmaci64'};
     
     %% Path to the folder
     the_folder = [spcies_get_root_directory '/generated_solvers/'];

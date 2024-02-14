@@ -54,13 +54,13 @@ LBx = -UBx;
 UBu = 11;
 LBu = 8;
 
-% The non-linear ordinary differential equations of the model are provided in utils.Duffing_ode()
+% The non-linear ordinary differential equations of the model are provided in sp_utils.Duffing_ode()
 % Let us construct a linear state-space model of the system around the operating point:
 u0 = 10;
-x0 = fsolve(@(xx) utils.Duffing_ode(0, xx, u0, param), zeros(2, 1));
+x0 = fsolve(@(xx) sp_utils.Duffing_ode(0, xx, u0, param), zeros(2, 1));
 
 % We can do by using the following function, also provided in the toolbox utility functions:
-sysC = utils.Duffing_to_ss(param, x0, u0);
+sysC = sp_utils.Duffing_to_ss(param, x0, u0);
 
 % We then construct a discrete-time model using Matlab's builtin c2d() function:
 Ts = 0.2; % Sampling time
@@ -83,13 +83,13 @@ R = 0.1*eye(m);
 N = 10;
 paramMPC = struct('Q', Q, 'R', R, 'T', T, 'N', N);
 
-solver_options.rho = 1; % Value of the penalty parameter of the ADMM algorithm
-solver_options.k_max = 3000; % Maximum number of iterations of the solver
-solver_options.tol = 1e-5; % Exit tolerance of the solver
+options.rho = 1; % Value of the penalty parameter of the ADMM algorithm
+options.k_max = 3000; % Maximum number of iterations of the solver
+options.tol = 1e-5; % Exit tolerance of the solver
 
-spcies_clear;
-spcies_gen_controller('sys', sys, 'param', paramMPC, 'solver_options', solver_options,...
-                      'platform', 'Matlab', 'type', 'laxMPC');
+spcies('clear');
+spcies('gen', 'sys', sys, 'param', paramMPC,...
+       'platform', 'Matlab', 'formulation', 'laxMPC');
 
 % And then control the "real" system using the discrete-time model contained in sys.
 num_iter = 50; % Number of simulated sample times
@@ -120,7 +120,7 @@ for i = 1:num_iter
     U = u + u0;
 
     % Simulate the "real" system
-    [tt, xx] = ode45(@(tt, xx) utils.Duffing_ode(tt, xx, U, param), [0, Ts], X);
+    [tt, xx] = ode45(@(tt, xx) sp_utils.Duffing_ode(tt, xx, U, param), [0, Ts], X);
     X = xx(end, :)';
 
     % Save values of X and U
@@ -195,7 +195,7 @@ Nu = 0.1; % We reduce the input by one order of magnitude
 % operating point (also in "engineering" units) and the scaling vectors Nx and Nu.
 % It returns the structure containing the matrices A and B of the new "scaled" model, as well as its constraints
 % and a copy of x0, u0, Nx and Nu (also required by spcies_gen_controller()).
-sysN = utils.scale_ss(sysD, UBx, LBx, UBu, LBu, x0, u0, Nx, Nu);
+sysN = sp_utils.scale_ss(sysD, UBx, LBx, UBu, LBu, x0, u0, Nx, Nu);
 
 % We now adjust the ingredients of the MPC controller to obtain a similar closed-loop behavior of the "real" system.
 Q = diag([1, 100]);
@@ -207,9 +207,9 @@ paramMPC = struct('Q', Q, 'R', R, 'T', T, 'N', N);
 % Finally, we regenerate the LaxMPC controller to use the new "scaled" system.
 % IMPORTANT: We need to tell Spcies that we want it to generate a solver whose inputs and outputs are
 % provided/returned in "engineering" units. To do so, we need to set the "in_engineering" solver options to true.
-solver_options.in_engineering = true;
-spcies_gen_controller('sys', sysN, 'param', paramMPC, 'solver_options', solver_options,...
-                      'platform', 'Matlab', 'type', 'laxMPC', 'save_name', 'laxMPC_scaled');
+options.in_engineering = true;
+spcies_gen_controller('sys', sysN, 'param', paramMPC, 'options', options,...
+                      'platform', 'Matlab', 'formulation', 'laxMPC', 'save_name', 'laxMPC_scaled');
 
 % We can now rerun the closed-loop simulation
 hX = zeros(n, num_iter+1); % Evolution of the state
@@ -222,7 +222,7 @@ X = X0; % Set the state of the "real" system to its initial state
 for i = 1:num_iter
 
     % Call the laxMPC solver.
-    % Note that, since we set solver_options.in_engineering = true, the solver function
+    % Note that, since we set options.in_engineering = true, the solver function
     % receives the system state and reference in "engineering" units and also returns
     % the control input in these units, so we don't need to manually make the transformation.
     [U, hK(i), hE(i), info] = laxMPC_scaled(X, Xr, Ur);
@@ -232,7 +232,7 @@ for i = 1:num_iter
     % tune the MPC solver to obtain a good performance in practice.
 
     % Simulate the "real" system
-    [tt, xx] = ode45(@(tt, xx) utils.Duffing_ode(tt, xx, U, param), [0, Ts], X);
+    [tt, xx] = ode45(@(tt, xx) sp_utils.Duffing_ode(tt, xx, U, param), [0, Ts], X);
     X = xx(end, :)';
 
     % Save values of X and U

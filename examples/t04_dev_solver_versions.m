@@ -91,7 +91,7 @@ M = [1; 0.5; 1]; % Mass of each object
 K = 2*ones(p+1, 1); % Spring constant of each spring
 F = [1; zeros(p-2, 1); 1]; % Objects in which an external force is applied
 
-sysC = utils.gen_oscillating_masses(M, K, F); % Generate the continuous-time model
+sysC = sp_utils.gen_oscillating_masses(M, K, F); % Generate the continuous-time model
 
 n = size(sysC.A, 1); % For convenience, we save the size of the state dimension
 m = size(sysC.B, 2); % and of the input dimension

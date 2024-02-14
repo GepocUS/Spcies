@@ -84,9 +84,9 @@ function spcies_gen_var_declaration(vars, language, varargin)
     the_dir.extension = 'txt';
     
     if ~par.Results.override
-        the_dir.save_name = utils.find_unused_file_name(the_dir);
+        the_dir.save_name = sp_utils.find_unused_file_name(the_dir);
     end
-    my_file = fopen(utils.get_full_path(the_dir), 'wt');
+    my_file = fopen(sp_utils.get_full_path(the_dir), 'wt');
     for i = 1:length(var_text)
         fprintf(my_file, var_text{i});
     end

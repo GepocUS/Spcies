@@ -104,9 +104,7 @@ function [u, k, e_flag, Hist] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
     else
         options = par.Results.options;
     end
-    
-    % Add default values
-    options = utils.add_default_options_to_struct(options, def_options);
+    options = Spcies_options('formulation', 'laxMPC', 'method', 'ADMM', 'options', options);
     
     % Create the controller structure
     if isempty(par.Results.controller)
@@ -163,10 +161,10 @@ function [u, k, e_flag, Hist] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
     end
     
     % Turn rho into a vector
-    if isscalar(options.rho) && options.force_vector_rho
-        rho = options.rho*ones(N*(n+m), 1);
+    if isscalar(options.solver.rho) && options.solver.force_vector_rho
+        rho = options.solver.rho*ones(N*(n+m), 1);
     else
-        rho = options.rho;
+        rho = options.solver.rho;
     end
     
     % Compute the Hessian H and the vector q
@@ -253,13 +251,13 @@ function [u, k, e_flag, Hist] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
     
     % Historics
     if genHist > 0
-        hRp = zeros(1, options.k_max);
-        hRd = zeros(1, options.k_max);
+        hRp = zeros(1, options.solver.k_max);
+        hRd = zeros(1, options.solver.k_max);
     end
     if genHist > 1
-        hZ = zeros(N*(n+m), options.k_max);
-        hV = zeros(N*(n+m), options.k_max);
-        hLambda = zeros(N*(n+m), options.k_max);
+        hZ = zeros(N*(n+m), options.solver.k_max);
+        hV = zeros(N*(n+m), options.solver.k_max);
+        hLambda = zeros(N*(n+m), options.solver.k_max);
     end
     
     % Obtain x0, xr and ur
@@ -299,10 +297,10 @@ function [u, k, e_flag, Hist] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
         r_d = norm(v - v1, Inf);
         
         % Check exit condition
-        if r_p <= options.tol && r_d <= options.tol
+        if r_p <= options.solver.tol && r_d <= options.solver.tol
             done = true;
             e_flag = 1;
-        elseif k >= options.k_max
+        elseif k >= options.solver.k_max
             done = true;
             e_flag = -1;
         end

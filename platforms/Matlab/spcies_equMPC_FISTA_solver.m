@@ -100,9 +100,7 @@ function [u, k, e_flag, Hist] = spcies_equMPC_FISTA_solver(x0, xr, ur, lambda, v
     else
         options = par.Results.options;
     end
-    
-    % Add default values
-    options = utils.add_default_options_to_struct(options, def_options);
+    options = Spcies_options('formulation', 'equMPC', 'method', 'FISTA', 'options', options);
     
     % Create the controller structure
     if isempty(par.Results.controller)
@@ -241,11 +239,11 @@ function [u, k, e_flag, Hist] = spcies_equMPC_FISTA_solver(x0, xr, ur, lambda, v
     
     % Historics
     if genHist > 0
-        hRes = zeros(1, options.k_max+1);
+        hRes = zeros(1, options.solver.k_max+1);
     end
     if genHist > 1
-        hZ = zeros(N*(n+m), options.k_max+1);
-        hLambda = zeros(N*n, options.k_max+1);
+        hZ = zeros(N*(n+m), options.solver.k_max+1);
+        hLambda = zeros(N*n, options.solver.k_max+1);
     end
     
     % Obtain x0, xr and ur
@@ -309,10 +307,10 @@ function [u, k, e_flag, Hist] = spcies_equMPC_FISTA_solver(x0, xr, ur, lambda, v
         res_k = norm(r_k, Inf);
         
         % Check exit condition
-        if res_k <= options.tol
+        if res_k <= options.solver.tol
             done = true;
             e_flag = 1;
-        elseif k >= options.k_max
+        elseif k >= options.solver.k_max
             done = true;
             e_flag = -1;
         end
