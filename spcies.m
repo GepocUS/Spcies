@@ -49,7 +49,7 @@ switch varargin{1}
     % 
     case {'version', 'v'}
         
-        varargout{1} = 'v0.3.9';
+        varargout{1} = 'v0.3.10';
         
         % If git is installed it will return the hash of the current commit
         try
