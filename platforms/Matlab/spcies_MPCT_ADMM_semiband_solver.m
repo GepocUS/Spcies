@@ -133,6 +133,9 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
     N = var.N;
     n = var.n; % Dimension of state space
     m = var.m; % Dimension of input space
+    if options.solver.soft_constraints
+        pp = var.p; % Dimension of constrained output
+    end
 
     %% Algorithm
 
@@ -140,9 +143,15 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
     done = false;
     k = 0;
     z = zeros((N+1)*(n+m),1);
-    v = zeros((N+1)*(n+m),1);
-    v_old = zeros((N+1)*(n+m),1); % Value of v in the previous iteration
-    lambda = zeros((N+1)*(n+m),1);
+    if ~options.solver.soft_constraints
+        v = zeros((N+1)*(n+m),1);
+        v_old = zeros((N+1)*(n+m),1); % Value of v in the previous iteration
+        lambda = zeros((N+1)*(n+m),1);
+    else
+        v = zeros((N+1)*(n+m+pp),1);
+        v_old = zeros((N+1)*(n+m+pp),1); % Value of v in the previous iteration
+        lambda = zeros((N+1)*(n+m+pp),1);
+    end
 
     % Historics
     if genHist > 0
@@ -151,8 +160,13 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
     end
     if genHist > 1
         hZ = zeros((N+1)*(n+m), options.solver.k_max);
-        hV = zeros((N+1)*(n+m), options.solver.k_max);
-        hLambda = zeros((N+1)*(n+m), options.solver.k_max);
+        if ~options.solver.soft_constraints
+            hV = zeros((N+1)*(n+m), options.solver.k_max);
+            hLambda = zeros((N+1)*(n+m), options.solver.k_max);
+        else
+            hV = zeros((N+1)*(n+m+pp), options.solver.k_max);
+            hLambda = zeros((N+1)*(n+m+pp), options.solver.k_max);
+        end
     end
     
     % Obtain x0, xr and ur
@@ -178,8 +192,11 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
 
         % Equality constrained QP solve : Update z
 
-        % Compute p = q + lambda - rho*v
-        p = q + lambda - var.rho*v;
+        if ~options.solver.soft_constraints
+            p = q + lambda - var.rho*v;
+        else
+            p = q + var.C_tilde'*(lambda - var.rho*v);
+        end
 
         % Compute xi from eq. (9a) using Alg. 2 from the article
 
@@ -271,36 +288,101 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
 
         % Inequality constrained QP solve: Update v
         
-        v = var.rho_i.*lambda + z;
-
+        if ~options.solver.soft_constraints
+            v = var.rho_i.*lambda + z;
+        else
+            v = var.rho_i.*lambda + var.C_tilde*z;
+        end
+        
         % Obtaining v^{k+1}
+
+        % x_0 is unconstrained
         for i = 1:n
             v(i) = min(max(v(i),-options.inf_value),options.inf_value);
         end
-
+        
+        % u_0 is hard-constrained is both hard and soft versions of the solver
         for i = n+1:n+m
             v(i) = min(max(v(i),var.LB(i)),var.UB(i));
         end
 
-        for l = 1:N-1
-            for i = l*(n+m)+1 : (l+1)*(n+m)
-                v(i) = min(max(v(i),var.LB(i-l*(n+m))),var.UB(i-l*(n+m)));
+        if ~options.solver.soft_constraints
+            % Rest of v is hard-constrained
+            for l = 1:N-1
+                for i = l*(n+m)+1 : (l+1)*(n+m)
+                    v(i) = min(max(v(i),var.LB(i-l*(n+m))),var.UB(i-l*(n+m)));
+                end
             end
-        end
+    
+            for i = N*(n+m)+1:N*(n+m)+n
+                v(i) = min(max(v(i),(var.LB(i-N*(n+m))+options.solver.epsilon_x)),(var.UB(i-N*(n+m))-options.solver.epsilon_x));
+            end
+    
+            for i = N*(n+m)+n+1:(N+1)*(n+m)
+                v(i) = min(max(v(i),(var.LB(i-(N*(n+m)))+options.solver.epsilon_u)),(var.UB(i-(N*(n+m)))-options.solver.epsilon_u));
+            end
 
-        for i = N*(n+m)+1:N*(n+m)+n
-            v(i) = min(max(v(i),(var.LB(i-N*(n+m))+options.solver.epsilon_x)),(var.UB(i-N*(n+m))-options.solver.epsilon_x));
-        end
+        else
+            
+            % y_0 is soft-constrained
+            for i = n+m+1:n+m+pp
 
-        for i = N*(n+m)+n+1:(N+1)*(n+m)
-            v(i) = min(max(v(i),(var.LB(i-(N*(n+m)))+options.solver.epsilon_u)),(var.UB(i-(N*(n+m)))-options.solver.epsilon_u));
+                v1 = v(i) + var.beta_rho_i;
+                v2 = v(i);
+                v3 = v(i) - var.beta_rho_i;
+
+                if (v1 <= var.LB(i))
+                    v(i) = v1;
+                elseif (v2 >= var.LB(i) && v2 <= var.UB(i))
+                    v(i) = v2;
+                elseif (v3 >= var.UB(i))
+                    v(i) = v3;
+                elseif (v2 > var.UB(i))
+                    v(i) = var.UB(i);
+                elseif (v2 < var.LB(i))
+                    v(i) = var.LB(i);
+                end
+
+            end
+            
+            % Rest of vector v soft-constrained
+            for l = 1:N
+                for i = l*(n+m+pp)+1 : (l+1)*(n+m+pp)
+                    
+                    v1 = v(i) + var.beta_rho_i;
+                    v2 = v(i);
+                    v3 = v(i) - var.beta_rho_i;
+
+                    if (v1 <= var.LB(i-l*(n+m+pp)))
+                        v(i) = v1;
+                    elseif (v2 >= var.LB(i-l*(n+m+pp)) && v2 <= var.UB(i-l*(n+m+pp)))
+                        v(i) = v2;
+                    elseif (v3 >= var.UB(i-l*(n+m+pp)))
+                        v(i) = v3;
+                    elseif (v2 > var.UB(i-l*(n+m+pp)))
+                        v(i) = var.UB(i-l*(n+m+pp));
+                    elseif (v2 < var.LB(i-l*(n+m+pp)))
+                        v(i) = var.LB(i-l*(n+m+pp));
+                    end
+
+                end
+            end
+
         end
         
         % Update lambda
-        lambda = lambda + var.rho.*(z - v);
+        if ~options.solver.soft_constraints
+            lambda = lambda + var.rho.*(z - v);
+        else
+            lambda = lambda + var.rho.*(var.C_tilde*z - v);
+        end
 
         % Compute residuals
-        r_p = norm(z - v,'inf'); % Primal residual
+        if ~options.solver.soft_constraints
+            r_p = norm(z - v,'inf'); % Primal residual
+        else
+            r_p = norm(var.C_tilde*z - v,'inf'); % Primal residual
+        end
         r_d = norm(v - v_old,'inf'); % Dual residual
 
         % Check exit condition
