@@ -1,5 +1,8 @@
 /**
- * ADMM solver for the MPCT formulation using Woodbury Matrix Identity
+ * ADMM solver for the MPCT formulation using Woodbury Matrix Identity. Features two different modes:
+ * > SOFT_CONSTRAINTS == 0: MPCT formulation with box constraints in states and inputs
+ * > SOFT_CONSTRAINTS == 1: MPCT formulation with box constraints in u_0, and "softened" box constraints
+ * in the rest of inputs, states, and also in constrained outputs, i.e., y_c = C_c*x_i+D_c*u_i.
  *
  * ARGUMENTS:
  * The current system state is given in "x0_in". Pointer to array of size nn_.
@@ -41,14 +44,13 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
     double v_old[(NN_+1)*nm_] = {0.0}; // Decision variable v in the previous iteration
     double lambda[(NN_+1)*nm_] = {0.0}; // Decision variable lambda
     #else
-    double v[(NN_+1)*(nm_+pp_)] = {0.0}; // Decision variable v
-    double v_old[(NN_+1)*(nm_+pp_)] = {0.0}; // Decision variable v in the previous iteration
-    double lambda[(NN_+1)*(nm_+pp_)] = {0.0}; // Decision variable lambda
-    double C_tilde_z_v[(NN_+1)*(nm_+pp_)] = {0.0}; // Auxiliary vector for storing C*z-v
+    double v[(NN_+1)*nmp_] = {0.0}; // Decision variable v
+    double v_old[(NN_+1)*nmp_] = {0.0}; // Decision variable v in the previous iteration
+    double lambda[(NN_+1)*nmp_] = {0.0}; // Decision variable lambda
+    double C_tilde_z_v[(NN_+1)*nmp_] = {0.0}; // Auxiliary vector for storing C*z-v
     double v_aux1 = 0.0; // Used for computation of v
     double v_aux2 = 0.0; // Used for computation of v
     double v_aux3 = 0.0; // Used for computation of v
-    double U_z2[(NN_+1)*nm_] = {0.0}; // Stores every U_hat*z2 in general
     #endif
     double q[nm_] = {0.0}; // Linear term vector in the functional. Only non-zero elements are considered.
     double xi[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step
@@ -120,7 +122,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         #if SOFT_CONSTRAINTS == 0
         memcpy(v_old, v, sizeof(double)*(NN_+1)*nm_);
         #else // SOFT_CONSTRAINTS == 1
-        memcpy(v_old, v, sizeof(double)*(NN_+1)*(nm_+pp_));
+        memcpy(v_old, v, sizeof(double)*(NN_+1)*nmp_);
         #endif        
         // Reset acumulator variables
         memset(xi, 0, sizeof(double)*(NN_+1)*nm_);
@@ -146,11 +148,11 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         
             for (unsigned int i = 0 ; i < nm_ ; i++){
 
-                p[l*nm_+i] = lambda[l*(nm_+pp_)+i] - rho * v[l*(nm_+pp_)+i];
+                p[l*nm_+i] = lambda[l*nmp_+i] - rho * v[l*nmp_+i];
             
                 for (unsigned int j = 0; j < pp_ ; j++){
                 
-                    p[l*nm_+i] += CD[j][i] * (lambda[l*(nm_+pp_)+nm_+j] - rho*v[l*(nm_+pp_)+nm_+j]);
+                    p[l*nm_+i] += CD[j][i] * (lambda[l*nmp_+nm_+j] - rho*v[l*nmp_+nm_+j]);
 
                 }
 
@@ -272,6 +274,12 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         memset(v, 0, sizeof(double)*(NN_+1)*nm_);
 
+        #else // SOFT_CONSTRAINTS == 1
+
+        memset(v, 0, sizeof(double)*(NN_+1)*nmp_);
+
+        #endif
+
         // (U_hat * z2_a) computed sparsely, stored in v to save memory
         for (unsigned int l = 0 ; l < NN_ ; l++){
 
@@ -305,47 +313,6 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         // End of computation of (U_hat * z2_a), stored in v
 
         solve_banded_QRST_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z3_ac, v); // Obtains z3_a
-
-        #else // SOFT_CONSTRAINTS == 1
-
-        // (U_hat * z2_a) computed sparsely, stored in U_z2
-
-        memset(U_z2, 0, sizeof(double)*(NN_+1)*nm_);
-        
-        for (unsigned int l = 0 ; l < NN_ ; l++){
-
-            for (unsigned int i = l*nm_ ; i < l*nm_ + nn_ ; i++){
-
-                for (unsigned int j = 0 ; j < nn_ ; j++){
-
-                    U_z2[i] -= Q[i-l*nm_][j] * z2[j];
-
-                }
-
-            }
-
-            for (unsigned int  i = l*nm_+nn_ ; i < (l+1)*nm_ ; i++){
-
-                for (unsigned int j = 0 ; j < mm_ ; j++){
-
-                    U_z2[i] -= R[i-l*nm_-nn_][j] * z2[j+nn_];
-
-                }
-
-            }
-
-        }
-
-        for (unsigned int i = NN_*nm_ ; i < (NN_+1)*nm_ ; i++){
-
-            U_z2[i] = z2[i-(NN_-1)*nm_];
-
-        }
-        // End of computation of (U_hat * z2_a)
-
-        solve_banded_QRST_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z3_ac, U_z2); // Obtains z3_a
-
-        #endif
 
         
         // Computation of xi, which is the solution of eq. (9a)
@@ -445,6 +412,12 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         memset(v, 0, sizeof(double)*(NN_+1)*nm_);
 
+        #else // SOFT_CONSTRAINTS == 1
+
+        memset(v, 0, sizeof(double)*(NN_+1)*nm_);
+
+        #endif
+
         // Computation of (U_tilde*z2_b), stored in v to save memory
         for  (unsigned int i = 0 ; i < 2*nm_ ; i++){ 
 
@@ -482,50 +455,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         }
         // End of computation of mu
-
-        #else // SOFT_CONSTRAINTS == 1
-
-        memset(U_z2, 0, sizeof(double)*(NN_+1)*nm_);
-
-        // Computation of (U_tilde*z2_b), stored in U_z2
-        for  (unsigned int i = 0 ; i < 2*nm_ ; i++){ 
-
-            for(unsigned int j = 0 ; j < nn_ ; j++){
-
-                U_z2[j] += U_tilde[j][i] * z2[i]; // U_tilde is dense, but it presents repetitions inside, so we use a shortened version of it instead
-
-            }
-
-            for (unsigned int l = 0 ; l < NN_-1 ; l++){
-            
-                for (unsigned int j = nn_ ; j < 2*nn_ ; j++){
-                
-                    U_z2[l*nn_+j] += U_tilde[j][i] * z2[i];
-
-                }
-                
-            }
-
-            for (unsigned int j = 2*nn_ ; j < 4*nn_ ; j++){
-
-                U_z2[(NN_-2)*nn_+j] += U_tilde[j][i] * z2[i];
-
-            }
-
-        }
-        // End of computation of (U_tilde*z2_b)
-
-        solve_banded_Chol(Alpha, Beta, U_z2); // Obtains z3_b, which is stored in U_z2 to save memory
-
-        // Computation of mu, which is the solution of eq. (9b)
-        for (unsigned int i = 0 ; i < (NN_+2)*nn_ ; i++){ 
-
-            mu[i] -= U_z2[i]; // mu[i] = z1_b[i] - z3_b[i];
-
-        }
-        // End of computation of mu
-
-        #endif
+        
         
         /****** Compute z^{k+1} from eq. (9c) using ALg. 2 from the article ******/
 
@@ -716,6 +646,12 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         memset(v, 0, sizeof(double)*(NN_+1)*nm_);
 
+        #else // SOFT_CONSTRAINTS == 1
+
+        memset(v, 0, sizeof(double)*(NN_+1)*nm_);
+
+        #endif
+
         // (U_hat * z2_c) computed sparsely, stored in v to save memory
         for (unsigned int l = 0 ; l < NN_ ; l++){
 
@@ -752,47 +688,6 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         solve_banded_QRST_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z3_ac, v); // Obtains z3_c
 
-        #else // SOFT_CONSTRAINTS == 1
-
-        memset(U_z2, 0, sizeof(double)*(NN_+1)*nm_);
-
-        // (U_hat * z2_c) computed sparsely, stored in U_z2
-        for (unsigned int l = 0 ; l < NN_ ; l++){
-
-            for (unsigned int i = l*nm_ ; i < l*nm_ + nn_ ; i++){
-
-                for (unsigned int j = 0 ; j < nn_ ; j++){
-
-                    U_z2[i] -= Q[i-l*nm_][j] * z2[j];
-
-                }
-
-            }
-
-            for (unsigned int  i = l*nm_+nn_ ; i < (l+1)*nm_ ; i++){
-
-                for (unsigned int j = 0 ; j < mm_ ; j++){
-
-                    U_z2[i] -= R[i-l*nm_-nn_][j] * z2[j+nn_];
-
-                }
-
-            }
-
-        }
-
-        for (unsigned int i = NN_*nm_ ; i < (NN_+1)*nm_ ; i++){
-
-            U_z2[i] = z2[i-(NN_-1)*nm_];
-
-        }
-        // End of computation of (U_hat * z2_c), stored in U_z2
-
-        memset(z3_ac, 0, sizeof(double)*(NN_+1)*nm_);
-
-        solve_banded_QRST_sys(Q_rho_i, R_rho_i, S_rho_i, T_rho_i, z3_ac, U_z2); // Obtains z3_c
-
-        #endif
 
         // Computation of  z^{k+1}, which is the solution of eq. (9c)
         for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
@@ -862,17 +757,17 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         
             for (unsigned int i = 0 ; i < nm_ ; i++){
             
-                v[l*(nm_+pp_)+i] = rho_i * lambda[l*(nm_+pp_)+i] + z[l*nm_+i];
+                v[l*nmp_+i] = rho_i * lambda[l*nmp_+i] + z[l*nm_+i];
 
             }
 
             for (unsigned int i = 0 ; i < pp_ ; i++){
 
-                v[l*(nm_+pp_)+nm_+i] = rho_i * lambda[l*(nm_+pp_)+nm_+i];
+                v[l*nmp_+nm_+i] = rho_i * lambda[l*nmp_+nm_+i];
 
                 for (unsigned int j = 0 ; j < nm_ ; j++){
                 
-                    v[l*(nm_+pp_)+nm_+i] += CD[i][j] * z[l*nm_+j];
+                    v[l*nmp_+nm_+i] += CD[i][j] * z[l*nm_+j];
     
                 }
             
@@ -897,7 +792,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         }
 
         // y_0 soft-constrained
-        for (unsigned int i = nm_ ; i<(nm_+pp_) ; i++){
+        for (unsigned int i = nm_ ; i<nmp_ ; i++){
             
             v_aux1 = v[i] + beta_rho_i;
             v_aux2 = v[i];
@@ -924,26 +819,26 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         // The rest of v is soft-constrained
         for (unsigned int l = 1 ; l < NN_+1 ; l++){
 
-            for (unsigned int i = l*(nm_+pp_) ; i < (l+1)*(nm_+pp_) ; i++){
+            for (unsigned int i = l*nmp_ ; i < (l+1)*nmp_ ; i++){
                 
                 v_aux1 = v[i] + beta_rho_i;
                 v_aux2 = v[i];
                 v_aux3 = v[i] - beta_rho_i;
                 
-                if (v_aux1 <= LB[i-l*(nm_+pp_)]){
+                if (v_aux1 <= LB[i-l*nmp_]){
                     v[i] = v_aux1;
                 }
-                else if (v_aux2 >= LB[i-l*(nm_+pp_)] && v_aux2 <= UB[i-l*(nm_+pp_)]){
+                else if (v_aux2 >= LB[i-l*nmp_] && v_aux2 <= UB[i-l*nmp_]){
                     v[i] = v_aux2;
                 }
-                else if(v_aux3 >= UB[i-l*(nm_+pp_)]){
+                else if(v_aux3 >= UB[i-l*nmp_]){
                     v[i] = v_aux3;
                 }
-                else if (v_aux2 > UB[i-l*(nm_+pp_)]){
-                    v[i] = UB[i-l*(nm_+pp_)];
+                else if (v_aux2 > UB[i-l*nmp_]){
+                    v[i] = UB[i-l*nmp_];
                 }
-                else if (v_aux2 < LB[i-l*(nm_+pp_)]){
-                    v[i] = LB[i-l*(nm_+pp_)];
+                else if (v_aux2 < LB[i-l*nmp_]){
+                    v[i] = LB[i-l*nmp_];
                 }
 
             }
@@ -966,17 +861,17 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         }
         #else
 
-        memset(C_tilde_z_v, 0, sizeof(double)*(NN_+1)*(nm_+pp_));
+        memset(C_tilde_z_v, 0, sizeof(double)*(NN_+1)*nmp_);
             
         for (unsigned int l = 0 ; l < NN_+1 ; l++){ // Computation of C_tilde*z-v and lambda^{k+1} = lambda^k + rho * (C_tilde*z - v)
         
             for (unsigned int i = 0 ; i < nm_ ; i++){
             
-                C_tilde_z_v[l*(nm_+pp_)+i] = z[l*nm_+i];
+                C_tilde_z_v[l*nmp_+i] = z[l*nm_+i];
 
-                C_tilde_z_v[l*(nm_+pp_)+i] -= v[l*(nm_+pp_)+i];
+                C_tilde_z_v[l*nmp_+i] -= v[l*nmp_+i];
 
-                lambda[l*(nm_+pp_)+i] += rho * (C_tilde_z_v[l*(nm_+pp_)+i]);
+                lambda[l*nmp_+i] += rho * (C_tilde_z_v[l*nmp_+i]);
 
             }
 
@@ -985,13 +880,13 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
                 for (unsigned int j = 0 ; j < nm_ ; j++){
                 
-                    C_tilde_z_v[l*(nm_+pp_)+nm_+i] += CD[i][j] * z[l*nm_+j];
+                    C_tilde_z_v[l*nmp_+nm_+i] += CD[i][j] * z[l*nm_+j];
     
                 }
 
-                C_tilde_z_v[l*(nm_+pp_)+nm_+i] -= v[l*(nm_+pp_)+nm_+i];
+                C_tilde_z_v[l*nmp_+nm_+i] -= v[l*nmp_+nm_+i];
 
-                lambda[l*(nm_+pp_)+nm_+i] += rho * (C_tilde_z_v[l*(nm_+pp_)+nm_+i]);
+                lambda[l*nmp_+nm_+i] += rho * (C_tilde_z_v[l*nmp_+nm_+i]);
             
             }
 
@@ -1026,7 +921,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         #else // SOFT_CONSTRAINTS == 1
 
-        for (unsigned int i = 0 ; i < (NN_+1)*(nm_+pp_) ; i++){
+        for (unsigned int i = 0 ; i < (NN_+1)*nmp_ ; i++){
         
             res_fixed_point = v[i] - v_old[i];
             res_primal_feas = C_tilde_z_v[i];
@@ -1103,7 +998,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
     
     }
 
-    for (unsigned int i = 0 ; i < (NN_+1)*(nm_+pp_) ; i++){
+    for (unsigned int i = 0 ; i < (NN_+1)*nmp_ ; i++){
         
         sol->v[i] = v[i];
         sol->lambda[i] = lambda[i];

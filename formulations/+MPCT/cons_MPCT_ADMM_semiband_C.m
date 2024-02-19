@@ -80,6 +80,7 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
     defCell = add_line(defCell, 'nm_', n+m, 1, 'uint', 'define');
     if recipe.options.solver.soft_constraints
         defCell = add_line(defCell, 'pp_', p, 1, 'uint', 'define');
+        defCell = add_line(defCell, 'nmp_', n+m+p, 1, 'uint', 'define');
     end
     defCell = add_line(defCell, 'NN_', N, 1, 'uint', 'define');
     defCell = add_line(defCell, 'k_max', recipe.options.solver.k_max, 1, 'uint', 'define');
