@@ -193,9 +193,17 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         % Equality constrained QP solve : Update z
 
         if ~options.solver.soft_constraints
-            p = q + lambda - var.rho*v;
+            if isscalar(var.rho)
+                p = q + lambda - var.rho*v;
+            else
+                p = q + lambda - var.rho.*v;
+            end
         else
-            p = q + var.C_tilde'*(lambda - var.rho*v);
+            if isscalar(var.rho)
+                p = q + var.C_tilde'*(lambda - var.rho*v);
+            else
+                p = q + var.C_tilde'*(lambda - var.rho.*v);
+            end
         end
 
         % Compute xi from eq. (9a) using Alg. 2 from the article
@@ -206,11 +214,20 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         % In C we create a function, as we need to solve it four times.
         
         % 1st banded-diagonal system
-        for i = 1:n+m:(N)*(n+m)
-            z1_a(i:i+n-1,1) = var.Q_rho_i*p(i:i+n-1);
-        end
-        for i = n+1:n+m:(N)*(n+m)
-            z1_a(i:i+m-1,1) = var.R_rho_i*p(i:i+m-1);
+        if isscalar(var.rho)
+            for i = 1:n+m:(N)*(n+m)
+                z1_a(i:i+n-1,1) = var.Q_rho_i*p(i:i+n-1);
+            end
+            for i = n+1:n+m:(N)*(n+m)
+                z1_a(i:i+m-1,1) = var.R_rho_i*p(i:i+m-1);
+            end
+        else
+            for i = 1:n+m:(N)*(n+m)
+                z1_a(i:i+n-1,1) = var.Q_rho_i(:,:,(i-1)/(n+m)+1)*p(i:i+n-1);
+            end
+            for i = n+1:n+m:(N)*(n+m)
+                z1_a(i:i+m-1,1) = var.R_rho_i(:,:,(i-n-1)/(n+m)+1)*p(i:i+m-1);
+            end
         end
         z1_a(N*(n+m)+1:N*(n+m)+n) = var.T_rho_i*p(N*(n+m)+1:N*(n+m)+n);
         z1_a(N*(n+m)+n+1:(N+1)*(n+m)) = var.S_rho_i*p(N*(n+m)+n+1:(N+1)*(n+m));
@@ -223,11 +240,20 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         vec = var.U_hat*z2_a;
         
         % 2nd banded-diagonal system
-        for i = 1:n+m:(N)*(n+m)
-            z3_a(i:i+n-1,1) = var.Q_rho_i*vec(i:i+n-1);
-        end
-        for i = n+1:n+m:(N)*(n+m)
-            z3_a(i:i+m-1,1) = var.R_rho_i*vec(i:i+m-1);
+        if isscalar(var.rho)
+            for i = 1:n+m:(N)*(n+m)
+                z3_a(i:i+n-1,1) = var.Q_rho_i*vec(i:i+n-1);
+            end
+            for i = n+1:n+m:(N)*(n+m)
+                z3_a(i:i+m-1,1) = var.R_rho_i*vec(i:i+m-1);
+            end
+        else
+            for i = 1:n+m:(N)*(n+m)
+                z3_a(i:i+n-1,1) = var.Q_rho_i(:,:,(i-1)/(n+m)+1)*vec(i:i+n-1);
+            end
+            for i = n+1:n+m:(N)*(n+m)
+                z3_a(i:i+m-1,1) = var.R_rho_i(:,:,(i-n-1)/(n+m)+1)*vec(i:i+m-1);
+            end
         end
         z3_a(N*(n+m)+1:N*(n+m)+n) = var.T_rho_i*vec(N*(n+m)+1:N*(n+m)+n);
         z3_a(N*(n+m)+n+1:(N+1)*(n+m)) = var.S_rho_i*vec(N*(n+m)+n+1:(N+1)*(n+m));
@@ -256,11 +282,20 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         vec = -(var.G'*mu+p);
         
         % 3rd banded-diagonal system
-        for i = 1:n+m:(N)*(n+m)
-            z1_c(i:i+n-1,1) = var.Q_rho_i*vec(i:i+n-1);
-        end
-        for i = n+1:n+m:(N)*(n+m)
-            z1_c(i:i+m-1,1) = var.R_rho_i*vec(i:i+m-1);
+        if isscalar(var.rho)
+            for i = 1:n+m:(N)*(n+m)
+                z1_c(i:i+n-1,1) = var.Q_rho_i*vec(i:i+n-1);
+            end
+            for i = n+1:n+m:(N)*(n+m)
+                z1_c(i:i+m-1,1) = var.R_rho_i*vec(i:i+m-1);
+            end
+        else
+            for i = 1:n+m:(N)*(n+m)
+                z1_c(i:i+n-1,1) = var.Q_rho_i(:,:,(i-1)/(n+m)+1)*vec(i:i+n-1);
+            end
+            for i = n+1:n+m:(N)*(n+m)
+                z1_c(i:i+m-1,1) = var.R_rho_i(:,:,(i-n-1)/(n+m)+1)*vec(i:i+m-1);
+            end
         end
         z1_c(N*(n+m)+1:N*(n+m)+n) = var.T_rho_i*vec(N*(n+m)+1:N*(n+m)+n);
         z1_c(N*(n+m)+n+1:(N+1)*(n+m)) = var.S_rho_i*vec(N*(n+m)+n+1:(N+1)*(n+m));
@@ -273,11 +308,20 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         vec = var.U_hat*z2_c;
         
         % 4th banded-diagonal system
-        for i = 1:n+m:(N)*(n+m)
-            z3_c(i:i+n-1,1) = var.Q_rho_i*vec(i:i+n-1);
-        end
-        for i = n+1:n+m:(N)*(n+m)
-            z3_c(i:i+m-1,1) = var.R_rho_i*vec(i:i+m-1);
+        if isscalar(var.rho)
+            for i = 1:n+m:(N)*(n+m)
+                z3_c(i:i+n-1,1) = var.Q_rho_i*vec(i:i+n-1);
+            end
+            for i = n+1:n+m:(N)*(n+m)
+                z3_c(i:i+m-1,1) = var.R_rho_i*vec(i:i+m-1);
+            end
+        else
+            for i = 1:n+m:(N)*(n+m)
+                z3_c(i:i+n-1,1) = var.Q_rho_i(:,:,(i-1)/(n+m)+1)*vec(i:i+n-1);
+            end
+            for i = n+1:n+m:(N)*(n+m)
+                z3_c(i:i+m-1,1) = var.R_rho_i(:,:,(i-n-1)/(n+m)+1)*vec(i:i+m-1);
+            end
         end
         z3_c(N*(n+m)+1:N*(n+m)+n) = var.T_rho_i*vec(N*(n+m)+1:N*(n+m)+n);
         z3_c(N*(n+m)+n+1:(N+1)*(n+m)) = var.S_rho_i*vec(N*(n+m)+n+1:(N+1)*(n+m));
@@ -289,9 +333,17 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         % Inequality constrained QP solve: Update v
         
         if ~options.solver.soft_constraints
-            v = var.rho_i.*lambda + z;
+            if isscalar(var.rho)
+                v = var.rho_i*lambda + z;
+            else
+                v = var.rho_i.*lambda + z;
+            end
         else
-            v = var.rho_i.*lambda + var.C_tilde*z;
+            if isscalar(var.rho)
+                v = var.rho_i*lambda + var.C_tilde*z;
+            else
+                v = var.rho_i.*lambda + var.C_tilde*z;
+            end
         end
         
         % Obtaining v^{k+1}
@@ -327,9 +379,15 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
             % y_0 is soft-constrained
             for i = n+m+1:n+m+pp
 
-                v1 = v(i) + var.beta_rho_i;
-                v2 = v(i);
-                v3 = v(i) - var.beta_rho_i;
+                if isscalar(var.rho)
+                    v1 = v(i) + var.beta_rho_i;
+                    v2 = v(i);
+                    v3 = v(i) - var.beta_rho_i;
+                else
+                    v1 = v(i) + var.beta_rho_i(i);
+                    v2 = v(i);
+                    v3 = v(i) - var.beta_rho_i(i);
+                end
 
                 if (v1 <= var.LB(i))
                     v(i) = v1;
@@ -349,9 +407,15 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
             for l = 1:N
                 for i = l*(n+m+pp)+1 : (l+1)*(n+m+pp)
                     
-                    v1 = v(i) + var.beta_rho_i;
-                    v2 = v(i);
-                    v3 = v(i) - var.beta_rho_i;
+                    if isscalar(var.rho)
+                        v1 = v(i) + var.beta_rho_i;
+                        v2 = v(i);
+                        v3 = v(i) - var.beta_rho_i;
+                    else
+                        v1 = v(i) + var.beta_rho_i(i);
+                        v2 = v(i);
+                        v3 = v(i) - var.beta_rho_i(i);
+                    end
 
                     if (v1 <= var.LB(i-l*(n+m+pp)))
                         v(i) = v1;
@@ -372,9 +436,17 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         
         % Update lambda
         if ~options.solver.soft_constraints
-            lambda = lambda + var.rho.*(z - v);
+            if isscalar(var.rho)
+                lambda = lambda + var.rho*(z - v);
+            else
+                lambda = lambda + var.rho.*(z - v);
+            end
         else
-            lambda = lambda + var.rho.*(var.C_tilde*z - v);
+            if isscalar(var.rho)
+                lambda = lambda + var.rho*(var.C_tilde*z - v);
+            else
+                lambda = lambda + var.rho.*(var.C_tilde*z - v);
+            end
         end
 
         % Compute residuals

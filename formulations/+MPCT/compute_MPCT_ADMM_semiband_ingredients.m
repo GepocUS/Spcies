@@ -96,7 +96,11 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
 
     %% Turn rho into a vector
     if isscalar(opt.solver.rho) && opt.solver.force_vector_rho
-        rho = opt.solver.rho*ones((N+1)*(n+m), 1);
+        if ~opt.solver.soft_constraints
+            rho = opt.solver.rho*ones((N+1)*(n+m), 1);
+        else
+            rho = opt.solver.rho*ones((N+1)*(n+m+p), 1);
+        end
     else
         rho = opt.solver.rho;
     end
@@ -165,7 +169,7 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
         end
     else
         if opt.solver.soft_constraints == true
-            Gamma_hat = band + diag(rho) * (C_tilde'*C_tilde);
+            Gamma_hat = band + (C_tilde'*diag(rho)*C_tilde);
         else
             Gamma_hat = band + diag(rho);
         end
@@ -265,14 +269,18 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
         vars.Q_rho_i = zeros(n,n,N);
         vars.R_rho_i = zeros(m,m,N);
         for i = 1:N
-            vars.Q_rho_i(:,:,i) = inv(Q + diag(rho((i-1)*(n+m)+1:(i-1)*(n+m)+n)));
-            vars.R_rho_i(:,:,i) = inv(R + diag(rho((i-1)*(n+m)+n+1:i*(n+m))));
+            
+            vars.Q_rho_i(:,:,i) = Gamma_hat_inv((i-1)*(n+m)+1:(i-1)*(n+m)+n,(i-1)*(n+m)+1:(i-1)*(n+m)+n);
+            vars.R_rho_i(:,:,i) = Gamma_hat_inv((i-1)*(n+m)+n+1:(i-1)*(n+m)+n+m,(i-1)*(n+m)+n+1:(i-1)*(n+m)+n+m);
+            
         end
-        vars.S_rho_i = inv(N*R + S + diag(rho(end-m+1:end)));
-        vars.T_rho_i = inv(N*Q + T + diag(rho(end-m-n+1:end-m)));
+        vars.T_rho_i = Gamma_hat_inv(N*(n+m)+1:N*(n+m)+n,N*(n+m)+1:N*(n+m)+n);
+        vars.S_rho_i = Gamma_hat_inv(N*(n+m)+n+1:N*(n+m)+n+m,N*(n+m)+n+1:N*(n+m)+n+m);
+        
         if opt.solver.soft_constraints
             vars.beta_rho_i = beta./rho;
         end
+
     end
 
     if opt.solver.soft_constraints
