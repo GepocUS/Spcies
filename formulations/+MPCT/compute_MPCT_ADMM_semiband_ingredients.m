@@ -193,11 +193,18 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
     Gamma_tilde_inv = inv(Gamma_tilde); % This avoids the inverse computation online
 
     U_tilde_full = -G*Gamma_hat_inv*U_hat*inv(eye(2*MM)+V_hat*Gamma_hat_inv*U_hat);
-
-    U_tilde = [U_tilde_full(1:2*n,:) ; U_tilde_full(N*n+1:(N+2)*n,:)];
     
+    % If rho is a scalar, some components are repeated inside U_tilde,
+    % otherwise we need the full matrix
+    if vars.rho_is_scalar
+        U_tilde = [U_tilde_full(1:2*n,:) ; U_tilde_full(N*n+1:(N+2)*n,:)];
+    else
+        U_tilde = U_tilde_full;
+    end
+
     V_tilde = V_hat*Gamma_hat_inv*G';
 
+    % M_hat repeats its components independently of rho being a vector
     M_hat = inv((eye(2*(n+m))+V_hat*Gamma_hat_inv*U_hat))*V_hat;
     
     M_hat_x1 = [M_hat(1:n,1:n) ; M_hat(n+m+1:2*n+m,1:n)];
@@ -205,11 +212,18 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
     
     M_hat_u1 = [M_hat(n+1:n+m,n+1:n+m) ; M_hat(2*n+m+1:2*(n+m),n+1:n+m)];
     M_hat_u2 = [M_hat(n+1:n+m, N*(n+m)+n+1:(N+1)*(n+m)) ; M_hat(2*n+m+1:2*(n+m),N*(n+m)+n+1:(N+1)*(n+m))];
+    
 
     M_tilde_full = inv((eye(2*(n+m))+V_tilde*Gamma_tilde_inv*U_tilde_full))*V_tilde;
 
-    M_tilde = [M_tilde_full(:,1:2*n), M_tilde_full(:,N*n+1:(N+2)*n)];
-
+    % If rho is a scalar, some components are repeated inside M_tilde,
+    % otherwise we need the full matrix 
+    if vars.rho_is_scalar
+        M_tilde = [M_tilde_full(:,1:2*n), M_tilde_full(:,N*n+1:(N+2)*n)];
+    else
+        M_tilde = M_tilde_full;
+    end
+    
     % Verification: W = G*inv(H)*G' = Gamma_tilde + U_tilde_full * V_tilde
 
     %% Compute upper and lower bounds

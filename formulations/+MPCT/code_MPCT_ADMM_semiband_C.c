@@ -148,6 +148,8 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         
             for (unsigned int i = 0 ; i < nm_ ; i++){
 
+                #ifdef SCALAR_RHO
+
                 p[l*nm_+i] = lambda[l*nmp_+i] - rho * v[l*nmp_+i];
             
                 for (unsigned int j = 0; j < pp_ ; j++){
@@ -155,6 +157,18 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
                     p[l*nm_+i] += CD[j][i] * (lambda[l*nmp_+nm_+j] - rho*v[l*nmp_+nm_+j]);
 
                 }
+
+                #else
+
+                p[l*nm_+i] = lambda[l*nmp_+i] - rho[l*nmp_+i] * v[l*nmp_+i];
+            
+                for (unsigned int j = 0; j < pp_ ; j++){
+                
+                    p[l*nm_+i] += CD[j][i] * (lambda[l*nmp_+nm_+j] - rho[l*nmp_+nm_+j]*v[l*nmp_+nm_+j]);
+
+                }
+
+                #endif
 
             }
 
@@ -381,11 +395,12 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         memset(z2, 0, sizeof(double)*2*nm_);
 
         // Computation of z2_b
+        #ifdef SCALAR_RHO
         for  (unsigned int i = 0 ; i < 2*nm_ ; i++){ 
 
             for(unsigned int j = 0 ; j < nn_ ; j++){
 
-                z2[i] += M_tilde[i][j] * mu[j]; // z2[i] += M_tilde[i][j] * z1_b[j]. M_tilde is dense, but it presents repetitions inside, so we use a shortened version of it instead
+                z2[i] += M_tilde[i][j] * mu[j]; // z2[i] += M_tilde[i][j] * z1_b[j]. M_tilde is dense, but it presents repetitions inside if rho is scalar, so we use a shortened version of it instead
 
             }
 
@@ -406,6 +421,20 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
             }
 
         }
+        
+        #else
+        
+        for  (unsigned int i = 0 ; i < 2*nm_ ; i++){ 
+
+            for(unsigned int j = 0 ; j < (NN_+2)*nn_ ; j++){
+
+                z2[i] += M_tilde[i][j] * mu[j]; // z2[i] += M_tilde[i][j] * z1_b[j]. M_tilde is dense, but it presents repetitions inside if rho is scalar, so we use a shortened version of it instead
+
+            }
+
+        }
+
+        #endif
         // End of computation of z2_b
 
         #if SOFT_CONSTRAINTS == 0
@@ -414,16 +443,18 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         #else // SOFT_CONSTRAINTS == 1
 
-        memset(v, 0, sizeof(double)*(NN_+1)*nm_);
+        memset(v, 0, sizeof(double)*(NN_+1)*nmp_);
 
         #endif
 
         // Computation of (U_tilde*z2_b), stored in v to save memory
-        for  (unsigned int i = 0 ; i < 2*nm_ ; i++){ 
+        #ifdef SCALAR_RHO
+
+        for (unsigned int i = 0 ; i < 2*nm_ ; i++){ 
 
             for(unsigned int j = 0 ; j < nn_ ; j++){
 
-                v[j] += U_tilde[j][i] * z2[i]; // U_tilde is dense, but it presents repetitions inside, so we use a shortened version of it instead
+                v[j] += U_tilde[j][i] * z2[i]; // U_tilde is dense, but it presents repetitions inside if rho is scalar, so we use a shortened version of it instead
 
             }
 
@@ -444,6 +475,20 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
             }
 
         }
+
+        #else
+
+        for (unsigned int i = 0 ; i < 2*nm_ ; i++){
+
+            for (unsigned int j = 0 ; j < (NN_+2)*nn_ ; j++){
+                
+                v[j] += U_tilde[j][i] * z2[i];
+
+            }
+
+        }
+
+        #endif
         // End of computation of (U_tilde*z2_b)
 
         solve_banded_Chol(Alpha, Beta, v); // Obtains z3_b, which is stored in v to save memory
@@ -648,7 +693,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         #else // SOFT_CONSTRAINTS == 1
 
-        memset(v, 0, sizeof(double)*(NN_+1)*nm_);
+        memset(v, 0, sizeof(double)*(NN_+1)*nmp_);
 
         #endif
 
@@ -756,14 +801,22 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         for (unsigned int l = 0 ; l < NN_+1 ; l++){ // Computation of v = lambda/rho + C_tilde*z
         
             for (unsigned int i = 0 ; i < nm_ ; i++){
-            
+
+                #ifdef SCALAR_RHO
                 v[l*nmp_+i] = rho_i * lambda[l*nmp_+i] + z[l*nm_+i];
+                #else
+                v[l*nmp_+i] = rho_i[l*nmp_+i] * lambda[l*nmp_+i] + z[l*nm_+i];
+                #endif
 
             }
 
             for (unsigned int i = 0 ; i < pp_ ; i++){
 
+                #ifdef SCALAR_RHO
                 v[l*nmp_+nm_+i] = rho_i * lambda[l*nmp_+nm_+i];
+                #else
+                v[l*nmp_+nm_+i] = rho_i[l*nmp_+nm_+i] * lambda[l*nmp_+nm_+i];
+                #endif
 
                 for (unsigned int j = 0 ; j < nm_ ; j++){
                 
@@ -794,9 +847,15 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         // y_0 soft-constrained
         for (unsigned int i = nm_ ; i<nmp_ ; i++){
             
-            v_aux1 = v[i] + beta_rho_i;
             v_aux2 = v[i];
+            #ifdef SCALAR_RHO
+            v_aux1 = v[i] + beta_rho_i;
             v_aux3 = v[i] - beta_rho_i;
+            #else
+            v_aux1 = v[i] + beta_rho_i[i];
+            v_aux3 = v[i] - beta_rho_i[i];
+            #endif
+
             
             if (v_aux1 <= LB[i]){
                 v[i] = v_aux1;
@@ -821,9 +880,14 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
             for (unsigned int i = l*nmp_ ; i < (l+1)*nmp_ ; i++){
                 
-                v_aux1 = v[i] + beta_rho_i;
                 v_aux2 = v[i];
+                #ifdef SCALAR_RHO
+                v_aux1 = v[i] + beta_rho_i;
                 v_aux3 = v[i] - beta_rho_i;
+                #else
+                v_aux1 = v[i] + beta_rho_i[i];
+                v_aux3 = v[i] - beta_rho_i[i];
+                #endif
                 
                 if (v_aux1 <= LB[i-l*nmp_]){
                     v[i] = v_aux1;
@@ -859,7 +923,8 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
             #endif
 
         }
-        #else
+
+        #else //SOFT_CONSTRAINTS == 1
 
         memset(C_tilde_z_v, 0, sizeof(double)*(NN_+1)*nmp_);
             
@@ -871,7 +936,11 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
                 C_tilde_z_v[l*nmp_+i] -= v[l*nmp_+i];
 
+                #ifdef SCALAR_RHO
                 lambda[l*nmp_+i] += rho * (C_tilde_z_v[l*nmp_+i]);
+                #else
+                lambda[l*nmp_+i] += rho[l*nmp_+i] * (C_tilde_z_v[l*nmp_+i]);
+                #endif
 
             }
 
@@ -886,7 +955,11 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
                 C_tilde_z_v[l*nmp_+nm_+i] -= v[l*nmp_+nm_+i];
 
+                #ifdef SCALAR_RHO
                 lambda[l*nmp_+nm_+i] += rho * (C_tilde_z_v[l*nmp_+nm_+i]);
+                #else
+                lambda[l*nmp_+nm_+i] += rho[l*nmp_+nm_+i] * (C_tilde_z_v[l*nmp_+nm_+i]);
+                #endif
             
             }
 
@@ -949,6 +1022,8 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
             done = 1;
             *e_flag = -1;        
         }
+
+        // done = 1; // TODO: Delete this
 
     }
 
