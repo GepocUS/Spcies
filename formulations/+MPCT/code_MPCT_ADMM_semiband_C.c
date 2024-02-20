@@ -428,7 +428,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
             for(unsigned int j = 0 ; j < (NN_+2)*nn_ ; j++){
 
-                z2[i] += M_tilde[i][j] * mu[j]; // z2[i] += M_tilde[i][j] * z1_b[j]. M_tilde is dense, but it presents repetitions inside if rho is scalar, so we use a shortened version of it instead
+                z2[i] += M_tilde[i][j] * mu[j]; // z2[i] += M_tilde[i][j] * z1_b[j]. M_tilde is dense. It does not have repetitions inside when rho is a vector, so we use the full matrix
 
             }
 
@@ -462,7 +462,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
             
                 for (unsigned int j = nn_ ; j < 2*nn_ ; j++){
                 
-                    v[l*nn_+j] += U_tilde[j][i] * z2[i];
+                    v[l*nn_+j] += U_tilde[j][i] * z2[i]; // U_tilde is dense. It does not have repetitions inside when rho is a vector, so we use the full matrix
 
                 }
                 
@@ -1022,8 +1022,6 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
             done = 1;
             *e_flag = -1;        
         }
-
-        // done = 1; // TODO: Delete this
 
     }
 
