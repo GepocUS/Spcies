@@ -1,7 +1,7 @@
 /**
  * ADMM solver for the MPCT formulation using Woodbury Matrix Identity. Features two different modes:
  * > SOFT_CONSTRAINTS == 0: MPCT formulation with box constraints in states and inputs
- * > SOFT_CONSTRAINTS == 1: MPCT formulation with box constraints in u_0, and "softened" box constraints
+ * > SOFT_CONSTRAINTS == 1: MPCT formulation with hard box constraints in u_0, and "softened" box constraints
  * in the rest of inputs, states, and also in constrained outputs, i.e., y_c = C_c*x_i+D_c*u_i.
  *
  * ARGUMENTS:
