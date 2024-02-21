@@ -49,7 +49,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
     double lambda[(NN_+1)*nmp_] = {0.0}; // Decision variable lambda
     double C_tilde_z_v[(NN_+1)*nmp_] = {0.0}; // Auxiliary vector for storing C*z-v
     double v_aux1 = 0.0; // Used for computation of v
-    double v_aux2 = 0.0; // Used for computation of v
+    // double v_aux2 = 0.0; // Used for computation of v
     double v_aux3 = 0.0; // Used for computation of v
     #endif
     double q[nm_] = {0.0}; // Linear term vector in the functional. Only non-zero elements are considered.
@@ -847,7 +847,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         // y_0 soft-constrained
         for (unsigned int i = nm_ ; i<nmp_ ; i++){
             
-            v_aux2 = v[i];
+            // v_aux2 = v[i];
             #ifdef SCALAR_RHO
             v_aux1 = v[i] + beta_rho_i;
             v_aux3 = v[i] - beta_rho_i;
@@ -860,16 +860,16 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
             if (v_aux1 <= LB[i]){
                 v[i] = v_aux1;
             }
-            else if (v_aux2 >= LB[i] && v_aux2 <= UB[i]){
-                v[i] = v_aux2;
-            }
+            // else if (v_aux2 >= LB[i] && v_aux2 <= UB[i]){
+            //     v[i] = v_aux2;
+            // }
             else if(v_aux3 >= UB[i]){
                 v[i] = v_aux3;
             }
-            else if (v_aux2 > UB[i]){
+            else if (v[i] > UB[i]){ // else if (v_aux2 > UB[i]){
                 v[i] = UB[i];
             }
-            else if (v_aux2 < LB[i]){
+            else if (v[i] < LB[i]){ // else if (v_aux2 < LB[i]){
                 v[i] = LB[i];
             }
 
@@ -880,7 +880,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
             for (unsigned int i = l*nmp_ ; i < (l+1)*nmp_ ; i++){
                 
-                v_aux2 = v[i];
+                // v_aux2 = v[i];
                 #ifdef SCALAR_RHO
                 v_aux1 = v[i] + beta_rho_i;
                 v_aux3 = v[i] - beta_rho_i;
@@ -892,16 +892,16 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
                 if (v_aux1 <= LB[i-l*nmp_]){
                     v[i] = v_aux1;
                 }
-                else if (v_aux2 >= LB[i-l*nmp_] && v_aux2 <= UB[i-l*nmp_]){
-                    v[i] = v_aux2;
-                }
+                // else if (v_aux2 >= LB[i-l*nmp_] && v_aux2 <= UB[i-l*nmp_]){
+                //     v[i] = v_aux2;
+                // }
                 else if(v_aux3 >= UB[i-l*nmp_]){
                     v[i] = v_aux3;
                 }
-                else if (v_aux2 > UB[i-l*nmp_]){
+                else if (v[i] > UB[i-l*nmp_]){ // else if (v_aux2 > UB[i-l*nmp_]){
                     v[i] = UB[i-l*nmp_];
                 }
-                else if (v_aux2 < LB[i-l*nmp_]){
+                else if (v[i] < LB[i-l*nmp_]){ // else if (v_aux2 < LB[i-l*nmp_]){
                     v[i] = LB[i-l*nmp_];
                 }
 
