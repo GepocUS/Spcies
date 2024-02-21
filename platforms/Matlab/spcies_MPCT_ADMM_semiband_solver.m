@@ -4,6 +4,11 @@
 %
 % This solver uses the Woodbury Matrix Identity to efficiently compute the iterate z^{k+1} of ADMM when it is applied to the MPC for Tracking formulation.
 % This step consists of an equality-contrained QP whose Hessian presents a semi-banded structure.
+% The solver considers two possibilities:
+%   1. options.solver.soft_constraints = false --> MPCT formulation with terminal equality constraint. 
+%   No box constraints in outputs allowed. All box constraints are hard.
+%   2. options.solver.soft_constraints = true --> MPCT formulation with terminal equality constraint.
+%   Box constraints in outputs allowed. All constraints are soft except for the applied input u_0.
 
 % Information about this formulation and the solver can be found at:
 % 
@@ -22,6 +27,10 @@
 %          structure containing:
 %          - .A: matrix A of the state space model.
 %          - .B: matrix B of the state space model.
+%          * Only if options.solver.soft_constraints == true *
+%               - .C_c: matrix C_c of the constrained ouput vector y_c =
+%                  C_c*x + D_c*u.
+%               - .D_c: matrix D_c of the constrained output vector y_c = C_c*x + D_c*u.
 %          It can optionally also contain the following fields:
 %          - .xOptPoint: operating point for the system state.
 %          - .uOptPoint: operating point for the system input.
@@ -29,6 +38,9 @@
 %          - .UBx: Upper bound for the system state.
 %          - .LBu: Upper bound for the system input.
 %          - .UBu: Upper bound for the system input.
+%          * Only if options.solver.soft_constraints == true *
+%               - .LBy: Lower bound for the constrained output vector y_c.
+%               - .UBy: Upper bound for the constrained output vector y_c.
 %          - .Nx: Vector defining the scaling of the system state.
 %          - .nU: Vector defining the scaling of the system input.
 %   - param: Structure containing the ingredients of the MPCT controller.
@@ -40,18 +52,21 @@
 %   - controller: Alternatively, the sys and param arguments can be omitted 
 %                 and instead substituted by an instance of the TrackingMPC
 %                 class of the GepocToolbox (https://github.com/GepocUS/GepocToolbox).
-%   - options: Structure containing options of the EADMM solver.
-%              - .epsilon_x: Vector by which the bound for x_s are reduced.
-%              - .epsilon_u: Vector by which the bound for u_s are reduced.
+%   - options: Structure containing options of the ADMM_semiband solver.
+%              - .soft_constraints: Boolean to choose if softened box
+%              constraints are considered, as well as softened box constraints in outputs.
 %              - .inf_bound: Scalar. Determines the value given to components without bound.
 %              - .tol_p: Primal exit tolerance of the solver. Defaults to 1e-4.
 %              - .tol_d: Dual exit tolerance (dual) of the solver. Defaults to 1e-4.
 %              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
 %              - .in_engineering: Boolean that determines if the arguments of the solver are given in
 %                                 engineering units (true) or incremental ones (false - default).
-%   - verbose: Controlls the amount of information printed in the console.
+%              * Only if options.solver.soft_constraints == false *
+%                   - .epsilon_x: Vector by which the bound for x_s are reduced when there are no soft constraints.
+%                   - .epsilon_u: Vector by which the bound for u_s are reduced when there are no soft constraints.
+%   - verbose: Controls the amount of information printed in the console.
 %              Integer from 0 (no information printed) to 3 (print all information).
-%   - genHist: Controlls the amount of information saved and returned in the output Hist.
+%   - genHist: Controls the amount of information saved and returned in the output Hist.
 %              Integer from 0 (save minimum amount of data) to 2 (save all data).
 % 
 % OUTPUTS:
