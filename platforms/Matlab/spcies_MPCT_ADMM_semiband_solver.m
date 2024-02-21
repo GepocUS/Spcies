@@ -28,8 +28,7 @@
 %          - .A: matrix A of the state space model.
 %          - .B: matrix B of the state space model.
 %          * Only if options.solver.soft_constraints == true *
-%               - .C_c: matrix C_c of the constrained ouput vector y_c =
-%                  C_c*x + D_c*u.
+%               - .C_c: matrix C_c of the constrained output vector y_c = C_c*x + D_c*u.
 %               - .D_c: matrix D_c of the constrained output vector y_c = C_c*x + D_c*u.
 %          It can optionally also contain the following fields:
 %          - .xOptPoint: operating point for the system state.
@@ -55,6 +54,11 @@
 %   - options: Structure containing options of the ADMM_semiband solver.
 %              - .soft_constraints: Boolean to choose if softened box
 %              constraints are considered, as well as softened box constraints in outputs.
+%              - .rho: Penalty parameter of ADMM. Can be either a scalar or
+%                      a vector. Defaults to 1e-2.
+%              * Only if options.solver.soft_constraints == true *
+%                   - .beta: Parameter to weight softened box constraints.
+%                            Can be either a scalar or a vector. Defaults to 1.
 %              - .inf_bound: Scalar. Determines the value given to components without bound.
 %              - .tol_p: Primal exit tolerance of the solver. Defaults to 1e-4.
 %              - .tol_d: Dual exit tolerance (dual) of the solver. Defaults to 1e-4.
@@ -89,6 +93,8 @@
 %
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 %
+
+% TODO: Change beta from option to necessary input of the solver when options.solver.soft_constraints == true.
 
 function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, varargin)
     import MPCT.compute_MPCT_ADMM_semiband_ingredients
