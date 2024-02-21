@@ -94,7 +94,7 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 %
 
-% TODO: Change beta from option to necessary input of the solver when options.solver.soft_constraints == true.
+% TODO: Change beta from option to necessary input of the solver when options.solver.soft_constraints == true and make it deal with beta being a vector.
 
 function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, varargin)
     import MPCT.compute_MPCT_ADMM_semiband_ingredients
