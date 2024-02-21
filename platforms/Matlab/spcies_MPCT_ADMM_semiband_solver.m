@@ -44,7 +44,8 @@
 %              - .epsilon_x: Vector by which the bound for x_s are reduced.
 %              - .epsilon_u: Vector by which the bound for u_s are reduced.
 %              - .inf_bound: Scalar. Determines the value given to components without bound.
-%              - .tol: Exit tolerance of the solver. Defaults to 1e-4.
+%              - .tol_p: Primal exit tolerance of the solver. Defaults to 1e-4.
+%              - .tol_d: Dual exit tolerance (dual) of the solver. Defaults to 1e-4.
 %              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
 %              - .in_engineering: Boolean that determines if the arguments of the solver are given in
 %                                 engineering units (true) or incremental ones (false - default).
@@ -458,7 +459,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         r_d = norm(v - v_old,'inf'); % Dual residual
 
         % Check exit condition
-        if (r_p <= options.solver.tol && r_d <= options.solver.tol) % Infinity norm
+        if (r_p <= options.solver.tol_p && r_d <= options.solver.tol_d) % Infinity norm
             done = true;
             e_flag = 1;
         elseif (k >= options.solver.k_max)

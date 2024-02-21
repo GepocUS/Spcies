@@ -84,9 +84,12 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
     end
     defCell = add_line(defCell, 'NN_', N, 1, 'uint', 'define');
     defCell = add_line(defCell, 'k_max', recipe.options.solver.k_max, 1, 'uint', 'define');
-    defCell = add_line(defCell, 'tol', recipe.options.solver.tol, 1, 'float', 'define');
-    defCell = add_line(defCell, 'eps_x', recipe.options.solver.epsilon_x, 1, 'float', 'define');
-    defCell = add_line(defCell, 'eps_u', recipe.options.solver.epsilon_u, 1, 'float', 'define');
+    defCell = add_line(defCell, 'tol_p', recipe.options.solver.tol_p, 1, 'float', 'define');
+    defCell = add_line(defCell, 'tol_d', recipe.options.solver.tol_d, 1, 'float', 'define');
+    if ~recipe.options.solver.soft_constraints
+        defCell = add_line(defCell, 'eps_x', recipe.options.solver.epsilon_x, 1, 'float', 'define');
+        defCell = add_line(defCell, 'eps_u', recipe.options.solver.epsilon_u, 1, 'float', 'define');
+    end
     defCell = add_line(defCell, 'inf', recipe.options.inf_value, 1, 'float', 'define');
     
     % Constants

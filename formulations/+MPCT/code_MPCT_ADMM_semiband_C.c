@@ -983,7 +983,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
             res_fixed_point = (res_fixed_point > 0.0) ? res_fixed_point : -res_fixed_point;
             res_primal_feas = (res_primal_feas > 0.0) ? res_primal_feas : -res_primal_feas;
             
-            if (res_fixed_point > tol || res_primal_feas > tol){
+            if (res_fixed_point > tol_d || res_primal_feas > tol_p){
 
                 res_flag = 1;
                 break;
@@ -1002,7 +1002,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
             res_fixed_point = (res_fixed_point > 0.0) ? res_fixed_point : -res_fixed_point;
             res_primal_feas = (res_primal_feas > 0.0) ? res_primal_feas : -res_primal_feas;
             
-            if (res_fixed_point > tol || res_primal_feas > tol){
+            if (res_fixed_point > tol_d || res_primal_feas > tol_p){
 
                 res_flag = 1;
                 break;
