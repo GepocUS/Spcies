@@ -122,7 +122,11 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
     constCell = add_line(constCell, 'A', vars.A, 1, precision, var_options);
     constCell = add_line(constCell, 'B', vars.B, 1, precision, var_options);
     if recipe.options.solver.soft_constraints
-        constCell = add_line(constCell, 'CD', [vars.C,vars.D], 1, precision, var_options);
+        var_options_CD = var_options;
+        if size(vars.C,1) == 1
+            var_options_CD = [var_options,'matrix'];
+        end
+        constCell = add_line(constCell, 'CD', [vars.C,vars.D], 1, precision, var_options_CD);
     end
     constCell = add_line(constCell, 'Alpha', vars.Alpha, 1, precision, var_options);
     constCell = add_line(constCell, 'Beta', vars.Beta, 1, precision, var_options);
