@@ -68,7 +68,7 @@ function s = dec_var(var)
 
     % Force vector to be declared as matrix if stated splicitly
     if any(strcmp(options, 'matrix'))
-        order = 'matrix';
+        order = 'matrix'; % TODO: This still needs a better solution
     end
     
     %% Open temporary file for writing the text to

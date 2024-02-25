@@ -124,7 +124,7 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
     if recipe.options.solver.soft_constraints
         var_options_CD = var_options;
         if size(vars.C,1) == 1
-            var_options_CD = [var_options,'matrix'];
+            var_options_CD = [var_options,'matrix']; % TODO: This still neeeds a better solution
         end
         constCell = add_line(constCell, 'CD', [vars.C,vars.D], 1, precision, var_options_CD);
     end
