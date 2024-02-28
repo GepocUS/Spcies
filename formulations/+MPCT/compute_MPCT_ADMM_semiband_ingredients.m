@@ -34,7 +34,7 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
         LBu = controller.model.LBu;
         UBx = controller.model.UBx;
         UBu = controller.model.UBu;
-        if opt.solver.soft_constraints
+        if opt.solver.constrained_output
             LBy = controller.model.LBy;
             UBy = controller.model.UBy;
             C = controller.model.C;
@@ -48,7 +48,7 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
         else
             B = controller.sys.B;
         end
-        if opt.solver.soft_constraints
+        if opt.solver.constrained_output
             C = controller.sys.C;
             D = controller.sys.D;
             p = size(C,1);
@@ -80,7 +80,7 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
         catch
             UBu = opt.inf_value*ones(m, 1);
         end
-        if opt.solver.soft_constraints
+        if opt.solver.constrained_output
             try
                 LBy = controller.sys.LBy;
             catch
@@ -96,7 +96,7 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
 
     %% Turn rho into a vector
     if isscalar(opt.solver.rho) && opt.solver.force_vector_rho
-        if ~opt.solver.soft_constraints
+        if ~opt.solver.constrained_output
             rho = opt.solver.rho*ones((N+1)*(n+m), 1);
         else
             rho = opt.solver.rho*ones((N+1)*(n+m+p), 1);
@@ -152,7 +152,7 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
     n_z = size(H,1); % Number of decision variables
 
     %% Compute C_tilde if necessary
-    if opt.solver.soft_constraints == true
+    if opt.solver.constrained_output == true
         C_tilde = [[eye(n) zeros(n,m)];[zeros(m,n) eye(m)];[C D]];
         for i = 2:N+1
             C_tilde = blkdiag(C_tilde , [[eye(n) zeros(n,m)];[zeros(m,n) eye(m)];[C D]]);
@@ -162,13 +162,13 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
     %% Ingredients necessary for low computational complexity
     
     if vars.rho_is_scalar
-        if opt.solver.soft_constraints == true
+        if opt.solver.constrained_output == true
             Gamma_hat = band + rho * (C_tilde'*C_tilde); % Band of P
         else
             Gamma_hat = band + rho * eye(n_z);
         end
     else
-        if opt.solver.soft_constraints == true
+        if opt.solver.constrained_output == true
             Gamma_hat = band + (C_tilde'*diag(rho)*C_tilde);
         else
             Gamma_hat = band + diag(rho);
@@ -229,7 +229,7 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
     %% Compute upper and lower bounds
     LB = [LBx ; LBu];
     UB = [UBx ; UBu];
-    if opt.solver.soft_constraints == true
+    if opt.solver.constrained_output == true
         LB = [LB ; LBy];
         UB = [UB ; UBy];
     end
@@ -238,7 +238,7 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
     vars.N = N;  % Prediction horizon
     vars.n = n; % Dimension of state space
     vars.m = m; % Dimension of input space
-    if opt.solver.soft_constraints == true
+    if opt.solver.constrained_output == true
         vars.p = p; % Dimension of constrained output
     end
     vars.A = A;
@@ -264,7 +264,7 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
     vars.rho = rho;
     if vars.rho_is_scalar
         vars.rho_i = 1/rho;
-        if ~opt.solver.soft_constraints
+        if ~opt.solver.constrained_output
             vars.Q_rho_i = inv(Q + rho*diag(ones(n,1)));
             vars.R_rho_i = inv(R + rho*diag(ones(m,1)));
             vars.S_rho_i = inv(N*R + S + rho*diag(ones(m,1)));
@@ -297,7 +297,7 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
 
     end
 
-    if opt.solver.soft_constraints
+    if opt.solver.constrained_output
         vars.C = C;
         vars.D = D;
         vars.C_tilde = C_tilde; % Just for Matlab version of the solver

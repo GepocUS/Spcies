@@ -55,7 +55,7 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
     %% Rename variables for convenience
     n = vars.n;
     m = vars.m;
-    if recipe.options.solver.soft_constraints
+    if recipe.options.solver.constrained_output
         p = vars.p;
     end
     N = vars.N;
@@ -75,10 +75,11 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
     % Defines
     defCell = recipe.options.default_defCell();
     defCell = add_line(defCell, 'SOFT_CONSTRAINTS', recipe.options.solver.soft_constraints, 1, 'bool', 'define');
+    defCell = add_line(defCell, 'CONSTRAINED_OUTPUT', recipe.options.solver.constrained_output, 1, 'bool', 'define');
     defCell = add_line(defCell, 'nn_', n, 1, 'uint', 'define');
     defCell = add_line(defCell, 'mm_', m, 1, 'uint', 'define');
     defCell = add_line(defCell, 'nm_', n+m, 1, 'uint', 'define');
-    if recipe.options.solver.soft_constraints
+    if recipe.options.solver.constrained_output
         defCell = add_line(defCell, 'pp_', p, 1, 'uint', 'define');
         defCell = add_line(defCell, 'nmp_', n+m+p, 1, 'uint', 'define');
     end
@@ -121,7 +122,7 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
     constCell = add_line(constCell, 'T_rho_i', vars.T_rho_i, 1, precision, var_options);
     constCell = add_line(constCell, 'A', vars.A, 1, precision, var_options);
     constCell = add_line(constCell, 'B', vars.B, 1, precision, var_options);
-    if recipe.options.solver.soft_constraints
+    if recipe.options.solver.constrained_output
         var_options_CD = var_options;
         if size(vars.C,1) == 1
             var_options_CD = [var_options,'matrix']; % TODO: This still neeeds a better solution

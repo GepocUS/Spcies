@@ -13,10 +13,10 @@ $INSERT_DEFINES$
 
 typedef struct {
     double z[(NN_+1)*nm_]; // Optimal z
-    #if SOFT_CONSTRAINTS == 0
+    #if CONSTRAINED_OUTPUT == 0
     double v[(NN_+1)*nm_]; // Optimal v
     double lambda[(NN_+1)*nm_]; // Optimal lambda
-    #else // SOFT_CONSTRAINTS == 1
+    #else // CONSTRAINED_OUTPUT == 1
     double v[(NN_+1)*(nm_+pp_)]; // Optimal v
     double lambda[(NN_+1)*(nm_+pp_)]; // Optimal lambda
     #endif

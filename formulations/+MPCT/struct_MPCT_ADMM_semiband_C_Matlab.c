@@ -71,7 +71,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     plhs[3] = mxCreateStructMatrix(1, 1, 7, field_names);
 
     z_pt = mxCreateDoubleMatrix((NN_+1)*nm_, 1, mxREAL);
-    #if SOFT_CONSTRAINTS == 0
+    #if CONSTRAINED_OUTPUT == 0
     v_pt = mxCreateDoubleMatrix((NN_+1)*nm_, 1, mxREAL);
     lambda_pt = mxCreateDoubleMatrix((NN_+1)*nm_, 1, mxREAL);
     #else
@@ -112,7 +112,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     #ifdef DEBUG
 
-    #if SOFT_CONSTRAINTS == 0
+    #if CONSTRAINED_OUTPUT == 0
     for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++) {
         z_out[i] = sol.z[i];
         v_out[i] = sol.v[i];

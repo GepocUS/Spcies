@@ -39,7 +39,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
     double xr[nn_] = {0.0}; // State reference
     double ur[mm_] = {0.0}; // Input reference
     double z[(NN_+1)*nm_] = {0.0}; // Decision variable z
-    #if SOFT_CONSTRAINTS == 0
+    #if CONSTRAINED_OUTPUT == 0
     double v[(NN_+1)*nm_] = {0.0}; // Decision variable v
     double v_old[(NN_+1)*nm_] = {0.0}; // Decision variable v in the previous iteration
     double lambda[(NN_+1)*nm_] = {0.0}; // Decision variable lambda
@@ -119,9 +119,9 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         k += 1;
 
         // Save the value of v
-        #if SOFT_CONSTRAINTS == 0
+        #if CONSTRAINED_OUTPUT == 0
         memcpy(v_old, v, sizeof(double)*(NN_+1)*nm_);
-        #else // SOFT_CONSTRAINTS == 1
+        #else // CONSTRAINED_OUTPUT == 1
         memcpy(v_old, v, sizeof(double)*(NN_+1)*nmp_);
         #endif        
         // Reset acumulator variables
@@ -131,7 +131,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         //********** Equality-constrained QP solve **********//
         // This problem updates z
-        #if SOFT_CONSTRAINTS == 0
+        #if CONSTRAINED_OUTPUT == 0
         for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
 
             #ifdef SCALAR_RHO
@@ -142,7 +142,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         }
 
-        #else // SOFT_CONSTRAINTS == 1
+        #else // CONSTRAINED_OUTPUT == 1
         // Compute p = q+C_tilde'*(lambda-rho*v);
         for (unsigned int l = 0 ; l < NN_+1 ; l++){
         
@@ -284,11 +284,11 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         }
 
-        #if SOFT_CONSTRAINTS == 0
+        #if CONSTRAINED_OUTPUT == 0
 
         memset(v, 0, sizeof(double)*(NN_+1)*nm_);
 
-        #else // SOFT_CONSTRAINTS == 1
+        #else // CONSTRAINED_OUTPUT == 1
 
         memset(v, 0, sizeof(double)*(NN_+1)*nmp_);
 
@@ -437,11 +437,11 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         #endif
         // End of computation of z2_b
 
-        #if SOFT_CONSTRAINTS == 0
+        #if CONSTRAINED_OUTPUT == 0
 
         memset(v, 0, sizeof(double)*(NN_+1)*nm_);
 
-        #else // SOFT_CONSTRAINTS == 1
+        #else // CONSTRAINED_OUTPUT == 1
 
         memset(v, 0, sizeof(double)*(NN_+1)*nmp_);
 
@@ -687,11 +687,11 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         }
 
-        #if SOFT_CONSTRAINTS == 0
+        #if CONSTRAINED_OUTPUT == 0
 
         memset(v, 0, sizeof(double)*(NN_+1)*nm_);
 
-        #else // SOFT_CONSTRAINTS == 1
+        #else // CONSTRAINED_OUTPUT == 1
 
         memset(v, 0, sizeof(double)*(NN_+1)*nmp_);
 
@@ -745,7 +745,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         //********** Inequality-constrained QP solve **********//
         // This problem updates v
 
-        #if SOFT_CONSTRAINTS == 0
+        #if CONSTRAINED_OUTPUT == 0
 
         for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
 
@@ -757,128 +757,145 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         }
 
-        for (unsigned int i = 0 ; i < nn_ ; i++){
-
-            v[i] = (v[i] > -inf) ? v[i] : -inf;
-            v[i] = (v[i] < inf) ? v[i] : inf;
-        
-        }
-
-        for (unsigned int i = nn_ ; i < nm_ ; i++){
-
-            v[i] = (v[i] > LB[i]) ? v[i] : LB[i];
-            v[i] = (v[i] < UB[i]) ? v[i] : UB[i];
-        
-        }
-
-        for (unsigned int l = 1 ; l < NN_ ; l++){
-
-            for (unsigned int i = l*nm_ ; i < (l+1)*nm_ ; i++){
-                
-                v[i] = (v[i] > LB[i-l*nm_]) ? v[i] : LB[i-l*nm_];
-                v[i] = (v[i] < UB[i-l*nm_]) ? v[i] : UB[i-l*nm_];
-
+            #if SOFT_CONSTRAINTS == 0 // && CONSTRAINED_OUTPUT == 0
+    
+            for (unsigned int i = 0 ; i < nn_ ; i++){
+    
+                v[i] = (v[i] > -inf) ? v[i] : -inf;
+                v[i] = (v[i] < inf) ? v[i] : inf;
+            
             }
-
-        }
-
-        for (unsigned int i = NN_*nm_ ; i < NN_*nm_+nn_ ; i++){
-
-            v[i] = (v[i] > LB[i-NN_*nm_]+eps_x) ? v[i] : LB[i-NN_*nm_]+eps_x;
-            v[i] = (v[i] < UB[i-NN_*nm_]-eps_x) ? v[i] : UB[i-NN_*nm_]-eps_x;
-
-        }
-
-        for (unsigned int i = NN_*nm_+nn_ ; i < (NN_+1)*nm_ ; i++){
-
-            v[i] = (v[i] > LB[i-NN_*nm_]+eps_u) ? v[i] : LB[i-NN_*nm_]+eps_u;
-            v[i] = (v[i] < UB[i-NN_*nm_]-eps_u) ? v[i] : UB[i-NN_*nm_]-eps_u;
-
-        }
-
-        #else // SOFT_CONSTRAINTS == 1
-
-        for (unsigned int l = 0 ; l < NN_+1 ; l++){ // Computation of v = lambda/rho + C_tilde*z
-        
-            for (unsigned int i = 0 ; i < nm_ ; i++){
-
-                #ifdef SCALAR_RHO
-                v[l*nmp_+i] = rho_i * lambda[l*nmp_+i] + z[l*nm_+i];
-                #else
-                v[l*nmp_+i] = rho_i[l*nmp_+i] * lambda[l*nmp_+i] + z[l*nm_+i];
-                #endif
-
+    
+            for (unsigned int i = nn_ ; i < nm_ ; i++){
+    
+                v[i] = (v[i] > LB[i]) ? v[i] : LB[i];
+                v[i] = (v[i] < UB[i]) ? v[i] : UB[i];
+            
             }
-
-            for (unsigned int i = 0 ; i < pp_ ; i++){
-
-                #ifdef SCALAR_RHO
-                v[l*nmp_+nm_+i] = rho_i * lambda[l*nmp_+nm_+i];
-                #else
-                v[l*nmp_+nm_+i] = rho_i[l*nmp_+nm_+i] * lambda[l*nmp_+nm_+i];
-                #endif
-
-                for (unsigned int j = 0 ; j < nm_ ; j++){
-                
-                    v[l*nmp_+nm_+i] += CD[i][j] * z[l*nm_+j];
+    
+            for (unsigned int l = 1 ; l < NN_ ; l++){
+    
+                for (unsigned int i = l*nm_ ; i < (l+1)*nm_ ; i++){
+                    
+                    v[i] = (v[i] > LB[i-l*nm_]) ? v[i] : LB[i-l*nm_];
+                    v[i] = (v[i] < UB[i-l*nm_]) ? v[i] : UB[i-l*nm_];
     
                 }
-            
+    
             }
-
-        }
-
-        // x_0 unconstrained
-        for (unsigned int i = 0 ; i < nn_ ; i++){
-
-            v[i] = (v[i] > -inf) ? v[i] : -inf;
-            v[i] = (v[i] < inf) ? v[i] : inf;
-        
-        }
-
-        // u_0 hard-constrained
-        for (unsigned int i = nn_ ; i < nm_ ; i++){ 
-
-            v[i] = (v[i] > LB[i]) ? v[i] : LB[i];
-            v[i] = (v[i] < UB[i]) ? v[i] : UB[i];
-
-        }
-
-        // y_0 soft-constrained
-        for (unsigned int i = nm_ ; i<nmp_ ; i++){
-            
-            // v_aux2 = v[i];
-            #ifdef SCALAR_RHO
-            v_aux1 = v[i] + beta_rho_i;
-            v_aux3 = v[i] - beta_rho_i;
-            #else
-            v_aux1 = v[i] + beta_rho_i[i];
-            v_aux3 = v[i] - beta_rho_i[i];
+    
+            for (unsigned int i = NN_*nm_ ; i < NN_*nm_+nn_ ; i++){
+    
+                v[i] = (v[i] > LB[i-NN_*nm_]+eps_x) ? v[i] : LB[i-NN_*nm_]+eps_x;
+                v[i] = (v[i] < UB[i-NN_*nm_]-eps_x) ? v[i] : UB[i-NN_*nm_]-eps_x;
+    
+            }
+    
+            for (unsigned int i = NN_*nm_+nn_ ; i < (NN_+1)*nm_ ; i++){
+    
+                v[i] = (v[i] > LB[i-NN_*nm_]+eps_u) ? v[i] : LB[i-NN_*nm_]+eps_u;
+                v[i] = (v[i] < UB[i-NN_*nm_]-eps_u) ? v[i] : UB[i-NN_*nm_]-eps_u;
+    
+            }
+    
+            #else // CONSTRAINED_OUTPUT == 0 && SOFT_CONSTRAINTS == 1
+    
+            // TODO: Do this case
+    
             #endif
 
+        #else // CONSTRAINED_OUTPUT == 1
+
+            for (unsigned int l = 0 ; l < NN_+1 ; l++){ // Computation of v = lambda/rho + C_tilde*z
             
-            if (v_aux1 <= LB[i]){
-                v[i] = v_aux1;
+                for (unsigned int i = 0 ; i < nm_ ; i++){
+    
+                    #ifdef SCALAR_RHO
+                    v[l*nmp_+i] = rho_i * lambda[l*nmp_+i] + z[l*nm_+i];
+                    #else
+                    v[l*nmp_+i] = rho_i[l*nmp_+i] * lambda[l*nmp_+i] + z[l*nm_+i];
+                    #endif
+    
+                }
+    
+                for (unsigned int i = 0 ; i < pp_ ; i++){
+    
+                    #ifdef SCALAR_RHO
+                    v[l*nmp_+nm_+i] = rho_i * lambda[l*nmp_+nm_+i];
+                    #else
+                    v[l*nmp_+nm_+i] = rho_i[l*nmp_+nm_+i] * lambda[l*nmp_+nm_+i];
+                    #endif
+    
+                    for (unsigned int j = 0 ; j < nm_ ; j++){
+                    
+                        v[l*nmp_+nm_+i] += CD[i][j] * z[l*nm_+j];
+        
+                    }
+                
+                }
+    
             }
-            // else if (v_aux2 >= LB[i] && v_aux2 <= UB[i]){
-            //     v[i] = v_aux2;
-            // }
-            else if(v_aux3 >= UB[i]){
-                v[i] = v_aux3;
+    
+
+            #if SOFT_CONSTRAINTS == 0 // CONSTRAINED_OUTPUT == 1 && SOFT_CONSTRAINTS == 0
+            
+            // x_0 unconstrained
+            for (unsigned int i = 0 ; i < nn_ ; i++){
+    
+                v[i] = (v[i] > -inf) ? v[i] : -inf;
+                v[i] = (v[i] < inf) ? v[i] : inf;
+            
             }
-            else if (v[i] > UB[i]){ // else if (v_aux2 > UB[i]){
-                v[i] = UB[i];
-            }
-            else if (v[i] < LB[i]){ // else if (v_aux2 < LB[i]){
-                v[i] = LB[i];
+            
+            // u_0 hard-constrained
+            for (unsigned int i = nn_ ; i < nm_ ; i++){
+    
+                v[i] = (v[i] > LB[i]) ? v[i] : LB[i];
+                v[i] = (v[i] < UB[i]) ? v[i] : UB[i];
+            
             }
 
-        }
+            // y_0 hard-constrained
+            for (unsigned int i = nm_ ; i<nmp_ ; i++){
 
-        // The rest of v is soft-constrained
-        for (unsigned int l = 1 ; l < NN_+1 ; l++){
+                v[i] = (v[i] > LB[i]) ? v[i] : LB[i];
+                v[i] = (v[i] < UB[i]) ? v[i] : UB[i];
 
-            for (unsigned int i = l*nmp_ ; i < (l+1)*nmp_ ; i++){
+            }
+
+            // The rest of the vector hard-constrained
+            for (unsigned int l = 1 ; l < NN_+1 ; l++){
+    
+                for (unsigned int i = l*nmp_ ; i < (l+1)*nmp_ ; i++){
+                    
+                    v[i] = (v[i] > LB[i-l*nmp_]) ? v[i] : LB[i-l*nmp_];
+                    v[i] = (v[i] < UB[i-l*nmp_]) ? v[i] : UB[i-l*nmp_];
+    
+                }
+    
+            }
+    
+    
+            #else // CONSTRAINED_OUTPUT == 1 && SOFT_CONSTRAINTS == 1
+    
+            // x_0 unconstrained
+            for (unsigned int i = 0 ; i < nn_ ; i++){
+    
+                v[i] = (v[i] > -inf) ? v[i] : -inf;
+                v[i] = (v[i] < inf) ? v[i] : inf;
+            
+            }
+    
+            // u_0 hard-constrained
+            for (unsigned int i = nn_ ; i < nm_ ; i++){ 
+    
+                v[i] = (v[i] > LB[i]) ? v[i] : LB[i];
+                v[i] = (v[i] < UB[i]) ? v[i] : UB[i];
+    
+            }
+    
+            // y_0 soft-constrained
+            for (unsigned int i = nm_ ; i<nmp_ ; i++){
                 
                 // v_aux2 = v[i];
                 #ifdef SCALAR_RHO
@@ -888,32 +905,69 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
                 v_aux1 = v[i] + beta_rho_i[i];
                 v_aux3 = v[i] - beta_rho_i[i];
                 #endif
+    
                 
-                if (v_aux1 <= LB[i-l*nmp_]){
+                if (v_aux1 <= LB[i]){
                     v[i] = v_aux1;
                 }
-                // else if (v_aux2 >= LB[i-l*nmp_] && v_aux2 <= UB[i-l*nmp_]){
+                // else if (v_aux2 >= LB[i] && v_aux2 <= UB[i]){
                 //     v[i] = v_aux2;
                 // }
-                else if(v_aux3 >= UB[i-l*nmp_]){
+                else if(v_aux3 >= UB[i]){
                     v[i] = v_aux3;
                 }
-                else if (v[i] > UB[i-l*nmp_]){ // else if (v_aux2 > UB[i-l*nmp_]){
-                    v[i] = UB[i-l*nmp_];
+                else if (v[i] > UB[i]){ // else if (v_aux2 > UB[i]){
+                    v[i] = UB[i];
                 }
-                else if (v[i] < LB[i-l*nmp_]){ // else if (v_aux2 < LB[i-l*nmp_]){
-                    v[i] = LB[i-l*nmp_];
+                else if (v[i] < LB[i]){ // else if (v_aux2 < LB[i]){
+                    v[i] = LB[i];
                 }
-
+    
             }
+    
+            // The rest of v is soft-constrained
+            for (unsigned int l = 1 ; l < NN_+1 ; l++){
+    
+                for (unsigned int i = l*nmp_ ; i < (l+1)*nmp_ ; i++){
+                    
+                    // v_aux2 = v[i];
+                    #ifdef SCALAR_RHO
+                    v_aux1 = v[i] + beta_rho_i;
+                    v_aux3 = v[i] - beta_rho_i;
+                    #else
+                    v_aux1 = v[i] + beta_rho_i[i];
+                    v_aux3 = v[i] - beta_rho_i[i];
+                    #endif
+                    
+                    if (v_aux1 <= LB[i-l*nmp_]){
+                        v[i] = v_aux1;
+                    }
+                    // else if (v_aux2 >= LB[i-l*nmp_] && v_aux2 <= UB[i-l*nmp_]){
+                    //     v[i] = v_aux2;
+                    // }
+                    else if(v_aux3 >= UB[i-l*nmp_]){
+                        v[i] = v_aux3;
+                    }
+                    else if (v[i] > UB[i-l*nmp_]){ // else if (v_aux2 > UB[i-l*nmp_]){
+                        v[i] = UB[i-l*nmp_];
+                    }
+                    else if (v[i] < LB[i-l*nmp_]){ // else if (v_aux2 < LB[i-l*nmp_]){
+                        v[i] = LB[i-l*nmp_];
+                    }
+    
+                }
+    
+            }
+    
+    
+            #endif
 
-        }
 
         #endif
 
         //********** Update dual variables **********//
 
-        #if SOFT_CONSTRAINTS == 0
+        #if CONSTRAINED_OUTPUT == 0
         for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){ // Computation of lambda^{k+1}
             
             #ifdef SCALAR_RHO
@@ -924,7 +978,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         }
 
-        #else //SOFT_CONSTRAINTS == 1
+        #else //CONSTRAINED_OUTPUT == 1
 
         memset(C_tilde_z_v, 0, sizeof(double)*(NN_+1)*nmp_);
             
@@ -973,7 +1027,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         res_flag = 0; // Reset the residual flag
 
-        #if SOFT_CONSTRAINTS == 0
+        #if CONSTRAINED_OUTPUT == 0
 
         for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
             
@@ -992,7 +1046,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         }
 
-        #else // SOFT_CONSTRAINTS == 1
+        #else // CONSTRAINED_OUTPUT == 1
 
         for (unsigned int i = 0 ; i < (NN_+1)*nmp_ ; i++){
         
@@ -1053,7 +1107,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
     // Save solution into structure
     #ifdef DEBUG
 
-    #if SOFT_CONSTRAINTS == 0
+    #if CONSTRAINED_OUTPUT == 0
 
     for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
         
@@ -1063,7 +1117,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
     
     }
 
-    #else // SOFT_CONSTRAINTS == 1
+    #else // CONSTRAINED_OUTPUT == 1
 
     for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
         
