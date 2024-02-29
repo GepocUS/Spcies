@@ -873,10 +873,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
                 }
     
             }
-    
 
-            #if SOFT_CONSTRAINTS == 0 // CONSTRAINED_OUTPUT == 1 && SOFT_CONSTRAINTS == 0
-            
             // x_0 unconstrained
             for (unsigned int i = 0 ; i < nn_ ; i++){
     
@@ -892,7 +889,10 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
                 v[i] = (v[i] < UB[i]) ? v[i] : UB[i];
             
             }
+    
 
+            #if SOFT_CONSTRAINTS == 0 // CONSTRAINED_OUTPUT == 1 && SOFT_CONSTRAINTS == 0
+                      
             // y_0 hard-constrained
             for (unsigned int i = nm_ ; i<nmp_ ; i++){
 
@@ -915,22 +915,6 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
     
     
             #else // CONSTRAINED_OUTPUT == 1 && SOFT_CONSTRAINTS == 1
-    
-            // x_0 unconstrained
-            for (unsigned int i = 0 ; i < nn_ ; i++){
-    
-                v[i] = (v[i] > -inf) ? v[i] : -inf;
-                v[i] = (v[i] < inf) ? v[i] : inf;
-            
-            }
-    
-            // u_0 hard-constrained
-            for (unsigned int i = nn_ ; i < nm_ ; i++){ 
-    
-                v[i] = (v[i] > LB[i]) ? v[i] : LB[i];
-                v[i] = (v[i] < UB[i]) ? v[i] : UB[i];
-    
-            }
     
             // y_0 soft-constrained
             for (unsigned int i = nm_ ; i<nmp_ ; i++){
