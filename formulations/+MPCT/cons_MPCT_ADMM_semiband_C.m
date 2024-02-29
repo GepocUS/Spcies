@@ -21,11 +21,12 @@
 %              - .rho: Scalar. Value of the penalty parameter.
 %              - .epsilon_x: Vector by which the bound for x_s are reduced.
 %              - .epsilon_u: Vector by which the bound for u_s are reduced.
+%              - .epsilon_y: Vector by which the bound for C*x_s+D*u_s is reduced.
 %              - .inf_bound: Scalar. Determines the value given to components without bound.
 %              - .tol: Exit tolerance of the solver.
 %              - .k_max: Maximum number of iterations of the solver.
-%              - .soft_constraints: Determines if soft constraints are allowed as well as constraints of kind LBy <= C*x+D*u <= UBy also softened.
-% 
+%              - .soft_constraints: Determines if soft constraints are allowed.
+%              - .constrained_output: Determines if constraints of kind LBy <= C*x+D*u <= UBy are allowed.
 % OUTPUTS:
 %   - constructor: An instance of the Spcies_constructor class ready for file generation.
 %                  
@@ -90,6 +91,9 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
     if ~recipe.options.solver.soft_constraints
         defCell = add_line(defCell, 'eps_x', recipe.options.solver.epsilon_x, 1, 'float', 'define');
         defCell = add_line(defCell, 'eps_u', recipe.options.solver.epsilon_u, 1, 'float', 'define');
+        if recipe.options.solver.constrained_output
+            defCell = add_line(defCell, 'eps_y', recipe.options.solver.epsilon_y, 1, 'float', 'define');
+        end
     end
     defCell = add_line(defCell, 'inf', recipe.options.inf_value, 1, 'float', 'define');
     

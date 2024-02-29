@@ -440,11 +440,23 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
                 for i = n+m+1:n+m+pp
                     v(i) = min(max(v(i),var.LB(i)),var.UB(i));
                 end
-
-                for l = 1:N
+                
+                % From x_1 to y_{N-1} 
+                for l = 1:N-1
                     for i = l*(n+m+pp)+1 : (l+1)*(n+m+pp)
                         v(i) = min(max(v(i),var.LB(i-l*(n+m+pp))),var.UB(i-l*(n+m+pp)));
                     end
+                end
+                
+                % From x_s to y_s
+                for i = N*(n+m+pp)+1 : N*(n+m+pp)+n
+                    v(i) = min(max(v(i),var.LB(i-N*(n+m+pp))+options.solver.epsilon_x),var.UB(i-N*(n+m+pp))-options.solver.epsilon_x);
+                end
+                for i = N*(n+m+pp)+n+1 : N*(n+m+pp)+n+m
+                    v(i) = min(max(v(i),var.LB(i-N*(n+m+pp))+options.solver.epsilon_u),var.UB(i-N*(n+m+pp))-options.solver.epsilon_u);
+                end
+                for i = N*(n+m+pp)+n+m+1 : (N+1)*(n+m+pp)
+                    v(i) = min(max(v(i),var.LB(i-N*(n+m+pp))+options.solver.epsilon_y),var.UB(i-N*(n+m+pp))-options.solver.epsilon_y);
                 end
         
             else % options.solver.soft_constraints == true

@@ -902,7 +902,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
             }
 
             // The rest of the vector hard-constrained
-            for (unsigned int l = 1 ; l < NN_+1 ; l++){
+            for (unsigned int l = 1 ; l < NN_ ; l++){
     
                 for (unsigned int i = l*nmp_ ; i < (l+1)*nmp_ ; i++){
                     
@@ -911,6 +911,27 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
     
                 }
     
+            }
+
+            for (unsigned int i = NN_*nmp_ ; i < NN_*nmp_+nn_ ; i++){
+
+                v[i] = (v[i] > LB[i-NN_*nmp_]+eps_x) ? v[i] : LB[i-NN_*nmp_]+eps_x;
+                v[i] = (v[i] < UB[i-NN_*nmp_]-eps_x) ? v[i] : UB[i-NN_*nmp_]-eps_x;
+
+            }
+
+            for (unsigned int i = NN_*nmp_+nn_ ; i < NN_*nmp_+nm_ ; i++){
+
+                v[i] = (v[i] > LB[i-NN_*nmp_]+eps_u) ? v[i] : LB[i-NN_*nmp_]+eps_u;
+                v[i] = (v[i] < UB[i-NN_*nmp_]-eps_u) ? v[i] : UB[i-NN_*nmp_]-eps_u;
+
+            }
+
+            for (unsigned int i = NN_*nmp_+nm_ ; i < (NN_+1)*nmp_ ; i++){
+
+                v[i] = (v[i] > LB[i-NN_*nmp_]+eps_y) ? v[i] : LB[i-NN_*nmp_]+eps_y;
+                v[i] = (v[i] < UB[i-NN_*nmp_]-eps_y) ? v[i] : UB[i-NN_*nmp_]-eps_y;
+
             }
     
     
