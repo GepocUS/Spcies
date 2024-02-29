@@ -749,7 +749,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
 
         #if CONSTRAINED_OUTPUT == 0
 
-        for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){
+        for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++){ // Computation of v = lambda/rho + z
 
             #ifdef SCALAR_RHO
             v[i] = rho_i * lambda[i] + z[i];
