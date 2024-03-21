@@ -13,8 +13,13 @@ $INSERT_DEFINES$
 
 typedef struct {
     double z[(NN_+1)*nm_]; // Optimal z
+    #if CONSTRAINED_OUTPUT == 0
     double v[(NN_+1)*nm_]; // Optimal v
     double lambda[(NN_+1)*nm_]; // Optimal lambda
+    #else // CONSTRAINED_OUTPUT == 1
+    double v[(NN_+1)*(nm_+pp_)]; // Optimal v
+    double lambda[(NN_+1)*(nm_+pp_)]; // Optimal lambda
+    #endif
     double update_time; // Time taken for the update of the ingredients of the optimization solver
     double solve_time; // Time spent in solving the optimization problem
     double polish_time; // Time taken for extra stuff

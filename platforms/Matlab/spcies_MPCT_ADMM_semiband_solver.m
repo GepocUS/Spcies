@@ -4,6 +4,11 @@
 %
 % This solver uses the Woodbury Matrix Identity to efficiently compute the iterate z^{k+1} of ADMM when it is applied to the MPC for Tracking formulation.
 % This step consists of an equality-contrained QP whose Hessian presents a semi-banded structure.
+% The solver considers two possibilities:
+%   1. options.solver.soft_constraints = false --> MPCT formulation with terminal equality constraint. 
+%   No box constraints in outputs allowed. All box constraints are hard.
+%   2. options.solver.soft_constraints = true --> MPCT formulation with terminal equality constraint.
+%   Box constraints in outputs allowed. All constraints are soft except for the applied input u_0.
 
 % Information about this formulation and the solver can be found at:
 % 
@@ -22,6 +27,9 @@
 %          structure containing:
 %          - .A: matrix A of the state space model.
 %          - .B: matrix B of the state space model.
+%          * Only if options.solver.soft_constraints == true *
+%               - .C_c: matrix C_c of the constrained output vector y_c = C_c*x + D_c*u.
+%               - .D_c: matrix D_c of the constrained output vector y_c = C_c*x + D_c*u.
 %          It can optionally also contain the following fields:
 %          - .xOptPoint: operating point for the system state.
 %          - .uOptPoint: operating point for the system input.
@@ -29,6 +37,9 @@
 %          - .UBx: Upper bound for the system state.
 %          - .LBu: Upper bound for the system input.
 %          - .UBu: Upper bound for the system input.
+%          * Only if options.solver.soft_constraints == true *
+%               - .LBy: Lower bound for the constrained output vector y_c.
+%               - .UBy: Upper bound for the constrained output vector y_c.
 %          - .Nx: Vector defining the scaling of the system state.
 %          - .nU: Vector defining the scaling of the system input.
 %   - param: Structure containing the ingredients of the MPCT controller.
@@ -40,17 +51,26 @@
 %   - controller: Alternatively, the sys and param arguments can be omitted 
 %                 and instead substituted by an instance of the TrackingMPC
 %                 class of the GepocToolbox (https://github.com/GepocUS/GepocToolbox).
-%   - options: Structure containing options of the EADMM solver.
-%              - .epsilon_x: Vector by which the bound for x_s are reduced.
-%              - .epsilon_u: Vector by which the bound for u_s are reduced.
+%   - options: Structure containing options of the ADMM_semiband solver.
+%              - .soft_constraints: Boolean to choose if softened box
+%              constraints are considered, as well as softened box constraints in outputs.
+%              - .rho: Penalty parameter of ADMM. Can be either a scalar or
+%                      a vector. Defaults to 1e-2.
+%              * Only if options.solver.soft_constraints == true *
+%                   - .beta: Parameter to weight softened box constraints.
+%                            Can be either a scalar or a vector. Defaults to 1.
 %              - .inf_bound: Scalar. Determines the value given to components without bound.
-%              - .tol: Exit tolerance of the solver. Defaults to 1e-4.
+%              - .tol_p: Primal exit tolerance of the solver. Defaults to 1e-4.
+%              - .tol_d: Dual exit tolerance (dual) of the solver. Defaults to 1e-4.
 %              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
 %              - .in_engineering: Boolean that determines if the arguments of the solver are given in
 %                                 engineering units (true) or incremental ones (false - default).
-%   - verbose: Controlls the amount of information printed in the console.
+%              * Only if options.solver.soft_constraints == false *
+%                   - .epsilon_x: Vector by which the bound for x_s are reduced when there are no soft constraints.
+%                   - .epsilon_u: Vector by which the bound for u_s are reduced when there are no soft constraints.
+%   - verbose: Controls the amount of information printed in the console.
 %              Integer from 0 (no information printed) to 3 (print all information).
-%   - genHist: Controlls the amount of information saved and returned in the output Hist.
+%   - genHist: Controls the amount of information saved and returned in the output Hist.
 %              Integer from 0 (save minimum amount of data) to 2 (save all data).
 % 
 % OUTPUTS:
@@ -73,6 +93,8 @@
 %
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 %
+
+% TODO: Change beta from option to necessary input of the solver when options.solver.soft_constraints == true and make it deal with beta being a vector.
 
 function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, varargin)
     import MPCT.compute_MPCT_ADMM_semiband_ingredients
@@ -133,6 +155,9 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
     N = var.N;
     n = var.n; % Dimension of state space
     m = var.m; % Dimension of input space
+    if options.solver.constrained_output
+        pp = var.p; % Dimension of constrained output
+    end
 
     %% Algorithm
 
@@ -140,9 +165,15 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
     done = false;
     k = 0;
     z = zeros((N+1)*(n+m),1);
-    v = zeros((N+1)*(n+m),1);
-    v_old = zeros((N+1)*(n+m),1); % Value of v in the previous iteration
-    lambda = zeros((N+1)*(n+m),1);
+    if ~options.solver.constrained_output
+        v = zeros((N+1)*(n+m),1);
+        v_old = zeros((N+1)*(n+m),1); % Value of v in the previous iteration
+        lambda = zeros((N+1)*(n+m),1);
+    else
+        v = zeros((N+1)*(n+m+pp),1);
+        v_old = zeros((N+1)*(n+m+pp),1); % Value of v in the previous iteration
+        lambda = zeros((N+1)*(n+m+pp),1);
+    end
 
     % Historics
     if genHist > 0
@@ -151,8 +182,13 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
     end
     if genHist > 1
         hZ = zeros((N+1)*(n+m), options.solver.k_max);
-        hV = zeros((N+1)*(n+m), options.solver.k_max);
-        hLambda = zeros((N+1)*(n+m), options.solver.k_max);
+        if ~options.solver.constrained_output
+            hV = zeros((N+1)*(n+m), options.solver.k_max);
+            hLambda = zeros((N+1)*(n+m), options.solver.k_max);
+        else
+            hV = zeros((N+1)*(n+m+pp), options.solver.k_max);
+            hLambda = zeros((N+1)*(n+m+pp), options.solver.k_max);
+        end
     end
     
     % Obtain x0, xr and ur
@@ -178,8 +214,19 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
 
         % Equality constrained QP solve : Update z
 
-        % Compute p = q + lambda - rho*v
-        p = q + lambda - var.rho*v;
+        if ~options.solver.constrained_output
+            if isscalar(var.rho)
+                p = q + lambda - var.rho*v;
+            else
+                p = q + lambda - var.rho.*v;
+            end
+        else
+            if isscalar(var.rho)
+                p = q + var.C_tilde'*(lambda - var.rho*v);
+            else
+                p = q + var.C_tilde'*(lambda - var.rho.*v);
+            end
+        end
 
         % Compute xi from eq. (9a) using Alg. 2 from the article
 
@@ -189,11 +236,20 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         % In C we create a function, as we need to solve it four times.
         
         % 1st banded-diagonal system
-        for i = 1:n+m:(N)*(n+m)
-            z1_a(i:i+n-1,1) = var.Q_rho_i*p(i:i+n-1);
-        end
-        for i = n+1:n+m:(N)*(n+m)
-            z1_a(i:i+m-1,1) = var.R_rho_i*p(i:i+m-1);
+        if isscalar(var.rho)
+            for i = 1:n+m:(N)*(n+m)
+                z1_a(i:i+n-1,1) = var.Q_rho_i*p(i:i+n-1);
+            end
+            for i = n+1:n+m:(N)*(n+m)
+                z1_a(i:i+m-1,1) = var.R_rho_i*p(i:i+m-1);
+            end
+        else
+            for i = 1:n+m:(N)*(n+m)
+                z1_a(i:i+n-1,1) = var.Q_rho_i(:,:,(i-1)/(n+m)+1)*p(i:i+n-1);
+            end
+            for i = n+1:n+m:(N)*(n+m)
+                z1_a(i:i+m-1,1) = var.R_rho_i(:,:,(i-n-1)/(n+m)+1)*p(i:i+m-1);
+            end
         end
         z1_a(N*(n+m)+1:N*(n+m)+n) = var.T_rho_i*p(N*(n+m)+1:N*(n+m)+n);
         z1_a(N*(n+m)+n+1:(N+1)*(n+m)) = var.S_rho_i*p(N*(n+m)+n+1:(N+1)*(n+m));
@@ -206,11 +262,20 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         vec = var.U_hat*z2_a;
         
         % 2nd banded-diagonal system
-        for i = 1:n+m:(N)*(n+m)
-            z3_a(i:i+n-1,1) = var.Q_rho_i*vec(i:i+n-1);
-        end
-        for i = n+1:n+m:(N)*(n+m)
-            z3_a(i:i+m-1,1) = var.R_rho_i*vec(i:i+m-1);
+        if isscalar(var.rho)
+            for i = 1:n+m:(N)*(n+m)
+                z3_a(i:i+n-1,1) = var.Q_rho_i*vec(i:i+n-1);
+            end
+            for i = n+1:n+m:(N)*(n+m)
+                z3_a(i:i+m-1,1) = var.R_rho_i*vec(i:i+m-1);
+            end
+        else
+            for i = 1:n+m:(N)*(n+m)
+                z3_a(i:i+n-1,1) = var.Q_rho_i(:,:,(i-1)/(n+m)+1)*vec(i:i+n-1);
+            end
+            for i = n+1:n+m:(N)*(n+m)
+                z3_a(i:i+m-1,1) = var.R_rho_i(:,:,(i-n-1)/(n+m)+1)*vec(i:i+m-1);
+            end
         end
         z3_a(N*(n+m)+1:N*(n+m)+n) = var.T_rho_i*vec(N*(n+m)+1:N*(n+m)+n);
         z3_a(N*(n+m)+n+1:(N+1)*(n+m)) = var.S_rho_i*vec(N*(n+m)+n+1:(N+1)*(n+m));
@@ -239,11 +304,20 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         vec = -(var.G'*mu+p);
         
         % 3rd banded-diagonal system
-        for i = 1:n+m:(N)*(n+m)
-            z1_c(i:i+n-1,1) = var.Q_rho_i*vec(i:i+n-1);
-        end
-        for i = n+1:n+m:(N)*(n+m)
-            z1_c(i:i+m-1,1) = var.R_rho_i*vec(i:i+m-1);
+        if isscalar(var.rho)
+            for i = 1:n+m:(N)*(n+m)
+                z1_c(i:i+n-1,1) = var.Q_rho_i*vec(i:i+n-1);
+            end
+            for i = n+1:n+m:(N)*(n+m)
+                z1_c(i:i+m-1,1) = var.R_rho_i*vec(i:i+m-1);
+            end
+        else
+            for i = 1:n+m:(N)*(n+m)
+                z1_c(i:i+n-1,1) = var.Q_rho_i(:,:,(i-1)/(n+m)+1)*vec(i:i+n-1);
+            end
+            for i = n+1:n+m:(N)*(n+m)
+                z1_c(i:i+m-1,1) = var.R_rho_i(:,:,(i-n-1)/(n+m)+1)*vec(i:i+m-1);
+            end
         end
         z1_c(N*(n+m)+1:N*(n+m)+n) = var.T_rho_i*vec(N*(n+m)+1:N*(n+m)+n);
         z1_c(N*(n+m)+n+1:(N+1)*(n+m)) = var.S_rho_i*vec(N*(n+m)+n+1:(N+1)*(n+m));
@@ -256,11 +330,20 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
         vec = var.U_hat*z2_c;
         
         % 4th banded-diagonal system
-        for i = 1:n+m:(N)*(n+m)
-            z3_c(i:i+n-1,1) = var.Q_rho_i*vec(i:i+n-1);
-        end
-        for i = n+1:n+m:(N)*(n+m)
-            z3_c(i:i+m-1,1) = var.R_rho_i*vec(i:i+m-1);
+        if isscalar(var.rho)
+            for i = 1:n+m:(N)*(n+m)
+                z3_c(i:i+n-1,1) = var.Q_rho_i*vec(i:i+n-1);
+            end
+            for i = n+1:n+m:(N)*(n+m)
+                z3_c(i:i+m-1,1) = var.R_rho_i*vec(i:i+m-1);
+            end
+        else
+            for i = 1:n+m:(N)*(n+m)
+                z3_c(i:i+n-1,1) = var.Q_rho_i(:,:,(i-1)/(n+m)+1)*vec(i:i+n-1);
+            end
+            for i = n+1:n+m:(N)*(n+m)
+                z3_c(i:i+m-1,1) = var.R_rho_i(:,:,(i-n-1)/(n+m)+1)*vec(i:i+m-1);
+            end
         end
         z3_c(N*(n+m)+1:N*(n+m)+n) = var.T_rho_i*vec(N*(n+m)+1:N*(n+m)+n);
         z3_c(N*(n+m)+n+1:(N+1)*(n+m)) = var.S_rho_i*vec(N*(n+m)+n+1:(N+1)*(n+m));
@@ -271,40 +354,198 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
 
         % Inequality constrained QP solve: Update v
         
-        v = var.rho_i.*lambda + z;
-
+        if ~options.solver.constrained_output
+            if isscalar(var.rho)
+                v = var.rho_i*lambda + z;
+            else
+                v = var.rho_i.*lambda + z;
+            end
+        else
+            if isscalar(var.rho)
+                v = var.rho_i*lambda + var.C_tilde*z;
+            else
+                v = var.rho_i.*lambda + var.C_tilde*z;
+            end
+        end
+        
         % Obtaining v^{k+1}
+
+        % x_0 is unconstrained
         for i = 1:n
             v(i) = min(max(v(i),-options.inf_value),options.inf_value);
         end
-
+        
+        % u_0 is hard-constrained in both hard and soft versions of the solver
         for i = n+1:n+m
             v(i) = min(max(v(i),var.LB(i)),var.UB(i));
         end
 
-        for l = 1:N-1
-            for i = l*(n+m)+1 : (l+1)*(n+m)
-                v(i) = min(max(v(i),var.LB(i-l*(n+m))),var.UB(i-l*(n+m)));
+        if ~options.solver.constrained_output
+
+            if ~options.solver.soft_constraints
+                % Rest of v is hard-constrained
+                for l = 1:N-1
+                    for i = l*(n+m)+1 : (l+1)*(n+m)
+                        v(i) = min(max(v(i),var.LB(i-l*(n+m))),var.UB(i-l*(n+m)));
+                    end
+                end
+        
+                for i = N*(n+m)+1:N*(n+m)+n
+                    v(i) = min(max(v(i),(var.LB(i-N*(n+m))+options.solver.epsilon_x)),(var.UB(i-N*(n+m))-options.solver.epsilon_x));
+                end
+        
+                for i = N*(n+m)+n+1:(N+1)*(n+m)
+                    v(i) = min(max(v(i),(var.LB(i-(N*(n+m)))+options.solver.epsilon_u)),(var.UB(i-(N*(n+m)))-options.solver.epsilon_u));
+                end
+
+            else % options.solver.soft_constraints == true
+                
+                % Rest of vector v soft-constrained
+                for l = 1:N
+                    for i = l*(n+m)+1 : (l+1)*(n+m)
+                        
+                        if isscalar(var.rho)
+                            v1 = v(i) + var.beta_rho_i;
+                            v2 = v(i);
+                            v3 = v(i) - var.beta_rho_i;
+                        else
+                            v1 = v(i) + var.beta_rho_i(i);
+                            v2 = v(i);
+                            v3 = v(i) - var.beta_rho_i(i);
+                        end
+    
+                        if (v1 <= var.LB(i-l*(n+m)))
+                            v(i) = v1;
+                        elseif (v2 >= var.LB(i-l*(n+m)) && v2 <= var.UB(i-l*(n+m)))
+                            v(i) = v2;
+                        elseif (v3 >= var.UB(i-l*(n+m)))
+                            v(i) = v3;
+                        elseif (v2 > var.UB(i-l*(n+m)))
+                            v(i) = var.UB(i-l*(n+m));
+                        elseif (v2 < var.LB(i-l*(n+m)))
+                            v(i) = var.LB(i-l*(n+m));
+                        end
+    
+                    end
+                end
+    
             end
-        end
 
-        for i = N*(n+m)+1:N*(n+m)+n
-            v(i) = min(max(v(i),(var.LB(i-N*(n+m))+options.solver.epsilon_x)),(var.UB(i-N*(n+m))-options.solver.epsilon_x));
-        end
+        else % options.solver.constrained_output == true
 
-        for i = N*(n+m)+n+1:(N+1)*(n+m)
-            v(i) = min(max(v(i),(var.LB(i-(N*(n+m)))+options.solver.epsilon_u)),(var.UB(i-(N*(n+m)))-options.solver.epsilon_u));
+            if ~options.solver.soft_constraints
+                % Rest of v is hard-constrained
+                
+                % y_0 is hard-constrained
+                for i = n+m+1:n+m+pp
+                    v(i) = min(max(v(i),var.LB(i)),var.UB(i));
+                end
+                
+                % From x_1 to y_{N-1} 
+                for l = 1:N-1
+                    for i = l*(n+m+pp)+1 : (l+1)*(n+m+pp)
+                        v(i) = min(max(v(i),var.LB(i-l*(n+m+pp))),var.UB(i-l*(n+m+pp)));
+                    end
+                end
+                
+                % From x_s to y_s
+                for i = N*(n+m+pp)+1 : N*(n+m+pp)+n
+                    v(i) = min(max(v(i),var.LB(i-N*(n+m+pp))+options.solver.epsilon_x),var.UB(i-N*(n+m+pp))-options.solver.epsilon_x);
+                end
+                for i = N*(n+m+pp)+n+1 : N*(n+m+pp)+n+m
+                    v(i) = min(max(v(i),var.LB(i-N*(n+m+pp))+options.solver.epsilon_u),var.UB(i-N*(n+m+pp))-options.solver.epsilon_u);
+                end
+                for i = N*(n+m+pp)+n+m+1 : (N+1)*(n+m+pp)
+                    v(i) = min(max(v(i),var.LB(i-N*(n+m+pp))+options.solver.epsilon_y),var.UB(i-N*(n+m+pp))-options.solver.epsilon_y);
+                end
+        
+            else % options.solver.soft_constraints == true
+                
+                % y_0 is soft-constrained
+                for i = n+m+1:n+m+pp
+    
+                    if isscalar(var.rho)
+                        v1 = v(i) + var.beta_rho_i;
+                        v2 = v(i);
+                        v3 = v(i) - var.beta_rho_i;
+                    else
+                        v1 = v(i) + var.beta_rho_i(i);
+                        v2 = v(i);
+                        v3 = v(i) - var.beta_rho_i(i);
+                    end
+    
+                    if (v1 <= var.LB(i))
+                        v(i) = v1;
+                    elseif (v2 >= var.LB(i) && v2 <= var.UB(i))
+                        v(i) = v2;
+                    elseif (v3 >= var.UB(i))
+                        v(i) = v3;
+                    elseif (v2 > var.UB(i))
+                        v(i) = var.UB(i);
+                    elseif (v2 < var.LB(i))
+                        v(i) = var.LB(i);
+                    end
+    
+                end
+                
+                % Rest of vector v soft-constrained
+                for l = 1:N
+                    for i = l*(n+m+pp)+1 : (l+1)*(n+m+pp)
+                        
+                        if isscalar(var.rho)
+                            v1 = v(i) + var.beta_rho_i;
+                            v2 = v(i);
+                            v3 = v(i) - var.beta_rho_i;
+                        else
+                            v1 = v(i) + var.beta_rho_i(i);
+                            v2 = v(i);
+                            v3 = v(i) - var.beta_rho_i(i);
+                        end
+    
+                        if (v1 <= var.LB(i-l*(n+m+pp)))
+                            v(i) = v1;
+                        elseif (v2 >= var.LB(i-l*(n+m+pp)) && v2 <= var.UB(i-l*(n+m+pp)))
+                            v(i) = v2;
+                        elseif (v3 >= var.UB(i-l*(n+m+pp)))
+                            v(i) = v3;
+                        elseif (v2 > var.UB(i-l*(n+m+pp)))
+                            v(i) = var.UB(i-l*(n+m+pp));
+                        elseif (v2 < var.LB(i-l*(n+m+pp)))
+                            v(i) = var.LB(i-l*(n+m+pp));
+                        end
+    
+                    end
+                end
+    
+            end
+
         end
         
         % Update lambda
-        lambda = lambda + var.rho.*(z - v);
+        if ~options.solver.constrained_output
+            if isscalar(var.rho)
+                lambda = lambda + var.rho*(z - v);
+            else
+                lambda = lambda + var.rho.*(z - v);
+            end
+        else
+            if isscalar(var.rho)
+                lambda = lambda + var.rho*(var.C_tilde*z - v);
+            else
+                lambda = lambda + var.rho.*(var.C_tilde*z - v);
+            end
+        end
 
         % Compute residuals
-        r_p = norm(z - v,'inf'); % Primal residual
+        if ~options.solver.constrained_output
+            r_p = norm(z - v,'inf'); % Primal residual
+        else
+            r_p = norm(var.C_tilde*z - v,'inf'); % Primal residual
+        end
         r_d = norm(v - v_old,'inf'); % Dual residual
 
         % Check exit condition
-        if (r_p <= options.solver.tol && r_d <= options.solver.tol) % Infinity norm
+        if (r_p <= options.solver.tol_p && r_d <= options.solver.tol_d) % Infinity norm
             done = true;
             e_flag = 1;
         elseif (k >= options.solver.k_max)

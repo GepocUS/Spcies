@@ -15,8 +15,8 @@ void mexFunction(int nlhs, mxArray *plhs[],
     double *u_opt; // Local u_opt
     int k; // Local k
     int e_flag; // Local e_flag
-    sol_$C_CODE_NAME$ sol;
-
+    sol_$C_CODE_NAME$ sol = {.update_time = 0.0, .solve_time = 0.0, .polish_time = 0.0, .run_time = 0.0};
+    
     // Check inputs and outputs
 
     // Check number of inputs
@@ -71,8 +71,13 @@ void mexFunction(int nlhs, mxArray *plhs[],
     plhs[3] = mxCreateStructMatrix(1, 1, 7, field_names);
 
     z_pt = mxCreateDoubleMatrix((NN_+1)*nm_, 1, mxREAL);
+    #if CONSTRAINED_OUTPUT == 0
     v_pt = mxCreateDoubleMatrix((NN_+1)*nm_, 1, mxREAL);
     lambda_pt = mxCreateDoubleMatrix((NN_+1)*nm_, 1, mxREAL);
+    #else
+    v_pt = mxCreateDoubleMatrix((NN_+1)*(nm_+pp_), 1, mxREAL);
+    lambda_pt = mxCreateDoubleMatrix((NN_+1)*(nm_+pp_), 1, mxREAL);
+    #endif
     update_time_pt = mxCreateDoubleMatrix(1, 1, mxREAL);
     solve_time_pt = mxCreateDoubleMatrix(1, 1, mxREAL);
     polish_time_pt = mxCreateDoubleMatrix(1, 1, mxREAL);
@@ -107,11 +112,21 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     #ifdef DEBUG
 
+    #if CONSTRAINED_OUTPUT == 0
     for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++) {
         z_out[i] = sol.z[i];
         v_out[i] = sol.v[i];
         lambda_out[i] = sol.lambda[i];
     }
+    #else
+    for (unsigned int i = 0 ; i < (NN_+1)*nm_ ; i++) {
+        z_out[i] = sol.z[i];
+    }
+    for (unsigned int i = 0 ; i < (NN_+1)*(nm_+pp_) ; i++) {
+        v_out[i] = sol.v[i];
+        lambda_out[i] = sol.lambda[i];
+    }
+    #endif
 
     #endif
 

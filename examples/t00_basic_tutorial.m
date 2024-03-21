@@ -94,7 +94,7 @@ options.tol = 1e-3; % Exit tolerance of the solver
 % MEX file that will be generated, or the directory where the solver is saved.
 options.save_name = 'mpc_solver';
 options.directory = '';
-options.time = true; % This option tells Spcies to measure the time internally.
+options.timing = true; % This option tells Spcies to measure the time internally.
 
 % If an empty field is provided (as in options.directory = ''), then
 % it is given its default value.

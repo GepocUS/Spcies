@@ -65,6 +65,11 @@ function s = dec_var(var)
     if strcmp(order, 'scalar') && any(strcmp(options, 'array'))
         order = 'vector';
     end
+
+    % Force vector to be declared as matrix if stated splicitly
+    if any(strcmp(options, 'matrix'))
+        order = 'matrix'; % TODO: This still needs a better solution
+    end
     
     %% Open temporary file for writing the text to
     thefile = fopen([spcies_get_root_directory '/generated_solvers/temp_write_var.txt'], 'wt');

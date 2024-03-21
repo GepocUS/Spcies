@@ -21,10 +21,12 @@
 %              - .rho: Scalar. Value of the penalty parameter.
 %              - .epsilon_x: Vector by which the bound for x_s are reduced.
 %              - .epsilon_u: Vector by which the bound for u_s are reduced.
+%              - .epsilon_y: Vector by which the bound for C*x_s+D*u_s is reduced.
 %              - .inf_bound: Scalar. Determines the value given to components without bound.
 %              - .tol: Exit tolerance of the solver.
 %              - .k_max: Maximum number of iterations of the solver.
-% 
+%              - .soft_constraints: Determines if soft constraints are allowed.
+%              - .constrained_output: Determines if constraints of kind LBy <= C*x+D*u <= UBy are allowed.
 % OUTPUTS:
 %   - constructor: An instance of the Spcies_constructor class ready for file generation.
 %                  
@@ -44,9 +46,19 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
     %% Compute the ingredients of the controller
     vars = MPCT.compute_MPCT_ADMM_semiband_ingredients(recipe.controller, recipe.options);
 
+    % Detect if weight matrices are diagonal
+    if (isdiag(vars.Q) && isdiag(vars.R) && isdiag(vars.T) && isdiag(vars.S))
+        recipe.options.force_diagonal = true; % This option does nothing in this solver for now
+    else
+        recipe.options.force_diagonal = false;
+    end
+
     %% Rename variables for convenience
     n = vars.n;
     m = vars.m;
+    if recipe.options.solver.constrained_output
+        p = vars.p;
+    end
     N = vars.N;
 
     % Determine if constant variables are defined as static
@@ -63,16 +75,28 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
 
     % Defines
     defCell = recipe.options.default_defCell();
+    defCell = add_line(defCell, 'SOFT_CONSTRAINTS', recipe.options.solver.soft_constraints, 1, 'bool', 'define');
+    defCell = add_line(defCell, 'CONSTRAINED_OUTPUT', recipe.options.solver.constrained_output, 1, 'bool', 'define');
     defCell = add_line(defCell, 'nn_', n, 1, 'uint', 'define');
     defCell = add_line(defCell, 'mm_', m, 1, 'uint', 'define');
     defCell = add_line(defCell, 'nm_', n+m, 1, 'uint', 'define');
+    if recipe.options.solver.constrained_output
+        defCell = add_line(defCell, 'pp_', p, 1, 'uint', 'define');
+        defCell = add_line(defCell, 'nmp_', n+m+p, 1, 'uint', 'define');
+    end
     defCell = add_line(defCell, 'NN_', N, 1, 'uint', 'define');
     defCell = add_line(defCell, 'k_max', recipe.options.solver.k_max, 1, 'uint', 'define');
-    defCell = add_line(defCell, 'tol', recipe.options.solver.tol, 1, 'float', 'define');
-    defCell = add_line(defCell, 'eps_x', recipe.options.solver.epsilon_x, 1, 'float', 'define');
-    defCell = add_line(defCell, 'eps_u', recipe.options.solver.epsilon_u, 1, 'float', 'define');
+    defCell = add_line(defCell, 'tol_p', recipe.options.solver.tol_p, 1, 'float', 'define');
+    defCell = add_line(defCell, 'tol_d', recipe.options.solver.tol_d, 1, 'float', 'define');
+    if ~recipe.options.solver.soft_constraints
+        defCell = add_line(defCell, 'eps_x', recipe.options.solver.epsilon_x, 1, 'float', 'define');
+        defCell = add_line(defCell, 'eps_u', recipe.options.solver.epsilon_u, 1, 'float', 'define');
+        if recipe.options.solver.constrained_output
+            defCell = add_line(defCell, 'eps_y', recipe.options.solver.epsilon_y, 1, 'float', 'define');
+        end
+    end
     defCell = add_line(defCell, 'inf', recipe.options.inf_value, 1, 'float', 'define');
-
+    
     % Constants
     constCell = [];
 
@@ -80,9 +104,15 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
         defCell = add_line(defCell, 'SCALAR_RHO', 1, 0, 'bool', 'define');
         defCell = add_line(defCell, 'rho', vars.rho, 1, precision, 'define');
         defCell = add_line(defCell, 'rho_i', vars.rho_i, 1, precision, 'define');
+        if recipe.options.solver.soft_constraints
+            defCell = add_line(defCell, 'beta_rho_i', vars.beta_rho_i, 1, precision, 'define');
+        end
     else
         constCell = add_line(constCell, 'rho', vars.rho, 1, precision, var_options);
         constCell = add_line(constCell, 'rho_i', vars.rho_i, 1, precision, var_options);
+        if recipe.options.solver.soft_constraints
+            constCell = add_line(constCell, 'beta_rho_i', vars.beta_rho_i, 1, precision, var_options);
+        end
     end
     constCell = add_line(constCell, 'LB', vars.LB, 1, precision, var_options);
     constCell = add_line(constCell, 'UB', vars.UB, 1, precision, var_options);
@@ -96,12 +126,16 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
     constCell = add_line(constCell, 'T_rho_i', vars.T_rho_i, 1, precision, var_options);
     constCell = add_line(constCell, 'A', vars.A, 1, precision, var_options);
     constCell = add_line(constCell, 'B', vars.B, 1, precision, var_options);
+    if recipe.options.solver.constrained_output
+        var_options_CD = var_options;
+        if size(vars.C,1) == 1
+            var_options_CD = [var_options,'matrix']; % TODO: This still neeeds a better solution
+        end
+        constCell = add_line(constCell, 'CD', [vars.C,vars.D], 1, precision, var_options_CD);
+    end
     constCell = add_line(constCell, 'Alpha', vars.Alpha, 1, precision, var_options);
     constCell = add_line(constCell, 'Beta', vars.Beta, 1, precision, var_options);
     constCell = add_line(constCell, 'U_tilde', vars.U_tilde, 1, precision, var_options);
-%     constCell = add_line(constCell, 'M_hat', vars.M_hat, 1, precision, var_options);
-%     constCell = add_line(constCell, 'M_hat_x', vars.M_hat_x, 1, precision, var_options);
-%     constCell = add_line(constCell, 'M_hat_u', vars.M_hat_u, 1, precision, var_options);
     constCell = add_line(constCell, 'M_hat_x1', vars.M_hat_x1, 1, precision, var_options);
     constCell = add_line(constCell, 'M_hat_x2', vars.M_hat_x2, 1, precision, var_options);
     constCell = add_line(constCell, 'M_hat_u1', vars.M_hat_u1, 1, precision, var_options);
