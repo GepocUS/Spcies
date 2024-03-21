@@ -28,7 +28,7 @@ options.tol = 1e-3; % Exit tolerance of the solver
 
 options.save_name = 'myMPCsolver';
 options.directory = './cl_in_C/'; % We save the solver in the directory were we have the main()
-options.time = true;
+options.timing = true;
 
 % Generate the solver (note that we select the 'platform' as 'C')
 spcies('gen', 'sys', sys, 'param', paramMPC,...

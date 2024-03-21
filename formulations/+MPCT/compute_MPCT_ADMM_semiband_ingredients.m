@@ -34,12 +34,24 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
         LBu = controller.model.LBu;
         UBx = controller.model.UBx;
         UBu = controller.model.UBu;
+        if opt.solver.constrained_output
+            LBy = controller.model.LBy;
+            UBy = controller.model.UBy;
+            C = controller.model.C;
+            D = controller.model.D;
+            p = size(C,1);
+        end
     else
         A = controller.sys.A;
         if isa(controller.sys, 'ssModel')
             B = controller.sys.Bu;
         else
             B = controller.sys.B;
+        end
+        if opt.solver.constrained_output
+            C = controller.sys.C;
+            D = controller.sys.D;
+            p = size(C,1);
         end
         n = size(A, 1);
         m = size(B, 2);
@@ -68,11 +80,27 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
         catch
             UBu = opt.inf_value*ones(m, 1);
         end
+        if opt.solver.constrained_output
+            try
+                LBy = controller.sys.LBy;
+            catch
+                LBy = -opt.inf_value*ones(p, 1);
+            end
+            try
+                UBy = controller.sys.UBy;
+            catch
+                UBy = opt.inf_value*ones(p, 1);
+            end
+        end
     end
 
     %% Turn rho into a vector
     if isscalar(opt.solver.rho) && opt.solver.force_vector_rho
-        rho = opt.solver.rho*ones((N+1)*(n+m), 1);
+        if ~opt.solver.constrained_output
+            rho = opt.solver.rho*ones((N+1)*(n+m), 1);
+        else
+            rho = opt.solver.rho*ones((N+1)*(n+m+p), 1);
+        end
     else
         rho = opt.solver.rho;
     end
@@ -80,6 +108,11 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
         vars.rho_is_scalar = true;
     else
         vars.rho_is_scalar = false;
+    end
+
+    %% Get beta
+    if opt.solver.soft_constraints
+        beta = opt.solver.beta;
     end
 
     %% Compute the Hessian
@@ -118,14 +151,29 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
     m_z = size(G,1); % Number of equality constraints
     n_z = size(H,1); % Number of decision variables
 
+    %% Compute C_tilde if necessary
+    if opt.solver.constrained_output == true
+        C_tilde = [[eye(n) zeros(n,m)];[zeros(m,n) eye(m)];[C D]];
+        for i = 2:N+1
+            C_tilde = blkdiag(C_tilde , [[eye(n) zeros(n,m)];[zeros(m,n) eye(m)];[C D]]);
+        end
+    end
+
     %% Ingredients necessary for low computational complexity
     
     if vars.rho_is_scalar
-        Gamma_hat = band + rho * eye(n_z); % Band of P
+        if opt.solver.constrained_output == true
+            Gamma_hat = band + rho * (C_tilde'*C_tilde); % Band of P
+        else
+            Gamma_hat = band + rho * eye(n_z);
+        end
     else
-        Gamma_hat = band + diag(rho);
+        if opt.solver.constrained_output == true
+            Gamma_hat = band + (C_tilde'*diag(rho)*C_tilde);
+        else
+            Gamma_hat = band + diag(rho);
+        end
     end
-%   We could use: dGamma_hat = decomposition(Gamma_hat,'diagonal'); % Decomposition object of Gamma_hat
 
     Gamma_hat_inv = inv(Gamma_hat); % This avoids the inverse computation online
 
@@ -141,16 +189,22 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
     % Verification: P = (Gamma_hat + U_hat*V_hat)
 
     Gamma_tilde = G*Gamma_hat_inv*G';
-%    We could use: dGamma_tilde = decomposition(Gamma_tilde,'banded'); % Decomposition object of Gamma_tilde
 
     Gamma_tilde_inv = inv(Gamma_tilde); % This avoids the inverse computation online
 
     U_tilde_full = -G*Gamma_hat_inv*U_hat*inv(eye(2*MM)+V_hat*Gamma_hat_inv*U_hat);
-
-    U_tilde = [U_tilde_full(1:2*n,:) ; U_tilde_full(N*n+1:(N+2)*n,:)];
     
+    % If rho is a scalar, some components are repeated inside U_tilde,
+    % otherwise we need the full matrix
+    if vars.rho_is_scalar
+        U_tilde = [U_tilde_full(1:2*n,:) ; U_tilde_full(N*n+1:(N+2)*n,:)];
+    else
+        U_tilde = U_tilde_full;
+    end
+
     V_tilde = V_hat*Gamma_hat_inv*G';
 
+    % M_hat repeats its components independently of rho being a vector
     M_hat = inv((eye(2*(n+m))+V_hat*Gamma_hat_inv*U_hat))*V_hat;
     
     M_hat_x1 = [M_hat(1:n,1:n) ; M_hat(n+m+1:2*n+m,1:n)];
@@ -158,24 +212,35 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
     
     M_hat_u1 = [M_hat(n+1:n+m,n+1:n+m) ; M_hat(2*n+m+1:2*(n+m),n+1:n+m)];
     M_hat_u2 = [M_hat(n+1:n+m, N*(n+m)+n+1:(N+1)*(n+m)) ; M_hat(2*n+m+1:2*(n+m),N*(n+m)+n+1:(N+1)*(n+m))];
-
-%     M_hat_x(1:2*n,1:2*n) = [M_hat(1:n,1:n) , M_hat(1:n,N*(n+m)+1:N*(n+m)+n) ; M_hat(n+m+1:2*n+m,1:n) , M_hat(n+m+1:2*n+m,N*(n+m)+1:N*(n+m)+n)];
-%     M_hat_u(1:2*m,1:2*m) = [M_hat(n+1:n+m,n+1:n+m) , M_hat(n+1:n+m, N*(n+m)+n+1:(N+1)*(n+m)) ; M_hat(2*n+m+1:2*(n+m),n+1:n+m), M_hat(2*n+m+1:2*(n+m),N*(n+m)+n+1:(N+1)*(n+m))];
+    
 
     M_tilde_full = inv((eye(2*(n+m))+V_tilde*Gamma_tilde_inv*U_tilde_full))*V_tilde;
 
-    M_tilde = [M_tilde_full(:,1:2*n), M_tilde_full(:,N*n+1:(N+2)*n)];
-
+    % If rho is a scalar, some components are repeated inside M_tilde,
+    % otherwise we need the full matrix 
+    if vars.rho_is_scalar
+        M_tilde = [M_tilde_full(:,1:2*n), M_tilde_full(:,N*n+1:(N+2)*n)];
+    else
+        M_tilde = M_tilde_full;
+    end
+    
     % Verification: W = G*inv(H)*G' = Gamma_tilde + U_tilde_full * V_tilde
 
     %% Compute upper and lower bounds
     LB = [LBx ; LBu];
     UB = [UBx ; UBu];
+    if opt.solver.constrained_output == true
+        LB = [LB ; LBy];
+        UB = [UB ; UBy];
+    end
     
     %% Create variables used in the ADMM_semiband solver for MPCT
     vars.N = N;  % Prediction horizon
     vars.n = n; % Dimension of state space
     vars.m = m; % Dimension of input space
+    if opt.solver.constrained_output == true
+        vars.p = p; % Dimension of constrained output
+    end
     vars.A = A;
     vars.B = B;
     vars.Q = Q;
@@ -184,7 +249,7 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
     vars.S = S;
     vars.G = G;
     vars.U_hat = U_hat;
-    vars.Gamma_tilde = Gamma_tilde; % Only needed for solver in Matlab. In C Alpha's and Beta's are used
+    vars.Gamma_tilde = Gamma_tilde; % Only needed for solver in Matlab. In C, Alpha's and Beta's are used
     vars.U_tilde_full = U_tilde_full;
     vars.U_tilde = U_tilde;
     vars.M_hat = M_hat;
@@ -197,22 +262,45 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
     vars.LB = LB;
     vars.UB = UB;
     vars.rho = rho;
-    if (vars.rho_is_scalar)
+    if vars.rho_is_scalar
         vars.rho_i = 1/rho;
-        vars.Q_rho_i = inv(Q + rho*diag(ones(n,1)));
-        vars.R_rho_i = inv(R + rho*diag(ones(m,1)));
-        vars.S_rho_i = inv(N*R + S + rho*diag(ones(m,1)));
-        vars.T_rho_i = inv(N*Q + T + rho*diag(ones(n,1)));
+        if ~opt.solver.constrained_output
+            vars.Q_rho_i = inv(Q + rho*diag(ones(n,1)));
+            vars.R_rho_i = inv(R + rho*diag(ones(m,1)));
+            vars.S_rho_i = inv(N*R + S + rho*diag(ones(m,1)));
+            vars.T_rho_i = inv(N*Q + T + rho*diag(ones(n,1)));
+        else
+            vars.Q_rho_i = inv(Q + rho*(eye(n)+(C'*C))); % This line is not correct in D~=0
+            vars.R_rho_i = inv(R + rho*diag(ones(m,1))); % If D of constrained outputs in ~=0, this line should be inv(R + rho*(eye(nu)+(D'*D))); and the band would be thicker
+            vars.S_rho_i = inv(N*R + S + rho*diag(ones(m,1))); % If D of constrained outputs in ~=0, this line should be inv(S + rho*(eye(nu)+(D'*D))); and the band would be thicker
+            vars.T_rho_i = inv(N*Q + T + rho*(eye(n)+(C'*C))); % This line is not correct in D~=0
+        end
+        if opt.solver.soft_constraints
+            vars.beta_rho_i = beta/rho;
+        end
     else
         vars.rho_i = 1./rho;
         vars.Q_rho_i = zeros(n,n,N);
         vars.R_rho_i = zeros(m,m,N);
         for i = 1:N
-            vars.Q_rho_i(:,:,i) = inv(Q + diag(rho((i-1)*(n+m)+1:(i-1)*(n+m)+n)));
-            vars.R_rho_i(:,:,i) = inv(R + diag(rho((i-1)*(n+m)+n+1:i*(n+m))));
+            
+            vars.Q_rho_i(:,:,i) = Gamma_hat_inv((i-1)*(n+m)+1:(i-1)*(n+m)+n,(i-1)*(n+m)+1:(i-1)*(n+m)+n);
+            vars.R_rho_i(:,:,i) = Gamma_hat_inv((i-1)*(n+m)+n+1:(i-1)*(n+m)+n+m,(i-1)*(n+m)+n+1:(i-1)*(n+m)+n+m);
+            
         end
-        vars.S_rho_i = inv(N*R + S + diag(rho(end-m+1:end)));
-        vars.T_rho_i = inv(N*Q + T + diag(rho(end-m-n+1:end-m)));
+        vars.T_rho_i = Gamma_hat_inv(N*(n+m)+1:N*(n+m)+n,N*(n+m)+1:N*(n+m)+n);
+        vars.S_rho_i = Gamma_hat_inv(N*(n+m)+n+1:N*(n+m)+n+m,N*(n+m)+n+1:N*(n+m)+n+m);
+        
+        if opt.solver.soft_constraints
+            vars.beta_rho_i = beta./rho;
+        end
+
+    end
+
+    if opt.solver.constrained_output
+        vars.C = C;
+        vars.D = D;
+        vars.C_tilde = C_tilde; % Just for Matlab version of the solver
     end
 
     % Scaling vectors and operating point

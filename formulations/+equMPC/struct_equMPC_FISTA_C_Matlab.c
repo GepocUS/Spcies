@@ -23,7 +23,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     double *u_opt; // Local u_opt
     int k; // Local k
     int e_flag; // Local e_flag
-    sol_$C_CODE_NAME$ sol;
+    sol_$C_CODE_NAME$ sol = {.update_time = 0.0, .solve_time = 0.0, .polish_time = 0.0, .run_time = 0.0};
 
     // Check inputs and outputs
 

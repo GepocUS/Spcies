@@ -55,7 +55,7 @@ If you use Spcies in your own research, please cite it using the following refer
 
 ```
 @misc{Spcies,
-  author={Krupa, Pablo and Limon, Daniel and Alamo, Teodoro},
+  author={Krupa, Pablo and Gracia, Victor and Limon, Daniel and Alamo, Teodoro},
     title = {{Spcies: Suite of Predictive Controllers for Industrial Embedded Systems}},
     howpublished = {\url{https://github.com/GepocUS/Spcies}},
     month = {Dec},
