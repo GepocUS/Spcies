@@ -185,7 +185,7 @@ function var = compute_ellipHMPC_ADMM_ingredients(controller, opt)
     M = [Hh, G'; G, zeros(n_eq)];
     % Compute LDL factorization of M
     [L, D, Pldl] = ldl(M);
-    L_CSC = full2CSC(L - eye(size(M, 1)));
+    L_CSC = sp_utils.full2CSC(L - eye(size(M, 1)));
     Dinv = inv(D);
     idx_LDL = zeros(dim+n_eq, 1);
     for i = 1:dim+n_eq
