@@ -224,7 +224,7 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
         M_tilde = M_tilde_full;
     end
     
-    % Verification: W = G*inv(H)*G' = Gamma_tilde + U_tilde_full * V_tilde
+    % Verification: W = G*inv(H+rho*eye(n_z))*G' = Gamma_tilde + U_tilde_full * V_tilde
 
     %% Compute upper and lower bounds
     LB = [LBx ; LBu];
@@ -276,8 +276,8 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
             vars.T_rho_i = inv(N*Q + T + rho*(eye(n)+(C'*C))); % This line is not correct in D~=0
         end
         if opt.solver.soft_constraints
-            vars.beta_rho_i = beta/rho;
-        end
+            vars.beta_rho_i = beta/(2*rho); % It is beta/(2*rho) since we minimize (1/2)*(f(z)+g(v)) with ADMM in order to be correct, as g(v)~=0. When we have hard constraints, g(v)=0, so minimizing (1/2)*f(z)+g(v) works.
+        end                                 % Note that we always minimize (1/2)*f(z) in our cases because we don't use H=2*(), q=2*(), but H=1*(), q=1*().
     else
         vars.rho_i = 1./rho;
         vars.Q_rho_i = zeros(n,n,N);
@@ -292,8 +292,8 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
         vars.S_rho_i = Gamma_hat_inv(N*(n+m)+n+1:N*(n+m)+n+m,N*(n+m)+n+1:N*(n+m)+n+m);
         
         if opt.solver.soft_constraints
-            vars.beta_rho_i = beta./rho;
-        end
+            vars.beta_rho_i = beta./(2*rho);% It is beta/(2*rho) since we minimize (1/2)*(f(z)+g(v)) with ADMM in order to be correct, as g(v)~=0. When we have hard constraints, g(v)=0, so minimizing (1/2)*f(z)+g(v) works.
+        end                                 % Note that we always minimize (1/2)*f(z) in our cases because we don't use H=2*(), q=2*(), but H=1*(), q=1*().
 
     end
 
