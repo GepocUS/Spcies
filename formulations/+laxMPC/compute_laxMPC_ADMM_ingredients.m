@@ -62,6 +62,11 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, opt)
     else
         vars.rho_is_scalar = false;
     end
+
+    %% Get beta
+    if opt.solver.soft_constraints
+        beta = opt.solver.beta;
+    end
     
     %% Compute the Hessian H and the vector q
     
@@ -123,6 +128,9 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, opt)
     if (vars.rho_is_scalar)
         vars.rho = rho;
         vars.rho_i = 1/rho;
+        if opt.solver.soft_constraints
+            vars.beta_rho_i = beta/(2*rho); % It is beta/(2*rho) since we minimize (1/2)*(f(z)+g(v)) with ADMM in order to be correct, as g(v)~=0. When we have hard constraints, g(v)=0, so minimizing (1/2)*f(z)+g(v) works.
+        end                                 % Note that we always minimize (1/2)*f(z) in our cases because we don't use H=2*(), q=2*(), but H=1*(), q=1*().
     else
         vars.rho_0 = rho(1:m);
         vars.rho = reshape(rho(m+1:end-n), n+m, N-1)';
@@ -130,6 +138,9 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, opt)
         vars.rho_i_0 = 1./rho(1:m);
         vars.rho_i = reshape(1./rho(m+1:end-n), n+m, N-1)';
         vars.rho_i_N = 1./rho(end-n+1:end);
+        if opt.solver.soft_constraints
+            vars.beta_rho_i = beta./(2*rho);% It is beta/(2*rho) since we minimize (1/2)*(f(z)+g(v)) with ADMM in order to be correct, as g(v)~=0. When we have hard constraints, g(v)=0, so minimizing (1/2)*f(z)+g(v) works.
+        end                                 % Note that we always minimize (1/2)*f(z) in our cases because we don't use H=2*(), q=2*(), but H=1*(), q=1*().
     end
     
     % Scaling vectors and operating point
