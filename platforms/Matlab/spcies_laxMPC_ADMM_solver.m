@@ -9,6 +9,12 @@
 % 
 % Specifically, this formulation is given in equation (9) of the above reference.
 %
+% Update: The solver now considers two possibilities:
+%   1. options.solver.soft_constraints = false
+%   No box constraints in outputs allowed. All box constraints are hard.
+%   2. options.solver.soft_constraints = true
+%   Box constraints in outputs allowed. All constraints are soft except for the applied input u_0.
+%
 % [u, k, e_flag, Hist] = spcies_laxMPC_ADMM_solver(x0, xr, ur, 'name', value, 'name', ...) 
 %
 % INPUTS:
@@ -40,7 +46,11 @@
 %                 and instead substituted by an instance of the LaxMPC
 %                 class of the GepocToolbox (https://github.com/GepocUS/GepocToolbox).
 %   - options: Structure containing options of the ADMM solver.
+%              - .soft_constraints: Boolean to choose if softened box constraints are considered.
 %              - .rho: Scalar or vector. Base value of the penalty parameter.
+%              * Only if options.solver.soft_constraints == true *
+%                   - .beta: Parameter to weight softened box constraints.
+%                            Can be either a scalar or a vector. Defaults to 1.
 %              - .tol: Exit tolerance of the solver. Defaults to 1e-4.
 %              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
 %              - .in_engineering: Boolean that determines if the arguments of the solver are given in
@@ -71,6 +81,8 @@
 %
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
+
+% TODO: Change beta from option to necessary input of the solver when options.solver.soft_constraints == true and make it deal with beta being a vector.
 
 function [u, k, e_flag, Hist] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
     
@@ -166,6 +178,15 @@ function [u, k, e_flag, Hist] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
     else
         rho = options.solver.rho;
     end
+
+    % Compute beta/(2+rho) if soft_constraints are enabled
+    if options.solver.soft_constraints
+        if isscalar(rho)
+            beta_rho_i = options.solver.beta/(2*rho);
+        else
+            beta_rho_i = options.solver.beta./(2*rho);
+        end
+    end
     
     % Compute the Hessian H and the vector q
     
@@ -246,7 +267,7 @@ function [u, k, e_flag, Hist] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
     k = 0;
     z = zeros(N*(n+m), 1);
     v = zeros(N*(n+m), 1);
-    v1 = v; % Value of z in the previous iteration
+    v_old = v; % Value of z in the previous iteration
     lambda = zeros(N*(n+m), 1);
     
     % Historics
@@ -287,14 +308,55 @@ function [u, k, e_flag, Hist] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
         q_hat_k = -rho.*z - lambda;
         
         % Update v
-        v = solve_boxQP(q_hat_k, rho_i, LB, UB);
+        if ~options.solver.soft_constraints
+            v = solve_boxQP(q_hat_k, rho_i, LB, UB);
+        else
+            
+            if isscalar(rho)
+                v = rho_i*lambda + z;
+            else
+                v = rho_i.*lambda + z;
+            end
+
+            % First m components are hard-constrained
+            for i = 1:m          
+                v(i) = min(max(v(i),LB(i)),UB(i));
+            end
+            
+            % Rest of vector v soft-constrained
+            for i = m+1:N*(n+m)
+                
+                if isscalar(rho)
+                    v1 = v(i) + beta_rho_i;
+                    v2 = v(i);
+                    v3 = v(i) - beta_rho_i;
+                else
+                    v1 = v(i) + beta_rho_i(i);
+                    v2 = v(i);
+                    v3 = v(i) - beta_rho_i(i);
+                end
+
+                if (v1 <= LB(i))
+                    v(i) = v1;
+                elseif (v2 >= LB(i) && v2 <= UB(i))
+                    v(i) = v2;
+                elseif (v3 >= UB(i))
+                    v(i) = v3;
+                elseif (v2 > UB(i))
+                    v(i) = UB(i);
+                elseif (v2 < LB(i))
+                    v(i) = LB(i);
+                end
+
+            end
+        end
         
         % Update lambda
         lambda = lambda + rho.*(z - v);
         
         % Compute residuals
         r_p = norm(z - v, Inf);
-        r_d = norm(v - v1, Inf);
+        r_d = norm(v - v_old, Inf);
         
         % Check exit condition
         if r_p <= options.solver.tol && r_d <= options.solver.tol
@@ -306,7 +368,7 @@ function [u, k, e_flag, Hist] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
         end
         
         % Update variables and historics
-        v1 = v;
+        v_old = v;
         
         if genHist > 0
             hRp(k) = r_p;
