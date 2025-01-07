@@ -58,6 +58,10 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
     double v[NN_-1][nm_] = {{0.0}}; // Decision variables v
     double v_0[mm_] = {0.0};
     double v_N[nn_] = {0.0};
+    #if SOFT_CONSTRAINTS
+    double v_aux1 = 0.0; // Used for computation of v when SOFT_CONSTRAINTS == 1
+    double v_aux3 = 0.0; // Used for computation of v when SOFT_CONSTRAINTS == 1
+    #endif
     double lambda[NN_-1][nm_] = {{0.0}}; // Dual variables lambda
     double lambda_0[mm_] = {0.0};
     double lambda_N[nn_] = {0.0};
@@ -510,12 +514,50 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
                 #else
                 v[l][j] = z[l][j] + rho_i[l][j]*lambda[l][j];
                 #endif
-                #ifdef VAR_BOUNDS
-                v[l][j] = (v[l][j] > LB[l][j]) ? v[l][j] : LB[l][j]; // maximum between v and the lower bound
-                v[l][j] = (v[l][j] > UB[l][j]) ? UB[l][j] : v[l][j]; // minimum between v and the upper bound
+                #if SOFT_CONSTRAINTS == 0
+                    #ifdef VAR_BOUNDS
+                    v[l][j] = (v[l][j] > LB[l][j]) ? v[l][j] : LB[l][j]; // maximum between v and the lower bound
+                    v[l][j] = (v[l][j] > UB[l][j]) ? UB[l][j] : v[l][j]; // minimum between v and the upper bound
+                    #else
+                    v[l][j] = (v[l][j] > LB[j]) ? v[l][j] : LB[j]; // maximum between v and the lower bound
+                    v[l][j] = (v[l][j] > UB[j]) ? UB[j] : v[l][j]; // minimum between v and the upper bound
+                    #endif
                 #else
-                v[l][j] = (v[l][j] > LB[j]) ? v[l][j] : LB[j]; // maximum between v and the lower bound
-                v[l][j] = (v[l][j] > UB[j]) ? UB[j] : v[l][j]; // minimum between v and the upper bound
+                    #ifdef SCALAR_RHO
+                    v_aux1 = v[l][j] + beta_rho_i;
+                    v_aux3 = v[l][j] - beta_rho_i;
+                    #else
+                    v_aux1 = v[l][j] + beta_rho_i[mm_+l*nm_+j];
+                    v_aux3 = v[l][j] - beta_rho_i[mm_+l*nm_+j];
+                    #endif
+
+                    #ifdef VAR_BOUNDS
+                    if(v_aux1 <= LB[l][j]){
+                        v[l][j] = v_aux1;
+                    }
+                    else if(v_aux3 >= UB[l][j]){
+                        v[l][j] = v_aux3;
+                    }
+                    else if(v[l][j] > UB[l][j]){
+                        v[l][j] = UB[l][j];
+                    }
+                    else if(v[l][j] < LB[l][j]){
+                        v[l][j] = LB[l][j];
+                    }
+                    #else
+                    if(v_aux1 <= LB[j]){
+                        v[l][j] = v_aux1;
+                    }
+                    else if(v_aux3 >= UB[j]){
+                        v[l][j] = v_aux3;
+                    }
+                    else if(v[l][j] > UB[j]){
+                        v[l][j] = UB[j];
+                    }
+                    else if(v[l][j] < LB[j]){
+                        v[l][j] = LB[j];
+                    }
+                    #endif
                 #endif
             }
         }
@@ -527,12 +569,51 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
             #else
             v_N[j] = z_N[j] + rho_i_N[j]*lambda_N[j];
             #endif
-            #ifdef VAR_BOUNDS
-            v_N[j] = (v_N[j] > LBN[j]) ? v_N[j] : LBN[j]; // maximum between v and the lower bound
-            v_N[j] = (v_N[j] > UBN[j]) ? UBN[j] : v_N[j]; // minimum between v and the upper bound
+            #if SOFT_CONSTRAINTS == 0
+                #ifdef VAR_BOUNDS
+                v_N[j] = (v_N[j] > LBN[j]) ? v_N[j] : LBN[j]; // maximum between v and the lower bound
+                v_N[j] = (v_N[j] > UBN[j]) ? UBN[j] : v_N[j]; // minimum between v and the upper bound
+                #else
+                v_N[j] = (v_N[j] > LB[j]) ? v_N[j] : LB[j]; // maximum between v and the lower bound
+                v_N[j] = (v_N[j] > UB[j]) ? UB[j] : v_N[j]; // minimum between v and the upper bound
+                #endif
             #else
-            v_N[j] = (v_N[j] > LB[j]) ? v_N[j] : LB[j]; // maximum between v and the lower bound
-            v_N[j] = (v_N[j] > UB[j]) ? UB[j] : v_N[j]; // minimum between v and the upper bound
+                #ifdef SCALAR_RHO
+                v_aux1 = v_N[j] + beta_rho_i;
+                v_aux3 = v_N[j] - beta_rho_i;
+                #else
+                v_aux1 = v_N[j] + beta_rho_i[mm_+(NN_-1)*nm_+j];
+                v_aux3 = v_N[j] - beta_rho_i[mm_+(NN_-1)*nm_+j];
+                #endif
+
+                #ifdef VAR_BOUNDS
+                if(v_aux1 <= LBN[j]){
+                    v_N[j] = v_aux1;
+                }
+                else if(v_aux3 >= UBN[j]){
+                    v_N[j] = v_aux3;
+                }
+                else if(v[l][j] > UBN[j]){
+                    v_N[j] = UBN[j];
+                }
+                else if(v[l][j] < LBN[j]){
+                    v_N[j] = LBN[j];
+                }
+                #else
+                if(v_aux1 <= LB[j]){
+                    v_N[j] = v_aux1;
+                }
+                else if(v_aux3 >= UB[j]){
+                    v_N[j] = v_aux3;
+                }
+                else if(v_N[j] > UB[j]){
+                    v_N[j] = UB[j];
+                }
+                else if(v_N[j] < LB[j]){
+                    v_N[j] = LB[j];
+                }
+                #endif
+
             #endif
         }
 
