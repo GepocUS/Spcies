@@ -404,7 +404,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
                 for l = 1:N
                     for i = l*(n+m)+1 : (l+1)*(n+m)
                         
-                        if isscalar(var.rho)
+                        if isscalar(var.rho) && var.beta_is_scalar
                             v1 = v(i) + var.beta_rho_i;
                             v2 = v(i);
                             v3 = v(i) - var.beta_rho_i;
@@ -464,7 +464,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
                 % y_0 is soft-constrained
                 for i = n+m+1:n+m+pp
     
-                    if isscalar(var.rho)
+                    if isscalar(var.rho) && var.beta_is_scalar
                         v1 = v(i) + var.beta_rho_i;
                         v2 = v(i);
                         v3 = v(i) - var.beta_rho_i;
@@ -492,7 +492,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
                 for l = 1:N
                     for i = l*(n+m+pp)+1 : (l+1)*(n+m+pp)
                         
-                        if isscalar(var.rho)
+                        if isscalar(var.rho) && var.beta_is_scalar
                             v1 = v(i) + var.beta_rho_i;
                             v2 = v(i);
                             v3 = v(i) - var.beta_rho_i;
