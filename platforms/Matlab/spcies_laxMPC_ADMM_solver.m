@@ -181,10 +181,15 @@ function [u, k, e_flag, Hist] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
 
     % Compute beta/(2+rho) if soft_constraints are enabled
     if options.solver.soft_constraints
-        if isscalar(rho)
-            beta_rho_i = options.solver.beta/(2*rho);
+        if isscalar(options.solver.beta) && options.solver.force_vector_beta
+            beta = options.solver.beta*ones(N*(n+m), 1);
         else
-            beta_rho_i = options.solver.beta./(2*rho);
+            beta = options.solver.beta;
+        end
+        if isscalar(rho)
+            beta_rho_i = beta/(2*rho);
+        else
+            beta_rho_i = beta./(2*rho);
         end
     end
     
@@ -326,7 +331,7 @@ function [u, k, e_flag, Hist] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
             % Rest of vector v soft-constrained
             for i = m+1:N*(n+m)
                 
-                if isscalar(rho)
+                if isscalar(rho) && isscalar(beta)
                     v1 = v(i) + beta_rho_i;
                     v2 = v(i);
                     v3 = v(i) - beta_rho_i;
