@@ -65,8 +65,18 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, opt)
 
     %% Get beta
     if opt.solver.soft_constraints
-        beta = opt.solver.beta;
+        if isscalar(opt.solver.beta) && opt.solver.force_vector_beta
+            beta = opt.solver.beta*ones(N*(n+m), 1);
+        else
+            beta = opt.solver.beta;
+        end
+        if isscalar(beta)
+            vars.beta_is_scalar = true;
+        else
+            vars.beta_is_scalar = false;
+        end
     end
+    
     
     %% Compute the Hessian H and the vector q
     
@@ -119,7 +129,11 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, opt)
         vars.Q = -diag(Q);
         vars.R = -diag(R);
     else
-        vars.T_rho_i = inv(T+rho*eye(n));
+        if isscalar(rho)
+            vars.T_rho_i = inv(T+rho*eye(n));
+        else
+            vars.T_rho_i = inv(T+diag(rho(end-n+1:end)));
+        end
     end
     vars.UB = UB;
     vars.LB = LB;

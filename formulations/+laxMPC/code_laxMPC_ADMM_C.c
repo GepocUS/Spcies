@@ -524,8 +524,13 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
                     #endif
                 #else
                     #ifdef SCALAR_RHO
-                    v_aux1 = v[l][j] + beta_rho_i;
-                    v_aux3 = v[l][j] - beta_rho_i;
+                        #ifdef SCALAR_BETA
+                        v_aux1 = v[l][j] + beta_rho_i;
+                        v_aux3 = v[l][j] - beta_rho_i;
+                        #else
+                        v_aux1 = v[l][j] + beta_rho_i[mm_+l*nm_+j];
+                        v_aux3 = v[l][j] - beta_rho_i[mm_+l*nm_+j];
+                        #endif
                     #else
                     v_aux1 = v[l][j] + beta_rho_i[mm_+l*nm_+j];
                     v_aux3 = v[l][j] - beta_rho_i[mm_+l*nm_+j];
@@ -579,8 +584,13 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
                 #endif
             #else
                 #ifdef SCALAR_RHO
-                v_aux1 = v_N[j] + beta_rho_i;
-                v_aux3 = v_N[j] - beta_rho_i;
+                    #ifdef SCALAR_BETA
+                    v_aux1 = v_N[j] + beta_rho_i;
+                    v_aux3 = v_N[j] - beta_rho_i;
+                    #else
+                    v_aux1 = v_N[j] + beta_rho_i[mm_+(NN_-1)*nm_+j];
+                    v_aux3 = v_N[j] - beta_rho_i[mm_+(NN_-1)*nm_+j];
+                    #endif
                 #else
                 v_aux1 = v_N[j] + beta_rho_i[mm_+(NN_-1)*nm_+j];
                 v_aux3 = v_N[j] - beta_rho_i[mm_+(NN_-1)*nm_+j];

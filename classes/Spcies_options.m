@@ -47,6 +47,7 @@ classdef Spcies_options < matlab.mixin.Copyable
             % tol_d % Dual exit tolerance of the solver
             % rho % Step-size of the solver (used in ADMM-based solvers)
             % force_vector_rho % If true, then rho is always considered to be a vector (instead of a scalar)
+            % force_vector_beta % If true and soft contraints are activated, then beta is always considered to be a vector (instead of a scalar)
             % alpha % For the SADMM solver
             % sigma % For some HMPC solvers
             % sparse % For some HMPC solvers
