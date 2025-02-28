@@ -112,7 +112,20 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
 
     %% Get beta
     if opt.solver.soft_constraints
-        beta = opt.solver.beta;
+        if isscalar(opt.solver.beta) && opt.solver.force_vector_beta
+            if opt.solver.constrained_output
+                beta = opt.solver.beta*ones((N+1)*(n+m+p), 1);
+            else
+                beta = opt.solver.beta*ones((N+1)*(n+m), 1);
+            end
+        else
+            beta = opt.solver.beta;
+        end
+        if isscalar(beta)
+            vars.beta_is_scalar = true;
+        else
+            vars.beta_is_scalar = false;
+        end
     end
 
     %% Compute the Hessian

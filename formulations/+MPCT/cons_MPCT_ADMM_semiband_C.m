@@ -46,6 +46,19 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
     %% Compute the ingredients of the controller
     vars = MPCT.compute_MPCT_ADMM_semiband_ingredients(recipe.controller, recipe.options);
 
+    % Check that when beta (soft constraints) is a vector, it has the right size
+    if recipe.options.solver.soft_constraints 
+        if recipe.options.solver.constrained_output
+            if ~vars.beta_is_scalar && length(vars.beta_rho_i)~=((vars.N+1)*(vars.n+vars.m+vars.p))
+                error("Vector beta (soft constraints) requires to be of size (N+1)*(n+m+p)");
+            end
+        else
+            if ~vars.beta_is_scalar && length(vars.beta_rho_i)~=((vars.N+1)*(vars.n+vars.m))
+                error("Vector beta (soft constraints) requires to be of size (N+1)*(n+m)");
+            end
+        end
+    end
+
     % Detect if weight matrices are diagonal
     if (isdiag(vars.Q) && isdiag(vars.R) && isdiag(vars.T) && isdiag(vars.S))
         recipe.options.force_diagonal = true; % This option does nothing in this solver for now
@@ -105,7 +118,11 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
         defCell = add_line(defCell, 'rho', vars.rho, 1, precision, 'define');
         defCell = add_line(defCell, 'rho_i', vars.rho_i, 1, precision, 'define');
         if recipe.options.solver.soft_constraints
-            defCell = add_line(defCell, 'beta_rho_i', vars.beta_rho_i, 1, precision, 'define');
+            if vars.beta_is_scalar
+                defCell = add_line(defCell, 'beta_rho_i', vars.beta_rho_i, 1, precision, 'define');
+            else
+                constCell = add_line(constCell, 'beta_rho_i', vars.beta_rho_i, 1, precision, var_options);
+            end
         end
     else
         constCell = add_line(constCell, 'rho', vars.rho, 1, precision, var_options);
@@ -142,6 +159,10 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
     constCell = add_line(constCell, 'M_hat_u2', vars.M_hat_u2, 1, precision, var_options);
     constCell = add_line(constCell, 'M_tilde', vars.M_tilde, 1, precision, var_options);
     
+    % beta (soft constraints)
+    if recipe.options.solver.soft_constraints && vars.beta_is_scalar
+        defCell = add_line(defCell, 'SCALAR_BETA', 1, 0, 'bool', 'define');
+    end
 
     if recipe.options.in_engineering
         constCell = add_line(constCell, 'scaling_x', vars.scaling_x, 1, precision, var_options);

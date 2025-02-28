@@ -812,8 +812,13 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
                     
                     // v_aux2 = v[i];
                     #ifdef SCALAR_RHO
-                    v_aux1 = v[i] + beta_rho_i;
-                    v_aux3 = v[i] - beta_rho_i;
+                        #ifdef SCALAR_BETA
+                        v_aux1 = v[i] + beta_rho_i;
+                        v_aux3 = v[i] - beta_rho_i;
+                        #else
+                        v_aux1 = v[i] + beta_rho_i[i];
+                        v_aux3 = v[i] - beta_rho_i[i];
+                        #endif
                     #else
                     v_aux1 = v[i] + beta_rho_i[i];
                     v_aux3 = v[i] - beta_rho_i[i];
@@ -942,8 +947,13 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
                 
                 // v_aux2 = v[i];
                 #ifdef SCALAR_RHO
-                v_aux1 = v[i] + beta_rho_i;
-                v_aux3 = v[i] - beta_rho_i;
+                    #ifdef SCALAR_BETA
+                    v_aux1 = v[i] + beta_rho_i;
+                    v_aux3 = v[i] - beta_rho_i;
+                    #else
+                    v_aux1 = v[i] + beta_rho_i[i];
+                    v_aux3 = v[i] - beta_rho_i[i];
+                    #endif
                 #else
                 v_aux1 = v[i] + beta_rho_i[i];
                 v_aux3 = v[i] - beta_rho_i[i];
@@ -975,8 +985,13 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
                     
                     // v_aux2 = v[i];
                     #ifdef SCALAR_RHO
-                    v_aux1 = v[i] + beta_rho_i;
-                    v_aux3 = v[i] - beta_rho_i;
+                        #ifdef SCALAR_BETA
+                        v_aux1 = v[i] + beta_rho_i;
+                        v_aux3 = v[i] - beta_rho_i;
+                        #else
+                        v_aux1 = v[i] + beta_rho_i[i];
+                        v_aux3 = v[i] - beta_rho_i[i];
+                        #endif
                     #else
                     v_aux1 = v[i] + beta_rho_i[i];
                     v_aux3 = v[i] - beta_rho_i[i];
