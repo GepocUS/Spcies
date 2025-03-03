@@ -12,6 +12,9 @@ void mexFunction(int nlhs, mxArray *plhs[],
     double *x0; // Local x0
     double *xr; // Local xr
     double *ur; // Local ur
+    #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
+    double *beta; // Local beta (soft constraints weights)
+    #endif
     double *u_opt; // Local u_opt
     int k; // Local k
     int e_flag; // Local e_flag
@@ -20,10 +23,17 @@ void mexFunction(int nlhs, mxArray *plhs[],
     // Check inputs and outputs
 
     // Check number of inputs
+    #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
+    if(nrhs != 4){
+        mexErrMsgIdAndTxt("Spcies:MPCT_ADMM:nrhs:number",
+                          "Four inputs are required");
+    }
+    #else
     if(nrhs != 3){
         mexErrMsgIdAndTxt("Spcies:MPCT_ADMM:nrhs:number",
                           "Three inputs are required");
     }
+    #endif
 
     // Check number of outputs
     if(nlhs == 0){
@@ -48,11 +58,29 @@ void mexFunction(int nlhs, mxArray *plhs[],
         mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:ur",
                           "ur must be of dimension %%d", mm_);
     }
+    
+    // Check that beta (if it applies) is of the correct dimension (must be a vector for now)
+    #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
+        #if CONSTRAINED_OUTPUT == 0
+            if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) !=  (NN_+1)*nm_){
+                mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:ur",
+                                  "when adaptive_beta==true, beta must be a vector, in this case of dimension %%d", (NN_+1)*nm_);
+            }
+        #else
+            if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) !=  (NN_+1)*(nm_+pp_)){
+                mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:ur",
+                                  "when adaptive_beta==true, beta must be a vector, in this case of dimension %%d", (NN_+1)*(nm_+pp_));
+            }
+        #endif
+    #endif
 
     // Read input data
     x0 = (double*) mxGetData(prhs[0]);
     xr = (double*) mxGetData(prhs[1]);
     ur = (double*) mxGetData(prhs[2]);
+    #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
+    beta = (double*) mxGetData(prhs[3]);
+    #endif
 
     // Prepare output data
     mxArray *z_pt, *v_pt, *lambda_pt, *update_time_pt, *solve_time_pt, *polish_time_pt, *run_time_pt;
@@ -100,7 +128,11 @@ void mexFunction(int nlhs, mxArray *plhs[],
     mxSetField(plhs[3], 0, "run_time", run_time_pt);
 
     // Call solver
+    #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
+    MPCT_ADMM_semiband(x0, xr, ur, beta, u_opt, &k, &e_flag, &sol);
+    #else
     MPCT_ADMM_semiband(x0, xr, ur, u_opt, &k, &e_flag, &sol);
+    #endif
 
     // Set output values
     *k_out = (double) k;

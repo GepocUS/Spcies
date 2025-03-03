@@ -47,7 +47,7 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
     vars = MPCT.compute_MPCT_ADMM_semiband_ingredients(recipe.controller, recipe.options);
 
     % Check that when beta (soft constraints) is a vector, it has the right size
-    if recipe.options.solver.soft_constraints 
+    if recipe.options.solver.soft_constraints && ~recipe.options.solver.adaptive_beta
         if recipe.options.solver.constrained_output
             if ~vars.beta_is_scalar && length(vars.beta_rho_i)~=((vars.N+1)*(vars.n+vars.m+vars.p))
                 error("Vector beta (soft constraints) requires to be of size (N+1)*(n+m+p)");
@@ -117,7 +117,7 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
         defCell = add_line(defCell, 'SCALAR_RHO', 1, 0, 'bool', 'define');
         defCell = add_line(defCell, 'rho', vars.rho, 1, precision, 'define');
         defCell = add_line(defCell, 'rho_i', vars.rho_i, 1, precision, 'define');
-        if recipe.options.solver.soft_constraints
+        if recipe.options.solver.soft_constraints && ~recipe.options.solver.adaptive_beta
             if vars.beta_is_scalar
                 defCell = add_line(defCell, 'beta_rho_i', vars.beta_rho_i, 1, precision, 'define');
             else
@@ -127,7 +127,7 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
     else
         constCell = add_line(constCell, 'rho', vars.rho, 1, precision, var_options);
         constCell = add_line(constCell, 'rho_i', vars.rho_i, 1, precision, var_options);
-        if recipe.options.solver.soft_constraints
+        if recipe.options.solver.soft_constraints && ~recipe.options.solver.adaptive_beta
             constCell = add_line(constCell, 'beta_rho_i', vars.beta_rho_i, 1, precision, var_options);
         end
     end
@@ -160,8 +160,14 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
     constCell = add_line(constCell, 'M_tilde', vars.M_tilde, 1, precision, var_options);
     
     % beta (soft constraints)
-    if recipe.options.solver.soft_constraints && vars.beta_is_scalar
-        defCell = add_line(defCell, 'SCALAR_BETA', 1, 0, 'bool', 'define');
+    if recipe.options.solver.soft_constraints && ~recipe.options.solver.adaptive_beta
+        if vars.beta_is_scalar
+            defCell = add_line(defCell, 'SCALAR_BETA', 1, 0, 'bool', 'define');
+        end
+    end
+
+    if recipe.options.solver.soft_constraints && recipe.options.solver.adaptive_beta
+        defCell = add_line(defCell, 'ADAPTIVE_BETA', 1, 1, 'bool', 'define');
     end
 
     if recipe.options.in_engineering

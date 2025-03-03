@@ -26,6 +26,7 @@ function def_options = def_options_MPCT_ADMM_semiband(submethod)
     def_options.constrained_output = false; % If true, contraints of kind LB<= C*x+D*u <= UB are allowed.
     % Also, every inequality constraint is soft constrained except for the ones in u_0.
     def_options.force_vector_beta = false; % If true, forces the penalization of soft constraints beta (if apply) to be defined as a vector
-    def_options.beta = 1; % Only useful if soft constraints are activated
+    def_options.adaptive_beta = false; % If true, weights for soft constraints can change online.
+    def_options.beta = 1; % Only useful if soft constraints are activated.
 end
 
