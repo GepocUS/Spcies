@@ -51,7 +51,7 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
     if recipe.options.time_varying && ~vars.rho_is_scalar
         error("LaxMPC ADMM time varying solver only allows the use of a scalar rho");
     end
-    if recipe.options.solver.soft_constraints
+    if recipe.options.solver.soft_constraints && ~recipe.options.solver.adaptive_beta
         if ~vars.beta_is_scalar && length(vars.beta_rho_i)~=(vars.N*(vars.n+vars.m))
             error("Vector beta (soft constraints) requires to be of size N*(n+m)");
         end
@@ -127,7 +127,7 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
         defCell = add_line(defCell, 'SCALAR_RHO', 1, 0, 'bool', 'define');
         defCell = add_line(defCell, 'rho', vars.rho, 1, precision, 'define');
         defCell = add_line(defCell, 'rho_i', vars.rho_i, 1, precision, 'define');
-        if recipe.options.solver.soft_constraints
+        if recipe.options.solver.soft_constraints && ~recipe.options.solver.adaptive_beta
             if vars.beta_is_scalar
                 defCell = add_line(defCell, 'beta_rho_i', vars.beta_rho_i, 1, precision, 'define');
             else
@@ -141,14 +141,20 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
         constCell = add_line(constCell, 'rho_i', vars.rho_i, 1, precision, var_options);
         constCell = add_line(constCell, 'rho_i_0', vars.rho_i_0, 1, precision, var_options);
         constCell = add_line(constCell, 'rho_i_N', vars.rho_i_N, 1, precision, var_options);
-        if recipe.options.solver.soft_constraints
+        if recipe.options.solver.soft_constraints && ~recipe.options.solver.adaptive_beta
             constCell = add_line(constCell, 'beta_rho_i', vars.beta_rho_i, 1, precision, var_options);
         end
     end
 
     % beta (soft constraints)
-    if recipe.options.solver.soft_constraints && vars.beta_is_scalar
-        defCell = add_line(defCell, 'SCALAR_BETA', 1, 0, 'bool', 'define');
+    if recipe.options.solver.soft_constraints && ~recipe.options.solver.adaptive_beta
+        if vars.beta_is_scalar
+            defCell = add_line(defCell, 'SCALAR_BETA', 1, 0, 'bool', 'define');
+        end
+    end
+
+    if recipe.options.solver.soft_constraints && recipe.options.solver.adaptive_beta
+        defCell = add_line(defCell, 'ADAPTIVE_BETA', 1, 1, 'bool', 'define');
     end
     
     %% Declare an empty constructor object

@@ -20,6 +20,9 @@ void mexFunction(int nlhs, mxArray *plhs[],
     double *LB;
     double *UB;
     #endif
+    #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
+    double *beta; // Local beta (soft constraints weights)
+    #endif
     double *u_opt; // Local u_opt
     int k; // Local k
     int e_flag; // Local e_flag
@@ -27,13 +30,25 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     // Check number of inputs
     #if TIME_VARYING == 1
-    if(nrhs != 9){
-        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:number", "Nine inputs are required");
-    }
+        #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
+            if(nrhs != 10){
+                mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:number", "Ten inputs are required");
+            }
+        #else
+            if(nrhs != 9){
+                mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:number", "Nine inputs are required");
+            }
+        #endif
     #else
-    if(nrhs != 3){
-        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:number", "Three inputs are required");
-    }
+        #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
+            if(nrhs != 4){
+                mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:number", "Four inputs are required");
+            }
+        #else
+            if(nrhs != 3){
+                mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:number", "Three inputs are required");
+            }
+        #endif
     #endif
 
     // Check number of outputs
@@ -54,52 +69,109 @@ void mexFunction(int nlhs, mxArray *plhs[],
         mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:ur", "ur must be of dimension %%d", mm_);
     }
 
-    #if TIME_VARYING == 1
+    #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
 
-    // Check that A is of the correct dimension
-    if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != nn_*nn_ ){
-        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:A", "A must be of dimension %%d by %%d", nn_, nn_);
-    }
+        // Check that beta (if it applies) is of the correct dimension (must be a vector for now)
+        if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != NN_*nm_ ){
+            mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:beta", "when adaptive_beta==true, beta must be a vector, in this case of dimension %%d", NN_*nm_);
+        }
+
+        #if TIME_VARYING == 1
+
+            // Check that A is of the correct dimension
+            if( !mxIsDouble(prhs[4]) || mxGetNumberOfElements(prhs[4]) != nn_*nn_ ){
+                mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:A", "A must be of dimension %%d by %%d", nn_, nn_);
+            }
+            
+            // Check that B is of the correct dimension
+            if( !mxIsDouble(prhs[5]) || mxGetNumberOfElements(prhs[5]) != nn_*mm_ ){
+                mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:B", "B must be of dimension %%d by %%d", nn_, mm_);
+            }
+        
+            // Check that Q is of the correct dimension
+            if( !mxIsDouble(prhs[6]) || mxGetNumberOfElements(prhs[6]) != nn_ ){
+                mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:Q", "Q must be a diagonal vector of %%d elements", nn_);
+            }
+            
+            // Check that R is of the correct dimension
+            if( !mxIsDouble(prhs[7]) || mxGetNumberOfElements(prhs[7]) != mm_ ){
+                mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:R", "R must be a diagonal vector of %%d elements", mm_);
+            }
+        
+            // Check that LB is of the correct dimension
+            if( !mxIsDouble(prhs[8]) || mxGetNumberOfElements(prhs[8]) != nm_ ){
+                mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:LB", "LB must be of dimension %%d", nm_);
+            }
+            
+            // Check that UB is of the correct dimension
+            if( !mxIsDouble(prhs[9]) || mxGetNumberOfElements(prhs[9]) != nm_ ){
+                mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:UB", "UB must be of dimension %%d", nm_);
+            }
+
+        #endif
+
+    #else
+        
+        #if TIME_VARYING == 1
+            // Check that A is of the correct dimension
+            if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != nn_*nn_ ){
+                mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:A", "A must be of dimension %%d by %%d", nn_, nn_);
+            }
+            
+            // Check that B is of the correct dimension
+            if( !mxIsDouble(prhs[4]) || mxGetNumberOfElements(prhs[4]) != nn_*mm_ ){
+                mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:B", "B must be of dimension %%d by %%d", nn_, mm_);
+            }
+        
+            // Check that Q is of the correct dimension
+            if( !mxIsDouble(prhs[5]) || mxGetNumberOfElements(prhs[5]) != nn_ ){
+                mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:Q", "Q must be a diagonal vector of %%d elements", nn_);
+            }
+            
+            // Check that R is of the correct dimension
+            if( !mxIsDouble(prhs[6]) || mxGetNumberOfElements(prhs[6]) != mm_ ){
+                mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:R", "R must be a diagonal vector of %%d elements", mm_);
+            }
+        
+            // Check that LB is of the correct dimension
+            if( !mxIsDouble(prhs[7]) || mxGetNumberOfElements(prhs[7]) != nm_ ){
+                mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:LB", "LB must be of dimension %%d", nm_);
+            }
+            
+            // Check that UB is of the correct dimension
+            if( !mxIsDouble(prhs[8]) || mxGetNumberOfElements(prhs[8]) != nm_ ){
+                mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:UB", "UB must be of dimension %%d", nm_);
+            }
+
+        #endif
     
-    // Check that B is of the correct dimension
-    if( !mxIsDouble(prhs[4]) || mxGetNumberOfElements(prhs[4]) != nn_*mm_ ){
-        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:B", "B must be of dimension %%d by %%d", nn_, mm_);
-    }
-
-    // Check that Q is of the correct dimension
-    if( !mxIsDouble(prhs[5]) || mxGetNumberOfElements(prhs[5]) != nn_ ){
-        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:Q", "Q must be a diagonal vector of %%d elements", nn_);
-    }
-    
-    // Check that R is of the correct dimension
-    if( !mxIsDouble(prhs[6]) || mxGetNumberOfElements(prhs[6]) != mm_ ){
-        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:R", "R must be a diagonal vector of %%d elements", mm_);
-    }
-
-    // Check that LB is of the correct dimension
-    if( !mxIsDouble(prhs[7]) || mxGetNumberOfElements(prhs[7]) != nm_ ){
-        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:LB", "LB must be of dimension %%d", nm_);
-    }
-    
-    // Check that UB is of the correct dimension
-    if( !mxIsDouble(prhs[8]) || mxGetNumberOfElements(prhs[8]) != nm_ ){
-        mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:UB", "UB must be of dimension %%d", nm_);
-    }
-
     #endif
+
 
     // Read input data
     x0 = (double*) mxGetData(prhs[0]);
     xr = (double*) mxGetData(prhs[1]);
     ur = (double*) mxGetData(prhs[2]);
 
-    #if TIME_VARYING == 1
-    A = (double*) mxGetData(prhs[3]);
-    B = (double*) mxGetData(prhs[4]);
-    Q = (double*) mxGetData(prhs[5]);
-    R = (double*) mxGetData(prhs[6]);
-    LB = (double*) mxGetData(prhs[7]);
-    UB = (double*) mxGetData(prhs[8]);
+    #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
+        beta = (double*) mxGetData(prhs[3]);
+        #if TIME_VARYING == 1
+            A = (double*) mxGetData(prhs[4]);
+            B = (double*) mxGetData(prhs[5]);
+            Q = (double*) mxGetData(prhs[6]);
+            R = (double*) mxGetData(prhs[7]);
+            LB = (double*) mxGetData(prhs[8]);
+            UB = (double*) mxGetData(prhs[9]);
+        #endif
+    #else
+        #if TIME_VARYING == 1
+            A = (double*) mxGetData(prhs[3]);
+            B = (double*) mxGetData(prhs[4]);
+            Q = (double*) mxGetData(prhs[5]);
+            R = (double*) mxGetData(prhs[6]);
+            LB = (double*) mxGetData(prhs[7]);
+            UB = (double*) mxGetData(prhs[8]);
+        #endif
     #endif
 
     // Prepare output data
@@ -143,10 +215,18 @@ void mexFunction(int nlhs, mxArray *plhs[],
     mxSetField(plhs[3], 0, "run_time", run_time_pt);
 
     // Call solver
-    #if TIME_VARYING == 1
-    laxMPC_ADMM(x0, xr, ur, A, B, Q, R, LB, UB, u_opt, &k, &e_flag, &sol);
+    #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
+        #if TIME_VARYING == 1
+        laxMPC_ADMM(x0, xr, ur, beta, A, B, Q, R, LB, UB, u_opt, &k, &e_flag, &sol);
+        #else
+        laxMPC_ADMM(x0, xr, ur, beta, u_opt, &k, &e_flag, &sol);
+        #endif
     #else
-    laxMPC_ADMM(x0, xr, ur, u_opt, &k, &e_flag, &sol);
+        #if TIME_VARYING == 1
+        laxMPC_ADMM(x0, xr, ur, A, B, Q, R, LB, UB, u_opt, &k, &e_flag, &sol);
+        #else
+        laxMPC_ADMM(x0, xr, ur, u_opt, &k, &e_flag, &sol);
+        #endif
     #endif
 
     // Set output values

@@ -16,9 +16,17 @@
  */
     
 #if TIME_VARYING == 1
-void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *A_in, double *B_in, double *Q_in, double *R_in, double *LB_in, double *UB_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
+    #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
+    void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *beta_in, double *A_in, double *B_in, double *Q_in, double *R_in, double *LB_in, double *UB_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
+    #else
+    void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *A_in, double *B_in, double *Q_in, double *R_in, double *LB_in, double *UB_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
+    #endif
 #else
-void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
+    #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1        
+    void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *beta_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
+    #else
+    void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
+    #endif
 #endif
 
     #if MEASURE_TIME == 1
@@ -61,6 +69,9 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
     #if SOFT_CONSTRAINTS
     double v_aux1 = 0.0; // Used for computation of v when SOFT_CONSTRAINTS == 1
     double v_aux3 = 0.0; // Used for computation of v when SOFT_CONSTRAINTS == 1
+        #if ADAPTIVE_BETA == 1
+            double beta_rho_i[NN_*nm_] = {0.0}; // Weights for soft constraints 
+        #endif
     #endif
     double lambda[NN_-1][nm_] = {{0.0}}; // Dual variables lambda
     double lambda_0[mm_] = {0.0};
@@ -280,6 +291,19 @@ void laxMPC_ADMM(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int
         R[i] = -R[i];
     }
 
+    #endif
+
+    // Get beta if it applies and compute required ingredients
+    #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
+        for(unsigned int i = 0 ; i < NN_*nm_ ; i++){
+            
+            #ifdef SCALAR_RHO
+            beta_rho_i[i] = beta_in[i]/(2*rho);
+            #else
+            beta_rho_i[i] = beta_in[i]/(2*rho[i]);
+            #endif
+            
+        }
     #endif
 
     // Update first nn_ elements of beq

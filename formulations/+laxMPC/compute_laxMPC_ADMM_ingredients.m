@@ -64,7 +64,7 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, opt)
     end
 
     %% Get beta
-    if opt.solver.soft_constraints
+    if opt.solver.soft_constraints && ~opt.solver.adaptive_beta
         if isscalar(opt.solver.beta) && opt.solver.force_vector_beta
             beta = opt.solver.beta*ones(N*(n+m), 1);
         else
@@ -142,7 +142,7 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, opt)
     if (vars.rho_is_scalar)
         vars.rho = rho;
         vars.rho_i = 1/rho;
-        if opt.solver.soft_constraints
+        if opt.solver.soft_constraints && ~opt.solver.adaptive_beta
             vars.beta_rho_i = beta/(2*rho); % It is beta/(2*rho) since we minimize (1/2)*(f(z)+g(v)) with ADMM in order to be correct, as g(v)~=0. When we have hard constraints, g(v)=0, so minimizing (1/2)*f(z)+g(v) works.
         end                                 % Note that we always minimize (1/2)*f(z) in our cases because we don't use H=2*(), q=2*(), but H=1*(), q=1*().
     else
@@ -152,7 +152,7 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, opt)
         vars.rho_i_0 = 1./rho(1:m);
         vars.rho_i = reshape(1./rho(m+1:end-n), n+m, N-1)';
         vars.rho_i_N = 1./rho(end-n+1:end);
-        if opt.solver.soft_constraints
+        if opt.solver.soft_constraints && ~opt.solver.adaptive_beta
             vars.beta_rho_i = beta./(2*rho);% It is beta/(2*rho) since we minimize (1/2)*(f(z)+g(v)) with ADMM in order to be correct, as g(v)~=0. When we have hard constraints, g(v)=0, so minimizing (1/2)*f(z)+g(v) works.
         end                                 % Note that we always minimize (1/2)*f(z) in our cases because we don't use H=2*(), q=2*(), but H=1*(), q=1*().
     end

@@ -23,6 +23,7 @@ function def_options = def_options_laxMPC_ADMM(submethod)
     def_options.force_vector_rho = false; % If true, forces the penalty parameter rho to be defined as a vector
     def_options.soft_constraints = false; % If true, soft constraints are allowed.
     def_options.force_vector_beta = false; % If true, forces the penalization of soft constraints beta (if apply) to be defined as a vector
+    def_options.adaptive_beta = false; % If true, weights for soft constraints can change online.
     def_options.beta = 1; % Only useful if soft constraints are activated
     
 end
