@@ -51,6 +51,9 @@
 %              * Only if options.solver.soft_constraints == true *
 %                   - .beta: Parameter to weight softened box constraints.
 %                            Can be either a scalar or a vector. Defaults to 1.
+%                   - .adaptive_beta: Determines if beta can change between sample times 
+%                     (in Matlab version it actually changes whenever options.beta is changed,
+%                     even if adaptive_beta==false)
 %              - .tol: Exit tolerance of the solver. Defaults to 1e-4.
 %              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
 %              - .in_engineering: Boolean that determines if the arguments of the solver are given in

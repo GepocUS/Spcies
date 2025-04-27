@@ -59,6 +59,9 @@
 %              * Only if options.solver.soft_constraints == true *
 %                   - .beta: Parameter to weight softened box constraints.
 %                            Can be either a scalar or a vector. Defaults to 1.
+%                   - .adaptive_beta: Determines if beta can change between sample times 
+%                     (in Matlab version it actually changes whenever options.beta is changed,
+%                     even if adaptive_beta==false)
 %              - .inf_bound: Scalar. Determines the value given to components without bound.
 %              - .tol_p: Primal exit tolerance of the solver. Defaults to 1e-4.
 %              - .tol_d: Dual exit tolerance (dual) of the solver. Defaults to 1e-4.
@@ -201,6 +204,15 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
     % Update beq
     beq = zeros((N+2)*n,1);
     beq(1:n,1) = x0;
+
+    % Compute beta_rho_i online if necessary
+    if options.solver.soft_constraints 
+        if options.solver.adaptive_beta
+            beta_rho_i = options.solver.beta./(2*options.solver.rho);
+        else
+            beta_rho_i = var.beta_rho_i;
+        end
+    end
 
     % Update q
     q = zeros((N+1)*(n+m),1);
@@ -404,14 +416,14 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
                 for l = 1:N
                     for i = l*(n+m)+1 : (l+1)*(n+m)
                         
-                        if isscalar(var.rho) && var.beta_is_scalar
-                            v1 = v(i) + var.beta_rho_i;
+                        if isscalar(beta_rho_i)
+                            v1 = v(i) + beta_rho_i;
                             v2 = v(i);
-                            v3 = v(i) - var.beta_rho_i;
+                            v3 = v(i) - beta_rho_i;
                         else
-                            v1 = v(i) + var.beta_rho_i(i);
+                            v1 = v(i) + beta_rho_i(i);
                             v2 = v(i);
-                            v3 = v(i) - var.beta_rho_i(i);
+                            v3 = v(i) - beta_rho_i(i);
                         end
     
                         if (v1 <= var.LB(i-l*(n+m)))
@@ -464,14 +476,14 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
                 % y_0 is soft-constrained
                 for i = n+m+1:n+m+pp
     
-                    if isscalar(var.rho) && var.beta_is_scalar
-                        v1 = v(i) + var.beta_rho_i;
+                    if isscalar(beta_rho_i)
+                        v1 = v(i) + beta_rho_i;
                         v2 = v(i);
-                        v3 = v(i) - var.beta_rho_i;
+                        v3 = v(i) - beta_rho_i;
                     else
-                        v1 = v(i) + var.beta_rho_i(i);
+                        v1 = v(i) + beta_rho_i(i);
                         v2 = v(i);
-                        v3 = v(i) - var.beta_rho_i(i);
+                        v3 = v(i) - beta_rho_i(i);
                     end
     
                     if (v1 <= var.LB(i))
@@ -492,14 +504,14 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
                 for l = 1:N
                     for i = l*(n+m+pp)+1 : (l+1)*(n+m+pp)
                         
-                        if isscalar(var.rho) && var.beta_is_scalar
-                            v1 = v(i) + var.beta_rho_i;
+                        if isscalar(beta_rho_i)
+                            v1 = v(i) + beta_rho_i;
                             v2 = v(i);
-                            v3 = v(i) - var.beta_rho_i;
+                            v3 = v(i) - beta_rho_i;
                         else
-                            v1 = v(i) + var.beta_rho_i(i);
+                            v1 = v(i) + beta_rho_i(i);
                             v2 = v(i);
-                            v3 = v(i) - var.beta_rho_i(i);
+                            v3 = v(i) - beta_rho_i(i);
                         end
     
                         if (v1 <= var.LB(i-l*(n+m+pp)))
