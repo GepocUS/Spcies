@@ -61,16 +61,23 @@ void mexFunction(int nlhs, mxArray *plhs[],
     
     // Check that beta (if it applies) is of the correct dimension (must be a vector for now)
     #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
-        #if CONSTRAINED_OUTPUT == 0
-            if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) !=  (NN_+1)*nm_){
-                mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:ur",
-                                  "when adaptive_beta==true, beta must be a vector, in this case of dimension %%d", (NN_+1)*nm_);
+        #ifdef SCALAR_BETA
+            if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != 1){
+                mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:beta",
+                                  "beta must be a scalar. To use a vector, please set option 'adaptive_beta_is_vector' to true");
             }
         #else
-            if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) !=  (NN_+1)*(nm_+pp_)){
-                mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:ur",
-                                  "when adaptive_beta==true, beta must be a vector, in this case of dimension %%d", (NN_+1)*(nm_+pp_));
-            }
+            #if CONSTRAINED_OUTPUT == 0
+                if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != (NN_+1)*nm_){
+                    mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:beta",
+                                      "beta must be a vector of dimension %%d. Optionally, a scalar can be used by setting option 'adaptive_beta_is_vector' to false", (NN_+1)*nm_);
+                }
+            #else
+                if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != (NN_+1)*(nm_+pp_)){
+                    mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:beta",
+                                      "beta must be a vector of dimension %%d. Optionally, a scalar can be used by setting option 'adaptive_beta_is_vector' to false", (NN_+1)*(nm_+pp_));
+                }
+            #endif
         #endif
     #endif
 

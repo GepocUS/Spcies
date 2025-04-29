@@ -12,7 +12,15 @@
 
 % Information about this formulation and the solver can be found at:
 % 
-% TODO: Write the name of the article here if published
+% "Efficient Implementation of MPC for Tracking using ADMM by Decoupling its Semi-Banded Structure",
+% by V. Gracia, P. Krupa, D. Limon and T. Alamo, 2024 European Control Conference (ECC),
+% pp. 2718-2723, doi: 10.23919/ECC64448.2024.10591273,
+%
+% and
+%
+% "Implementation of Soft-Constrained MPC for Tracking Using Its Semi-Banded Problem Structure",
+% by V. Gracia, P. Krupa, D. Limon and T. Alamo, in IEEE Control Systems Letters, vol. 8,
+% pp. 1499-1504, 2024, doi: 10.1109/LCSYS.2024.3407609.
 %
 % [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, 'name', value, 'name', ...)
 %
@@ -61,7 +69,10 @@
 %                            Can be either a scalar or a vector. Defaults to 1.
 %                   - .adaptive_beta: Determines if beta can change between sample times 
 %                     (in Matlab version it actually changes whenever options.beta is changed,
-%                     even if adaptive_beta==false)
+%                     even if adaptive_beta==false).
+%                   - .adaptive_beta_is_vector: Tells the solver if beta is
+%                     a vector or a scalar when adaptive_beta==true (only useful in C version
+%                     of the solver).
 %              - .inf_bound: Scalar. Determines the value given to components without bound.
 %              - .tol_p: Primal exit tolerance of the solver. Defaults to 1e-4.
 %              - .tol_d: Dual exit tolerance (dual) of the solver. Defaults to 1e-4.

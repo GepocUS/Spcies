@@ -111,20 +111,28 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
     end
 
     %% Get beta
-    if opt.solver.soft_constraints && ~opt.solver.adaptive_beta
-        if isscalar(opt.solver.beta) && opt.solver.force_vector_beta
-            if opt.solver.constrained_output
-                beta = opt.solver.beta*ones((N+1)*(n+m+p), 1);
+    if opt.solver.soft_constraints
+        if ~opt.solver.adaptive_beta
+            if isscalar(opt.solver.beta) && opt.solver.force_vector_beta
+                if opt.solver.constrained_output
+                    beta = opt.solver.beta*ones((N+1)*(n+m+p), 1);
+                else
+                    beta = opt.solver.beta*ones((N+1)*(n+m), 1);
+                end
             else
-                beta = opt.solver.beta*ones((N+1)*(n+m), 1);
+                beta = opt.solver.beta;
+            end
+            if isscalar(beta)
+                vars.beta_is_scalar = true;
+            else
+                vars.beta_is_scalar = false;
             end
         else
-            beta = opt.solver.beta;
-        end
-        if isscalar(beta)
-            vars.beta_is_scalar = true;
-        else
-            vars.beta_is_scalar = false;
+            if ~opt.solver.adaptive_beta_is_vector
+                vars.beta_is_scalar = true;
+            else
+                vars.beta_is_scalar = false;
+            end
         end
     end
 
