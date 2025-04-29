@@ -67,10 +67,18 @@
     double v_0[mm_] = {0.0};
     double v_N[nn_] = {0.0};
     #if SOFT_CONSTRAINTS
-    double v_aux1 = 0.0; // Used for computation of v when SOFT_CONSTRAINTS == 1
-    double v_aux3 = 0.0; // Used for computation of v when SOFT_CONSTRAINTS == 1
+        double v_aux1 = 0.0; // Used for computation of v when SOFT_CONSTRAINTS == 1
+        double v_aux3 = 0.0; // Used for computation of v when SOFT_CONSTRAINTS == 1
         #if ADAPTIVE_BETA == 1
-            double beta_rho_i[NN_*nm_] = {0.0}; // Weights for soft constraints 
+            #ifdef SCALAR_BETA
+                #ifdef SCALAR_RHO
+                    double beta_rho_i = 0.0;
+                #else
+                    double beta_rho_i[NN_*nm_] = {0.0}; // Weights for soft constraints 
+                #endif
+            #else
+                double beta_rho_i[NN_*nm_] = {0.0}; // Weights for soft constraints 
+            #endif
         #endif
     #endif
     double lambda[NN_-1][nm_] = {{0.0}}; // Dual variables lambda
@@ -295,15 +303,41 @@
 
     // Get beta if it applies and compute required ingredients
     #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
-        for(unsigned int i = 0 ; i < NN_*nm_ ; i++){
-            
+        #ifdef SCALAR_BETA
             #ifdef SCALAR_RHO
-            beta_rho_i[i] = beta_in[i]/(2*rho);
+                beta_rho_i = *beta_in/(2*rho);
             #else
-            beta_rho_i[i] = beta_in[i]/(2*rho[i]);
+                for(unsigned int i = 0 ; i < mm_ ; i++){
+                    beta_rho_i[i] = *beta_in/(2*rho_0[i]);
+                }
+                for (unsigned int i = 0 ; i < NN_-1 ; i++){
+                    for(unsigned int j = 0 ; j < nm_ ; j++){
+                        beta_rho_i[mm_+i*nm_+j] = *beta_in/(2*rho[i][j]);
+                    }
+                }
+                for (unsigned int i = 0 ; i < nn_ ; i++){
+                    beta_rho_i[mm_+(NN_-1)*nm_+i] = *beta_in/(2*rho_N[i]);
+                }
             #endif
-            
-        }
+        #else
+            for(unsigned int i = 0 ; i < NN_*nm_ ; i++){
+                #ifdef SCALAR_RHO
+                beta_rho_i[i] = beta_in[i]/(2*rho);
+                #else
+                for(unsigned int i = 0 ; i < mm_ ; i++){
+                    beta_rho_i[i] = beta_in[i]/(2*rho_0[i]);
+                }
+                for (unsigned int i = 0 ; i < NN_-1 ; i++){
+                    for(unsigned int j = 0 ; j < nm_ ; j++){
+                        beta_rho_i[mm_+i*nm_+j] = beta_in[mm_+i*nm_+j]/(2*rho[i][j]);
+                    }
+                }
+                for (unsigned int i = 0 ; i < nn_ ; i++){
+                    beta_rho_i[mm_+(NN_-1)*nm_+i] = beta_in[mm_+(NN_-1)*nm_+i]/(2*rho_N[i]);
+                }
+                #endif
+            }
+        #endif
     #endif
 
     // Update first nn_ elements of beq
@@ -547,8 +581,8 @@
                     v[l][j] = (v[l][j] > UB[j]) ? UB[j] : v[l][j]; // minimum between v and the upper bound
                     #endif
                 #else
-                    #ifdef SCALAR_RHO
-                        #ifdef SCALAR_BETA
+                    #ifdef SCALAR_BETA
+                        #ifdef SCALAR_RHO
                         v_aux1 = v[l][j] + beta_rho_i;
                         v_aux3 = v[l][j] - beta_rho_i;
                         #else
@@ -607,8 +641,8 @@
                 v_N[j] = (v_N[j] > UB[j]) ? UB[j] : v_N[j]; // minimum between v and the upper bound
                 #endif
             #else
-                #ifdef SCALAR_RHO
-                    #ifdef SCALAR_BETA
+                #ifdef SCALAR_BETA
+                    #ifdef SCALAR_RHO
                     v_aux1 = v_N[j] + beta_rho_i;
                     v_aux3 = v_N[j] - beta_rho_i;
                     #else

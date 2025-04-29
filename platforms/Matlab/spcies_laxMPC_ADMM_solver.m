@@ -54,6 +54,9 @@
 %                   - .adaptive_beta: Determines if beta can change between sample times 
 %                     (in Matlab version it actually changes whenever options.beta is changed,
 %                     even if adaptive_beta==false)
+%                   - .adaptive_beta_is_vector: Tells the solver if beta is
+%                     a vector or a scalar when adaptive_beta==true (only useful in C version
+%                     of the solver).
 %              - .tol: Exit tolerance of the solver. Defaults to 1e-4.
 %              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
 %              - .in_engineering: Boolean that determines if the arguments of the solver are given in
@@ -85,7 +88,8 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 % 
 
-% TODO: Change beta from option to necessary input of the solver when options.solver.soft_constraints == true and make it deal with beta being a vector.
+% TODO: Make this solver use: 'import compute_laxMPC_ADMM_ingredients.m' to
+% generate its ingredients instead of computing them in this script.
 
 function [u, k, e_flag, Hist] = spcies_laxMPC_ADMM_solver(x0, xr, ur, varargin)
     

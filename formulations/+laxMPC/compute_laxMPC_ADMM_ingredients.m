@@ -64,16 +64,24 @@ function vars = compute_laxMPC_ADMM_ingredients(controller, opt)
     end
 
     %% Get beta
-    if opt.solver.soft_constraints && ~opt.solver.adaptive_beta
-        if isscalar(opt.solver.beta) && opt.solver.force_vector_beta
-            beta = opt.solver.beta*ones(N*(n+m), 1);
+    if opt.solver.soft_constraints
+        if ~opt.solver.adaptive_beta
+            if isscalar(opt.solver.beta) && opt.solver.force_vector_beta
+                beta = opt.solver.beta*ones(N*(n+m), 1);
+            else
+                beta = opt.solver.beta;
+            end
+            if isscalar(beta)
+                vars.beta_is_scalar = true;
+            else
+                vars.beta_is_scalar = false;
+            end
         else
-            beta = opt.solver.beta;
-        end
-        if isscalar(beta)
-            vars.beta_is_scalar = true;
-        else
-            vars.beta_is_scalar = false;
+            if ~opt.solver.adaptive_beta_is_vector
+                vars.beta_is_scalar = true;
+            else
+                vars.beta_is_scalar = false;
+            end
         end
     end
     

@@ -147,14 +147,14 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
     end
 
     % beta (soft constraints)
-    if recipe.options.solver.soft_constraints && ~recipe.options.solver.adaptive_beta
+    if recipe.options.solver.soft_constraints
         if vars.beta_is_scalar
             defCell = add_line(defCell, 'SCALAR_BETA', 1, 0, 'bool', 'define');
         end
     end
 
-    if recipe.options.solver.soft_constraints && recipe.options.solver.adaptive_beta
-        defCell = add_line(defCell, 'ADAPTIVE_BETA', 1, 1, 'bool', 'define');
+    if recipe.options.solver.soft_constraints
+        defCell = add_line(defCell, 'ADAPTIVE_BETA', recipe.options.solver.adaptive_beta, 1, 'bool', 'define');
     end
     
     %% Declare an empty constructor object

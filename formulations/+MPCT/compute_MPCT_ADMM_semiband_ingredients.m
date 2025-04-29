@@ -5,7 +5,15 @@
 %
 % Information about this formulation and the solver can be found at:
 %
-% TODO: PONER NOMBRE DEL ARTÍCULO DEL ECC24 SI LO ACEPTAN
+% "Efficient Implementation of MPC for Tracking using ADMM by Decoupling its Semi-Banded Structure",
+% by V. Gracia, P. Krupa, D. Limon and T. Alamo, 2024 European Control Conference (ECC),
+% pp. 2718-2723, doi: 10.23919/ECC64448.2024.10591273,
+%
+% and
+%
+% "Implementation of Soft-Constrained MPC for Tracking Using Its Semi-Banded Problem Structure",
+% by V. Gracia, P. Krupa, D. Limon and T. Alamo, in IEEE Control Systems Letters, vol. 8,
+% pp. 1499-1504, 2024, doi: 10.1109/LCSYS.2024.3407609.
 %
 % INPUTS:
 %   - controller: Contains the information of the controller.

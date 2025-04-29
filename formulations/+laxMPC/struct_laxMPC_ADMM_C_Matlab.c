@@ -72,9 +72,15 @@ void mexFunction(int nlhs, mxArray *plhs[],
     #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
 
         // Check that beta (if it applies) is of the correct dimension (must be a vector for now)
-        if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != NN_*nm_ ){
-            mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:beta", "when adaptive_beta==true, beta must be a vector, in this case of dimension %%d", NN_*nm_);
-        }
+        #ifdef SCALAR_BETA
+            if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != 1 ){
+                mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:beta", "beta must be a scalar. To use a vector, please set option 'adaptive_beta_is_vector' to true");
+            }
+        #else
+            if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != NN_*nm_ ){
+                mexErrMsgIdAndTxt("Spcies:laxMPC:nrhs:beta", "beta must be a vector of dimension %%d. Optionally, a scalar can be used by setting option 'adaptive_beta_is_vector' to false", NN_*nm_);
+            }
+        #endif
 
         #if TIME_VARYING == 1
 
