@@ -24,6 +24,7 @@
 %                      If a vector is provided, it must have the same dimensions as the decision variables.
 %              - .tol: Exit tolerance of the solver.
 %              - .k_max: Maximum number of iterations of the solver.
+%              - .soft_constraints: Determines if soft constraints are allowed.
 % 
 % OUTPUTS:
 %   - constructor: An instance of the Spcies_constructor class ready for file generation.
@@ -50,6 +51,11 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
     if recipe.options.time_varying && ~vars.rho_is_scalar
         error("LaxMPC ADMM time varying solver only allows the use of a scalar rho");
     end
+    if recipe.options.solver.soft_constraints && ~recipe.options.solver.adaptive_beta
+        if ~vars.beta_is_scalar && length(vars.beta_rho_i)~=(vars.N*(vars.n+vars.m))
+            error("Vector beta (soft constraints) requires to be of size N*(n+m)");
+        end
+    end
     
     %% Rename variables for convenience
     n = vars.n;
@@ -70,6 +76,7 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
     
     % Defines
     defCell = recipe.options.default_defCell();
+    defCell = add_line(defCell, 'SOFT_CONSTRAINTS', recipe.options.solver.soft_constraints, 1, 'bool', 'define');
     defCell = add_line(defCell, 'nn_', n, 1, 'uint', 'define');
     defCell = add_line(defCell, 'mm_', m, 1, 'uint', 'define');
     defCell = add_line(defCell, 'nm_', n+m, 1, 'uint', 'define');
@@ -120,6 +127,13 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
         defCell = add_line(defCell, 'SCALAR_RHO', 1, 0, 'bool', 'define');
         defCell = add_line(defCell, 'rho', vars.rho, 1, precision, 'define');
         defCell = add_line(defCell, 'rho_i', vars.rho_i, 1, precision, 'define');
+        if recipe.options.solver.soft_constraints && ~recipe.options.solver.adaptive_beta
+            if vars.beta_is_scalar
+                defCell = add_line(defCell, 'beta_rho_i', vars.beta_rho_i, 1, precision, 'define');
+            else
+                constCell = add_line(constCell, 'beta_rho_i', vars.beta_rho_i, 1, precision, var_options);
+            end
+        end
     else
         constCell = add_line(constCell, 'rho', vars.rho, 1, precision, var_options);
         constCell = add_line(constCell, 'rho_0', vars.rho_0, 1, precision, var_options);
@@ -127,6 +141,20 @@ function constructor = cons_laxMPC_ADMM_C(recipe)
         constCell = add_line(constCell, 'rho_i', vars.rho_i, 1, precision, var_options);
         constCell = add_line(constCell, 'rho_i_0', vars.rho_i_0, 1, precision, var_options);
         constCell = add_line(constCell, 'rho_i_N', vars.rho_i_N, 1, precision, var_options);
+        if recipe.options.solver.soft_constraints && ~recipe.options.solver.adaptive_beta
+            constCell = add_line(constCell, 'beta_rho_i', vars.beta_rho_i, 1, precision, var_options);
+        end
+    end
+
+    % beta (soft constraints)
+    if recipe.options.solver.soft_constraints
+        if vars.beta_is_scalar
+            defCell = add_line(defCell, 'SCALAR_BETA', 1, 0, 'bool', 'define');
+        end
+    end
+
+    if recipe.options.solver.soft_constraints
+        defCell = add_line(defCell, 'ADAPTIVE_BETA', recipe.options.solver.adaptive_beta, 1, 'bool', 'define');
     end
     
     %% Declare an empty constructor object

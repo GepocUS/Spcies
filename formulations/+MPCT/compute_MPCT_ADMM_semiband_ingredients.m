@@ -5,7 +5,15 @@
 %
 % Information about this formulation and the solver can be found at:
 %
-% TODO: PONER NOMBRE DEL ARTÍCULO DEL ECC24 SI LO ACEPTAN
+% "Efficient Implementation of MPC for Tracking using ADMM by Decoupling its Semi-Banded Structure",
+% by V. Gracia, P. Krupa, D. Limon and T. Alamo, 2024 European Control Conference (ECC),
+% pp. 2718-2723, doi: 10.23919/ECC64448.2024.10591273,
+%
+% and
+%
+% "Implementation of Soft-Constrained MPC for Tracking Using Its Semi-Banded Problem Structure",
+% by V. Gracia, P. Krupa, D. Limon and T. Alamo, in IEEE Control Systems Letters, vol. 8,
+% pp. 1499-1504, 2024, doi: 10.1109/LCSYS.2024.3407609.
 %
 % INPUTS:
 %   - controller: Contains the information of the controller.
@@ -112,7 +120,28 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
 
     %% Get beta
     if opt.solver.soft_constraints
-        beta = opt.solver.beta;
+        if ~opt.solver.adaptive_beta
+            if isscalar(opt.solver.beta) && opt.solver.force_vector_beta
+                if opt.solver.constrained_output
+                    beta = opt.solver.beta*ones((N+1)*(n+m+p), 1);
+                else
+                    beta = opt.solver.beta*ones((N+1)*(n+m), 1);
+                end
+            else
+                beta = opt.solver.beta;
+            end
+            if isscalar(beta)
+                vars.beta_is_scalar = true;
+            else
+                vars.beta_is_scalar = false;
+            end
+        else
+            if ~opt.solver.adaptive_beta_is_vector
+                vars.beta_is_scalar = true;
+            else
+                vars.beta_is_scalar = false;
+            end
+        end
     end
 
     %% Compute the Hessian
@@ -275,7 +304,7 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
             vars.S_rho_i = inv(N*R + S + rho*diag(ones(m,1))); % If D of constrained outputs in ~=0, this line should be inv(S + rho*(eye(nu)+(D'*D))); and the band would be thicker
             vars.T_rho_i = inv(N*Q + T + rho*(eye(n)+(C'*C))); % This line is not correct in D~=0
         end
-        if opt.solver.soft_constraints
+        if opt.solver.soft_constraints && ~opt.solver.adaptive_beta
             vars.beta_rho_i = beta/(2*rho); % It is beta/(2*rho) since we minimize (1/2)*(f(z)+g(v)) with ADMM in order to be correct, as g(v)~=0. When we have hard constraints, g(v)=0, so minimizing (1/2)*f(z)+g(v) works.
         end                                 % Note that we always minimize (1/2)*f(z) in our cases because we don't use H=2*(), q=2*(), but H=1*(), q=1*().
     else
@@ -291,7 +320,7 @@ function [vars] = compute_MPCT_ADMM_semiband_ingredients(controller, opt)
         vars.T_rho_i = Gamma_hat_inv(N*(n+m)+1:N*(n+m)+n,N*(n+m)+1:N*(n+m)+n);
         vars.S_rho_i = Gamma_hat_inv(N*(n+m)+n+1:N*(n+m)+n+m,N*(n+m)+n+1:N*(n+m)+n+m);
         
-        if opt.solver.soft_constraints
+        if opt.solver.soft_constraints && ~opt.solver.adaptive_beta
             vars.beta_rho_i = beta./(2*rho);% It is beta/(2*rho) since we minimize (1/2)*(f(z)+g(v)) with ADMM in order to be correct, as g(v)~=0. When we have hard constraints, g(v)=0, so minimizing (1/2)*f(z)+g(v) works.
         end                                 % Note that we always minimize (1/2)*f(z) in our cases because we don't use H=2*(), q=2*(), but H=1*(), q=1*().
 

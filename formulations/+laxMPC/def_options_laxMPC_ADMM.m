@@ -21,5 +21,10 @@ function def_options = def_options_laxMPC_ADMM(submethod)
     def_options.tol = 1e-4; % Tolerance of the optimization algorithm for the exit condition
     def_options.k_max = 1000; % Maximum number of iterations allowed for the optimization algorithm
     def_options.force_vector_rho = false; % If true, forces the penalty parameter rho to be defined as a vector
+    def_options.soft_constraints = false; % If true, soft constraints are allowed.
+    def_options.force_vector_beta = false; % When soft_constraints == true and adaptive_beta == false, forces internally the penalization of soft constraints beta to be a vector.
+    def_options.adaptive_beta = false; % If true, weights for soft constraints can change online.
+    def_options.adaptive_beta_is_vector = true; % If true, when adaptive_beta is set to true, the solver requires a vector for beta. If false, the solver requires a scalar.
+    def_options.beta = 1; % Only useful if soft constraints are set to true.
     
 end

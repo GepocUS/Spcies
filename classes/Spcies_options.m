@@ -47,6 +47,10 @@ classdef Spcies_options < matlab.mixin.Copyable
             % tol_d % Dual exit tolerance of the solver
             % rho % Step-size of the solver (used in ADMM-based solvers)
             % force_vector_rho % If true, then rho is always considered to be a vector (instead of a scalar)
+            % soft_constraints % If true, box constraints are transformed into softened box constraints
+            % force_vector_beta % If true and soft contraints are activated, then beta is always considered to be a vector (instead of a scalar)
+            % beta % Weight(s) for soft constraints
+            % adaptive_beta % If true, beta can change between sample times, and is required as an input for the solver
             % alpha % For the SADMM solver
             % sigma % For some HMPC solvers
             % sparse % For some HMPC solvers

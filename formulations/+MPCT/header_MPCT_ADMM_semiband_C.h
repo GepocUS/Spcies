@@ -26,7 +26,11 @@ typedef struct {
     double run_time; // Time taken in the execution of the whole MPC solver function, equal to the sum of all other times
 } sol_$INSERT_NAME$;
 
+#if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
+void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *beta_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol);
+#else
 void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol);
+#endif
 
 #ifdef SCALAR_RHO
 void solve_banded_QRST_sys(const double (*Q_rho_i)[nn_], const double (*R_rho_i)[mm_], const double (*S_rho_i)[mm_], const double (*T_rho_i)[nn_], double *z, double *d);

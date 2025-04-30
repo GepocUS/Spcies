@@ -18,7 +18,11 @@
  * 
  */
 
+#if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
+void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *beta_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
+#else
 void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
+#endif
 
     #if MEASURE_TIME == 1
 
@@ -54,6 +58,25 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
     // double v_aux2 = 0.0; // Used for computation of v when SOFT_CONSTRAINTS == 1
     double v_aux3 = 0.0; // Used for computation of v when SOFT_CONSTRAINTS == 1
     #endif
+    #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
+        #ifdef SCALAR_BETA 
+            #ifdef SCALAR_RHO // If rho and beta are scalars, beta_rho_i is scalar
+                double beta_rho_i = 0.0; // Used for soft constraints
+            #else
+                #if CONSTRAINED_OUTPUT == 0
+                double beta_rho_i[(NN_+1)*nm_] = {0.0}; // Used for soft constraints
+                #else
+                double beta_rho_i[(NN_+1)*nmp_] = {0.0}; // Used for soft constraints
+                #endif
+            #endif
+        #else
+            #if CONSTRAINED_OUTPUT == 0
+            double beta_rho_i[(NN_+1)*nm_] = {0.0}; // Used for soft constraints
+            #else
+            double beta_rho_i[(NN_+1)*nmp_] = {0.0}; // Used for soft constraints
+            #endif
+        #endif
+    #endif
     double q[nm_] = {0.0}; // Linear term vector in the functional. Only non-zero elements are considered.
     double xi[(NN_+1)*nm_] = {0.0}; // Used to solve the equality-constrained QP step
     double mu[(NN_+2)*nn_] = {0.0}; // Used to solve the equality-constrained QP step
@@ -85,6 +108,43 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
     for(unsigned int i = 0; i < mm_; i++){
         ur[i] = ur_in[i];
     }
+    #endif
+
+    // Get beta if it applies and compute required ingredients 
+    #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
+        #ifdef SCALAR_BETA
+            #ifdef SCALAR_RHO
+                beta_rho_i = *beta_in/(2*rho);
+            #else
+                #if CONSTRAINED_OUTPUT == 0   
+                for(unsigned int i = 0; i < (NN_+1)*nm_ ; i++){
+                    beta_rho_i[i] = *beta_in/(2*rho[i]);
+                }  
+                #else
+                for(unsigned int i = 0; i < (NN_+1)*nmp_ ; i++){
+                    beta_rho_i[i] = *beta_in/(2*rho[i]);
+                }
+                #endif
+            #endif       
+        #else
+            #if CONSTRAINED_OUTPUT == 0
+            for(unsigned int i = 0; i < (NN_+1)*nm_ ; i++){
+                #ifdef SCALAR_RHO
+                beta_rho_i[i] = beta_in[i]/(2*rho);
+                #else
+                beta_rho_i[i] = beta_in[i]/(2*rho[i]);
+                #endif
+            }
+            #else
+            for(unsigned int i = 0; i < (NN_+1)*nmp_ ; i++){
+                #ifdef SCALAR_RHO
+                beta_rho_i[i] = beta_in[i]/(2*rho);
+                #else
+                beta_rho_i[i] = beta_in[i]/(2*rho[i]);
+                #endif
+            }
+            #endif    
+        #endif
     #endif
 
     // Compute q
@@ -811,12 +871,17 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
                 for (unsigned int i = l*nm_ ; i < (l+1)*nm_ ; i++){
                     
                     // v_aux2 = v[i];
-                    #ifdef SCALAR_RHO
-                    v_aux1 = v[i] + beta_rho_i;
-                    v_aux3 = v[i] - beta_rho_i;
+                    #ifdef SCALAR_BETA
+                        #ifdef SCALAR_RHO
+                            v_aux1 = v[i] + beta_rho_i;
+                            v_aux3 = v[i] - beta_rho_i;
+                        #else
+                            v_aux1 = v[i] + beta_rho_i[i];
+                            v_aux3 = v[i] - beta_rho_i[i];
+                        #endif
                     #else
-                    v_aux1 = v[i] + beta_rho_i[i];
-                    v_aux3 = v[i] - beta_rho_i[i];
+                        v_aux1 = v[i] + beta_rho_i[i];
+                        v_aux3 = v[i] - beta_rho_i[i];
                     #endif
                     
                     if (v_aux1 <= LB[i-l*nm_]){
@@ -941,14 +1006,18 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
             for (unsigned int i = nm_ ; i<nmp_ ; i++){
                 
                 // v_aux2 = v[i];
-                #ifdef SCALAR_RHO
-                v_aux1 = v[i] + beta_rho_i;
-                v_aux3 = v[i] - beta_rho_i;
+                #ifdef SCALAR_BETA
+                    #ifdef SCALAR_RHO
+                        v_aux1 = v[i] + beta_rho_i;
+                        v_aux3 = v[i] - beta_rho_i;
+                    #else
+                        v_aux1 = v[i] + beta_rho_i[i];
+                        v_aux3 = v[i] - beta_rho_i[i];
+                    #endif
                 #else
-                v_aux1 = v[i] + beta_rho_i[i];
-                v_aux3 = v[i] - beta_rho_i[i];
+                    v_aux1 = v[i] + beta_rho_i[i];
+                    v_aux3 = v[i] - beta_rho_i[i];
                 #endif
-    
                 
                 if (v_aux1 <= LB[i]){
                     v[i] = v_aux1;
@@ -974,14 +1043,19 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
                 for (unsigned int i = l*nmp_ ; i < (l+1)*nmp_ ; i++){
                     
                     // v_aux2 = v[i];
-                    #ifdef SCALAR_RHO
-                    v_aux1 = v[i] + beta_rho_i;
-                    v_aux3 = v[i] - beta_rho_i;
+                    #ifdef SCALAR_BETA
+                        #ifdef SCALAR_RHO
+                            v_aux1 = v[i] + beta_rho_i;
+                            v_aux3 = v[i] - beta_rho_i;
+                        #else
+                            v_aux1 = v[i] + beta_rho_i[i];
+                            v_aux3 = v[i] - beta_rho_i[i];
+                        #endif
                     #else
-                    v_aux1 = v[i] + beta_rho_i[i];
-                    v_aux3 = v[i] - beta_rho_i[i];
+                        v_aux1 = v[i] + beta_rho_i[i];
+                        v_aux3 = v[i] - beta_rho_i[i];
                     #endif
-                    
+
                     if (v_aux1 <= LB[i-l*nmp_]){
                         v[i] = v_aux1;
                     }
