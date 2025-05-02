@@ -109,6 +109,9 @@ function constructor = cons_MPCT_ADMM_semiband_C(recipe)
         end
     end
     defCell = add_line(defCell, 'inf', recipe.options.inf_value, 1, 'float', 'define');
+    if recipe.options.solver.initialize_iterates
+        defCell = add_line(defCell, 'INITIALIZE_ITERATES', 1, 0, 'bool', 'define');
+    end
     
     % Constants
     constCell = [];

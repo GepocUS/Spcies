@@ -15,6 +15,10 @@ void mexFunction(int nlhs, mxArray *plhs[],
     #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
     double *beta; // Local beta (soft constraints weights)
     #endif
+    #ifdef INITIALIZE_ITERATES
+    double *v_ini;
+    double *lambda_ini;
+    #endif
     double *u_opt; // Local u_opt
     int k; // Local k
     int e_flag; // Local e_flag
@@ -24,15 +28,29 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     // Check number of inputs
     #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
-    if(nrhs != 4){
-        mexErrMsgIdAndTxt("Spcies:MPCT_ADMM:nrhs:number",
-                          "Four inputs are required");
-    }
+        #ifdef INITIALIZE_ITERATES
+            if(nrhs != 6){
+                mexErrMsgIdAndTxt("Spcies:MPCT_ADMM:nrhs:number",
+                                  "Six inputs are required");
+            }
+        #else
+            if(nrhs != 4){
+                mexErrMsgIdAndTxt("Spcies:MPCT_ADMM:nrhs:number",
+                                  "Four inputs are required");
+            }
+        #endif
     #else
-    if(nrhs != 3){
-        mexErrMsgIdAndTxt("Spcies:MPCT_ADMM:nrhs:number",
-                          "Three inputs are required");
-    }
+        #ifdef INITIALIZE_ITERATES
+            if(nrhs != 5){
+                mexErrMsgIdAndTxt("Spcies:MPCT_ADMM:nrhs:number",
+                                  "Five inputs are required");
+            }
+        #else
+            if(nrhs != 3){
+                mexErrMsgIdAndTxt("Spcies:MPCT_ADMM:nrhs:number",
+                                  "Three inputs are required");
+            }
+        #endif
     #endif
 
     // Check number of outputs
@@ -79,6 +97,49 @@ void mexFunction(int nlhs, mxArray *plhs[],
                 }
             #endif
         #endif
+        #ifdef INITIALIZE_ITERATES
+            #if CONSTRAINED_OUTPUT == 0
+                if( !mxIsDouble(prhs[4]) || mxGetNumberOfElements(prhs[4]) != (NN_+1)*nm_){
+                    mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:v_ini",
+                                      "v_ini must be a vector of dimension %%d", (NN_+1)*nm_);
+                }
+                if( !mxIsDouble(prhs[5]) || mxGetNumberOfElements(prhs[5]) != (NN_+1)*nm_){
+                    mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:lambda_ini",
+                                      "lambda_ini must be a vector of dimension %%d", (NN_+1)*nm_);
+                }
+            #else
+                if( !mxIsDouble(prhs[4]) || mxGetNumberOfElements(prhs[4]) != (NN_+1)*(nm_+pp_)){
+                    mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:v_ini",
+                                      "v_ini must be a vector of dimension %%d", (NN_+1)*(nm_+pp_));
+                }
+                if( !mxIsDouble(prhs[5]) || mxGetNumberOfElements(prhs[5]) != (NN_+1)*(nm_+pp_)){
+                    mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:lambda_ini",
+                                      "lambda_ini must be a vector of dimension %%d", (NN_+1)*(nm_+pp_));
+                }
+            #endif
+        #endif
+    #else
+        #ifdef INITIALIZE_ITERATES
+            #if CONSTRAINED_OUTPUT == 0
+                if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != (NN_+1)*nm_){
+                    mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:v_ini",
+                                      "v_ini must be a vector of dimension %%d", (NN_+1)*nm_);
+                }
+                if( !mxIsDouble(prhs[4]) || mxGetNumberOfElements(prhs[4]) != (NN_+1)*nm_){
+                    mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:lambda_ini",
+                                      "lambda_ini must be a vector of dimension %%d", (NN_+1)*nm_);
+                }
+            #else
+                if( !mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != (NN_+1)*(nm_+pp_)){
+                    mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:v_ini",
+                                      "v_ini must be a vector of dimension %%d", (NN_+1)*(nm_+pp_));
+                }
+                if( !mxIsDouble(prhs[4]) || mxGetNumberOfElements(prhs[4]) != (NN_+1)*(nm_+pp_)){
+                    mexErrMsgIdAndTxt("Spcies:MPCT_ADMM_semiband:nrhs:lambda_ini",
+                                      "lambda_ini must be a vector of dimension %%d", (NN_+1)*(nm_+pp_));
+                }
+            #endif
+        #endif
     #endif
 
     // Read input data
@@ -87,7 +148,17 @@ void mexFunction(int nlhs, mxArray *plhs[],
     ur = (double*) mxGetData(prhs[2]);
     #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
     beta = (double*) mxGetData(prhs[3]);
+        #ifdef INITIALIZE_ITERATES
+        v_ini = (double*) mxGetData(prhs[4]);
+        lambda_ini = (double*) mxGetData(prhs[5]);
+        #endif
+    #else
+        #ifdef INITIALIZE_ITERATES
+        v_ini = (double*) mxGetData(prhs[3]);
+        lambda_ini = (double*) mxGetData(prhs[4]);
+        #endif
     #endif
+    
 
     // Prepare output data
     mxArray *z_pt, *v_pt, *lambda_pt, *update_time_pt, *solve_time_pt, *polish_time_pt, *run_time_pt;
@@ -136,9 +207,17 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     // Call solver
     #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
-    MPCT_ADMM_semiband(x0, xr, ur, beta, u_opt, &k, &e_flag, &sol);
+        #ifdef INITIALIZE_ITERATES
+        MPCT_ADMM_semiband(x0, xr, ur, beta, v_ini, lambda_ini, u_opt, &k, &e_flag, &sol);
+        #else
+        MPCT_ADMM_semiband(x0, xr, ur, beta, u_opt, &k, &e_flag, &sol);
+        #endif
     #else
-    MPCT_ADMM_semiband(x0, xr, ur, u_opt, &k, &e_flag, &sol);
+        #ifdef INITIALIZE_ITERATES
+        MPCT_ADMM_semiband(x0, xr, ur, v_ini, lambda_ini, u_opt, &k, &e_flag, &sol);
+        #else
+        MPCT_ADMM_semiband(x0, xr, ur, u_opt, &k, &e_flag, &sol);
+        #endif
     #endif
 
     // Set output values
