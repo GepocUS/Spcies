@@ -27,9 +27,17 @@ typedef struct {
 } sol_$INSERT_NAME$;
 
 #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
-void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *beta_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol);
+    #ifdef INITIALIZE_ITERATES
+    void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *beta_in, double *v_ini_in, double *lambda_ini_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol);
+    #else
+    void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *beta_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol);
+    #endif
 #else
-void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol);
+    #ifdef INITIALIZE_ITERATES
+    void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *v_ini_in, double *lambda_ini_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol);
+    #else
+    void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol);
+    #endif
 #endif
 
 #ifdef SCALAR_RHO

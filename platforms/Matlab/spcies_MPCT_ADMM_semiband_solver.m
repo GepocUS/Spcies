@@ -79,6 +79,7 @@
 %              - .k_max: Maximum number of iterations of the solver. Defaults to 1000.
 %              - .in_engineering: Boolean that determines if the arguments of the solver are given in
 %                                 engineering units (true) or incremental ones (false - default).
+%              - .initialize_iterates: Boolean that determines if initial values for v (primal variables) and lambda (dual variables) must be given.
 %              * Only if options.solver.soft_constraints == false *
 %                   - .epsilon_x: Vector by which the bound for x_s are reduced when there are no soft constraints.
 %                   - .epsilon_u: Vector by which the bound for u_s are reduced when there are no soft constraints.
@@ -108,8 +109,6 @@
 % This function is part of Spcies: https://github.com/GepocUS/Spcies
 %
 
-% TODO: Change beta from option to necessary input of the solver when options.solver.soft_constraints == true and make it deal with beta being a vector.
-
 function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, varargin)
     import MPCT.compute_MPCT_ADMM_semiband_ingredients
 
@@ -133,6 +132,9 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
     addParameter(par, 'options', def_options, @(x) isstruct(x));
     addParameter(par, 'genHist', def_genHist, @(x) isnumeric(x) && (x>=0));
     addParameter(par, 'verbose', def_verbose, @(x) isnumeric(x) && (x>=0));
+    % New inputs for warm-start
+    addParameter(par, 'v_ini', []);
+    addParameter(par, 'lambda_ini', []);
 
     % Parse
     parse(par, varargin{:})
@@ -180,13 +182,49 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
     k = 0;
     z = zeros((N+1)*(n+m),1);
     if ~options.solver.constrained_output
-        v = zeros((N+1)*(n+m),1);
-        v_old = zeros((N+1)*(n+m),1); % Value of v in the previous iteration
-        lambda = zeros((N+1)*(n+m),1);
+        if options.solver.initialize_iterates
+            if ~isempty(par.Results.v_ini)
+                v = par.Results.v_ini;
+                if size(v,1) ~= (N+1)*(n+m)
+                    error("v_ini must be a column vector of dimension %d", (N+1)*(n+m));
+                end
+            else
+                v = zeros((N+1)*(n+m),1);
+            end
+            if ~isempty(par.Results.lambda_ini)
+                lambda = par.Results.lambda_ini;
+                if size(lambda,1) ~= (N+1)*(n+m)
+                    error("lambda_ini must be a column vector of dimension %d", (N+1)*(n+m));
+                end
+            else
+                lambda = zeros((N+1)*(n+m+pp),1);
+            end
+        else
+            v = zeros((N+1)*(n+m),1);
+            lambda = zeros((N+1)*(n+m),1);
+        end
     else
-        v = zeros((N+1)*(n+m+pp),1);
-        v_old = zeros((N+1)*(n+m+pp),1); % Value of v in the previous iteration
-        lambda = zeros((N+1)*(n+m+pp),1);
+        if options.solver.initialize_iterates
+            if ~isempty(par.Results.v_ini)
+                v = par.Results.v_ini;
+                if size(v,1) ~= (N+1)*(n+m+pp)
+                    error("v_ini must be a column vector of dimension %d", (N+1)*(n+m+pp));
+                end
+            else
+                v = zeros((N+1)*(n+m+pp),1);
+            end
+            if ~isempty(par.Results.lambda_ini)
+                lambda = par.Results.lambda_ini;
+                if size(lambda,1) ~= (N+1)*(n+m+pp)
+                    error("lambda_ini must be a column vector of dimension %d", (N+1)*(n+m+pp));
+                end
+            else
+                lambda = zeros((N+1)*(n+m+pp),1);
+            end
+        else
+            v = zeros((N+1)*(n+m+pp),1);
+            lambda = zeros((N+1)*(n+m+pp),1);
+        end
     end
 
     % Historics
@@ -234,6 +272,9 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
 
     while ~done
         k = k + 1;
+
+        % Save value of v in the previous iteration
+        v_old = v;
 
         % Equality constrained QP solve : Update z
 
@@ -576,9 +617,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
             e_flag = -1;
         end
 
-        % Update variables and historics
-        v_old = v;
-
+        % Update historics
         if genHist > 0
             hRp(k) = r_p;
             hRd(k) = r_d;
