@@ -19,9 +19,17 @@
  */
 
 #if SOFT_CONSTRAINTS == 1 && ADAPTIVE_BETA == 1
-void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *beta_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
+    #ifdef INITIALIZE_ITERATES
+    void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *beta_in, double *v_ini_in, double *lambda_ini_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
+    #else
+    void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *beta_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
+    #endif
 #else
-void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
+    #ifdef INITIALIZE_ITERATES
+    void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *v_ini_in, double *lambda_ini_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
+    #else
+    void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_opt, int *k_in, int *e_flag, sol_$INSERT_NAME$ *sol){
+    #endif
 #endif
 
     #if MEASURE_TIME == 1
@@ -147,6 +155,19 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         #endif
     #endif
 
+    // Get v_ini and lambda_ini if INITIALIZE_ITERATES is defined
+        
+    #ifdef INITIALIZE_ITERATES
+        #if CONSTRAINED_OUTPUT == 0
+        for(unsigned int i = 0; i < (NN_+1)*nm_ ; i++){
+        #else
+        for(unsigned int i = 0; i < (NN_+1)*nmp_ ; i++){
+        #endif
+            v[i] = v_ini_in[i];
+            lambda[i] = lambda_ini_in[i];
+        }
+    #endif
+            
     // Compute q
 
     for(unsigned int i = 0 ; i < nn_ ; i++){
@@ -185,7 +206,7 @@ void MPCT_ADMM_semiband(double *x0_in, double *xr_in, double *ur_in, double *u_o
         memcpy(v_old, v, sizeof(double)*(NN_+1)*nm_);
         #else // CONSTRAINED_OUTPUT == 1
         memcpy(v_old, v, sizeof(double)*(NN_+1)*nmp_);
-        #endif        
+        #endif
         // Reset acumulator variables
         memset(xi, 0, sizeof(double)*(NN_+1)*nm_);
         memset(z3_ac, 0, sizeof(double)*(NN_+1)*nm_);

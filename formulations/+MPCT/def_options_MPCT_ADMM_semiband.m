@@ -30,6 +30,7 @@ function def_options = def_options_MPCT_ADMM_semiband(submethod)
     def_options.tol_d = 1e-4;
     def_options.k_max = 1000;
     def_options.force_vector_rho = false; % If true, forces the penalty parameter rho to be defined as a vector.
+    def_options.initialize_iterates = false; % If true, initial values for v (primal variables) and lambda (dual variables) must be given.
     def_options.soft_constraints = false; % If true, soft constraints are allowed.
     def_options.constrained_output = false; % If true, contraints of kind LB<= C*x+D*u <= UB are allowed.
     % Also, every inequality constraint is soft constrained except for the ones in u_0.
@@ -37,5 +38,6 @@ function def_options = def_options_MPCT_ADMM_semiband(submethod)
     def_options.adaptive_beta = false; % If true, weights for soft constraints can change online.
     def_options.adaptive_beta_is_vector = true; % If true, when adaptive_beta is set to true, the solver requires a vector for beta. If false, the solver requires a scalar.
     def_options.beta = 1; % Only useful if soft constraints are set to true.
+
 end
 
