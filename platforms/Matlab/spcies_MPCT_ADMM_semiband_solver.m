@@ -80,7 +80,6 @@
 %              - .in_engineering: Boolean that determines if the arguments of the solver are given in
 %                                 engineering units (true) or incremental ones (false - default).
 %              - .initialize_iterates: Boolean that determines if initial values for v (primal variables) and lambda (dual variables) must be given.
-%              initial value for 
 %              * Only if options.solver.soft_constraints == false *
 %                   - .epsilon_x: Vector by which the bound for x_s are reduced when there are no soft constraints.
 %                   - .epsilon_u: Vector by which the bound for u_s are reduced when there are no soft constraints.
@@ -166,7 +165,6 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
     verbose = par.Results.verbose;
     if verbose > 3; verbose = 3; end
     if verbose < 0; verbose = 0; end
-    
     
     %% Generate ingredients of the solver
     var = compute_MPCT_ADMM_semiband_ingredients(controller, options);
