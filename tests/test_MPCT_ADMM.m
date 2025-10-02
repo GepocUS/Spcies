@@ -17,8 +17,8 @@ function [gap, exit] = test_MPCT_ADMM(sys, status)
     param.N = 10;
     
     % Construct solver
-    spcies_gen_controller('sys', sys, 'param', param, 'solver_options', solver_options,...
-    'platform', 'Matlab', 'type', 'MPCT', 'method', 'ADMM');
+    spcies_gen_controller('sys', sys, 'param', param, 'options', solver_options,...
+    'platform', 'Matlab', 'formulation', 'MPCT', 'method', 'ADMM');
     
     % Solve using the sparse solver
     [u_s, k_s, e_s, sol_s] = MPCT(status.x, status.xr, status.ur);

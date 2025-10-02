@@ -158,10 +158,10 @@ function [u, k, e_flag, Hist] = spcies_equMPC_ADMM_solver(x0, xr, ur, varargin)
     end
     
     % Turn rho into a vector
-    if isscalar(options.rho) && options.force_vector_rho
-        rho = options.rho*ones(N*(n+m) - n, 1);
+    if isscalar(options.solver.rho) && options.solver.force_vector_rho
+        rho = options.solver.rho*ones(N*(n+m) - n, 1);
     else
-        rho = options.rho;
+        rho = options.solver.rho;
     end
     
     % Compute the Hessian H and the vector q

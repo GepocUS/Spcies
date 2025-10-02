@@ -71,7 +71,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     z1_pt = mxCreateDoubleMatrix((NN_+1)*nm_, 1, mxREAL);
     z2_pt = mxCreateDoubleMatrix(nm_, 1, mxREAL);
     z3_pt = mxCreateDoubleMatrix((NN_+1)*nm_, 1, mxREAL);
-    lambda_pt = mxCreateDoubleMatrix((NN_+3)*nm_, 1, mxREAL);
+    lambda_pt = mxCreateDoubleMatrix((NN_+2)*nm_+nn_, 1, mxREAL);
     update_time_pt = mxCreateDoubleMatrix(1, 1, mxREAL);
     solve_time_pt = mxCreateDoubleMatrix(1, 1, mxREAL);
     polish_time_pt = mxCreateDoubleMatrix(1, 1, mxREAL);

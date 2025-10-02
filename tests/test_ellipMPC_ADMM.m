@@ -20,8 +20,8 @@ function [gap, exit] = test_ellipMPC_ADMM(sys, status)
     param.r = 0;
     
     % Construct solver
-    spcies_gen_controller('sys', sys, 'param', param, 'solver_options', solver_options,...
-    'platform', 'Matlab', 'type', 'ellipMPC', 'method', 'ADMM');
+    spcies_gen_controller('sys', sys, 'param', param, 'options', solver_options,...
+    'platform', 'Matlab', 'formulation', 'ellipMPC', 'method', 'ADMM');
 
     % Solve using the sparse solver
     [u_s, k_s, e_s, sol_s] = ellipMPC(status.x, status.xr, status.ur);

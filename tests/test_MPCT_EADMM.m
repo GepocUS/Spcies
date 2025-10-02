@@ -5,7 +5,7 @@ function [gap, exit] = test_MPCT_EADMM(sys, status)
     % Solver options
     solver_options.rho_base = 2;
     solver_options.rho_mult = 20;
-    solver_options.k_max = 5000;
+    solver_options.k_max = 500;
     solver_options.tol = 1e-7;
     solver_options.debug = true;
     
@@ -17,8 +17,8 @@ function [gap, exit] = test_MPCT_EADMM(sys, status)
     param.N = 10;
     
     % Construct solver
-    spcies_gen_controller('sys', sys, 'param', param, 'solver_options', solver_options,...
-    'platform', 'Matlab', 'type', 'MPCT', 'method', 'EADMM');
+    spcies_gen_controller('sys', sys, 'param', param, 'options', solver_options,...
+    'platform', 'Matlab', 'formulation', 'MPCT', 'method', 'EADMM');
     
     % Solve using the sparse solver
     [u_s, k_s, e_s, sol_s] = MPCT(status.x, status.xr, status.ur);

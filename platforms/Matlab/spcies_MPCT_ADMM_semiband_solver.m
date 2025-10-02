@@ -118,7 +118,7 @@ function [u, k, e_flag, Hist] = spcies_MPCT_ADMM_semiband_solver(x0, xr, ur, var
     def_controller = []; % Default value for the controller argument
     def_genHist = 0; % Default amount of data generated for Hist
     def_verbose = 1; % Default amount of information displayed
-    def_options = MPCT.def_options_MPCT_ADMM_semiband();
+    def_options = MPCT.def_options_MPCT_ADMM('semiband');
 
     %% Parser
     par = inputParser;

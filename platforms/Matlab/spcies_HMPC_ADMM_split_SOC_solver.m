@@ -115,7 +115,7 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_split_SOC_solver(x0, xr, ur, va
     end
     
     % Update q and b using x0, xr and ur
-    q = -[zeros((N-1)*(n+m)+m, 1); var.Te*xr; zeros(2*n,1); var.Se*ur; zeros(2*m,1)];
+    q = -[zeros((N-1)*(n+m)+m, 1); var.Te*xr + var.Q*x0; zeros(n,1); var.Q*x0; var.Se*ur; zeros(2*m,1)]; % Add reference
     bh = var.bh;
     bh(1:n) = -var.A*x0;
     

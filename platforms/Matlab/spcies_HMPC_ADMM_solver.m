@@ -113,7 +113,7 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_solver(x0, xr, ur, varargin)
     end
     
     % Other variables
-    q = -[zeros((N-1)*(n+m)+m, 1); var.Te*xr; zeros(2*n,1); var.Se*ur; zeros(2*m,1)]; % Add reference
+    q = -[zeros((N-1)*(n+m)+m, 1); var.Te*xr + var.Q*x0; zeros(n,1); var.Q*x0; var.Se*ur; zeros(2*m,1)]; % Add reference
     b = -var.A*x0; % Add current state
     d = var.d;
     C = var.C;
@@ -144,7 +144,7 @@ function [u, k, e_flag, Hist] = spcies_HMPC_ADMM_solver(x0, xr, ur, varargin)
         Czd = sp_utils.smv(var.C_CSR.val, var.C_CSR.col, var.C_CSR.row, z) - d;
         
         %%%%%%%%%%%%% Update dual (in the SADMM variant) %%%%%%%%%%%%%
-        if strcmp(options.solver.method, 'SADMM')
+        if strcmp(options.method, 'SADMM')
             lambda = lambda + options.solver.alpha*var.rho*(Czd + s);
         end
         

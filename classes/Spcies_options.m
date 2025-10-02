@@ -38,7 +38,7 @@ classdef Spcies_options < matlab.mixin.Copyable
 
     end
 
-    properties (Hidden=false, SetAccess=protected)
+    properties (Hidden=false)%, SetAccess=protected)
 
         solver = struct() % Structure that contains solver-specific options, including:
             % k_max % Maximum number of iterations of the solver
@@ -499,12 +499,11 @@ classdef Spcies_options < matlab.mixin.Copyable
             if ~isempty(method)
                 func_name = strcat(func_name, ['_' method]);
             end
-            if ~isempty(submethod)
-                func_name = strcat(func_name, ['_' submethod]);
-            end
-
+            % if ~isempty(submethod)
+            %     func_name = strcat(func_name, ['_' submethod]);
+            % end
             try
-                opt = eval([func_name '(self)']);
+                opt = eval([func_name '(submethod)']);
                 self.set_opt_from_struct(opt);
             catch err
                 if strcmp(err.identifier,'MATLAB:UndefinedFunction')

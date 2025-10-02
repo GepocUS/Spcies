@@ -122,7 +122,7 @@ switch varargin{1}
     % This function calls the function /tests/spcies_tester.m with its default
     % settings. Please refer to its documentation for further details.
     %
-    case 'test'
+    case {'test', 't'}
         [varargout{1}, varargout{2}] = spcies_tester(varargin{2:end});
 
     % spcies('clear')
@@ -130,7 +130,7 @@ switch varargin{1}
     % Deletes the contents of /generated_solvers/
     % Calls spcies_clear();
     %
-    case 'clear'
+    case {'clear', 'c'}
         spcies_clear(varargin{2:end});
 
     % spcies('root')
@@ -155,7 +155,7 @@ switch varargin{1}
     % 
     % Prints the license
     % 
-    case 'license'
+    case {'license', 'l'}
         try
             type([spcies_get_root_directory() '/LICENSE']);
         catch ME

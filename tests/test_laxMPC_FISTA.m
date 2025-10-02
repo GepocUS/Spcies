@@ -20,8 +20,8 @@ function [gap, exit] = test_laxMPC_FISTA(sys, status)
 %     sys.UBu = kron(ones(1, param.N+1), sys.UBu);
     
     % Construct solver
-    spcies_gen_controller('sys', sys, 'param', param, 'solver_options', solver_options,...
-    'platform', 'Matlab', 'type', 'laxMPC', 'method', 'FISTA');
+    spcies_gen_controller('sys', sys, 'param', param, 'options', solver_options,...
+    'platform', 'Matlab', 'formulation', 'laxMPC', 'method', 'FISTA');
 
     % Solve using the sparse solver
     [u_s, k_s, e_s, sol_s] = laxMPC(status.x, status.xr, status.ur);

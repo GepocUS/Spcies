@@ -13,7 +13,7 @@ function [u, k, e_flag, Hist] = spcies_HMPC_SADMM_split_solver(x0, xr, ur, varar
     def_controller = []; % Default value for the controller argument
     def_genHist = 0; % Default amount of data generated for Hist
     def_verbose = 1; % Default amount of information displayed
-    def_options = HMPC.def_options_HMPC_SADMM();
+    def_options = HMPC.def_options_HMPC_SADMM('split');
     
     %% Parser
     par = inputParser;
@@ -113,7 +113,7 @@ function [u, k, e_flag, Hist] = spcies_HMPC_SADMM_split_solver(x0, xr, ur, varar
     end
     
     % Update q and b using x0, xr and ur
-    q = -[zeros((N-1)*(n+m)+m, 1); var.Te*xr; zeros(2*n,1); var.Se*ur; zeros(2*m,1)];
+    q = -[zeros((N-1)*(n+m)+m, 1); var.Te*xr + var.Q*x0; zeros(n,1); var.Q*x0; var.Se*ur; zeros(2*m,1)]; % Add reference
     bh = var.bh;
     bh(1:n) = -var.A*x0;
     

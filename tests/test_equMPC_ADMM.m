@@ -19,8 +19,8 @@ function [gap, exit] = test_equMPC_ADMM(sys, status)
 %     sys.UBu = kron(ones(1, param.N), sys.UBu);
     
     % Construct solver
-    spcies_gen_controller('sys', sys, 'param', param, 'solver_options', solver_options,...
-    'platform', 'Matlab', 'type', 'equMPC', 'method', 'ADMM');
+    spcies_gen_controller('sys', sys, 'param', param, 'options', solver_options,...
+    'platform', 'Matlab', 'formulation', 'equMPC', 'method', 'ADMM');
 
     % Solve using the sparse solver
     [u_s, k_s, e_s, sol_s] = equMPC(status.x, status.xr, status.ur);

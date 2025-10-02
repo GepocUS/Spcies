@@ -260,54 +260,60 @@ function [correct, test] = spcies_tester(varargin)
     tol_spcies = 1e-10; % Maximum allowed difference between the sparse and non-sparse SPCIES solvers
     tol_opt = 1e-4; % Maximum allowed difference between the SPCIES solver and optimal solution
     
-    correct = true;
-    for i = 1:length(test)
-        
-        if strcmp(test{i}.error, 'Yes')
-            correct = false;
-            test{i}.spcies = '??';
-            test{i}.opt = '??';
-            test{i}.flag = '??';
-        else
+    if isempty(test)
+        correct = false;
+    else
+        correct = true;
+        for i = 1:length(test)
             
-            % Check sparse and non-sparse solvers
-            if max(test{i}.gap.spcies) > tol_spcies
+            if strcmp(test{i}.error, 'Yes')
                 correct = false;
-                test{i}.spcies = 'No';
+                test{i}.spcies = '??';
+                test{i}.opt = '??';
+                test{i}.flag = '??';
             else
-                test{i}.spcies = 'Yes';
-            end
-
-            % Check against the optimal solution
-            if max(test{i}.gap.opt) > tol_opt
-                correct = false;
-                test{i}.opt = 'No';
-            else
-                test{i}.opt = 'Yes';
-            end
-            
-            if any(test{i}.exit <= 0)
-                correct = false;
-                test{i}.flag = num2str(min(test{i}.exit));
-            else
-                test{i}.flag = num2str(max(test{i}.exit));
+                
+                % Check sparse and non-sparse solvers
+                if max(test{i}.gap.spcies) > tol_spcies
+                    correct = false;
+                    test{i}.spcies = 'No';
+                else
+                    test{i}.spcies = 'Yes';
+                end
+    
+                % Check against the optimal solution
+                if max(test{i}.gap.opt) > tol_opt
+                    correct = false;
+                    test{i}.opt = 'No';
+                else
+                    test{i}.opt = 'Yes';
+                end
+                
+                if any(test{i}.exit <= 0)
+                    correct = false;
+                    test{i}.flag = num2str(min(test{i}.exit));
+                else
+                    test{i}.flag = num2str(max(test{i}.exit));
+                end
+                
             end
             
         end
-        
     end
     
     %% Print information
     if verbose > 0
         
-        fprintf('Result:\n');
-        fprintf('----------------------------------------------\n');
-        fprintf('Type\tMethod\tSPCIES\tOpt\tFlag\tError\n');
-        fprintf('----------------------------------------------\n');
-        for i = 1:length(test)
-            fprintf('%s\t%s\t%s\t%s\t%s\t%s\n', test{i}.type, test{i}.method, test{i}.spcies, test{i}.opt, test{i}.flag, test{i}.error);
+        if ~isempty(test)
+            fprintf('Result:\n');
+            fprintf('-------------------------------------------------------------------\n');
+            fprintf('Type\tMethod\tSPCIES\tOpt\tFlag\tError\n');
+            fprintf('-------------------------------------------------------------------\n');
+            for i = 1:length(test)
+                fprintf('%s\t%s\t%s\t%s\t%s\t%s\n', test{i}.type, test{i}.method, test{i}.spcies, test{i}.opt, test{i}.flag, test{i}.error);
+            end
+            fprintf('-------------------------------------------------------------------\n\n');
         end
-        fprintf('----------------------------------------------\n\n');
         
         if correct
             fprintf('SPCIES test result: Positive.\n');

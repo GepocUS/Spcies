@@ -507,7 +507,7 @@ for(unsigned int j = 0; j < nn_; j++){
     sol->lambda[count] = lambda[0][j];
 }
 for(unsigned int l = 1; l < NN_+3; l ++){
-    for(unsigned int j = 0; j < nn_; j++){
+    for(unsigned int j = 0; j < nm_; j++){
         count++;
         sol->lambda[count] = lambda[l][j];
     }
