@@ -226,7 +226,7 @@ function var = compute_HMPC_ADMM_split_ingredients(controller, opt)
     M = [Hh, Gh'; Gh, zeros(n_eq+n_s)];
     % Compute LDL factorization of M
     [L, D, Pldl] = ldl(M);
-    L_CSC = full2CSC(L - eye(size(M, 1)));
+    L_CSC = sp_utils.full2CSC(L - eye(size(M, 1)));
     Dinv = inv(D);
     idx_x0 = zeros(n, 1);
     for i = 1:n
